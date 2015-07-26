@@ -1,0 +1,5 @@
+language: clojure
+lein: lein2
+script: lein with-profile travis-ci test
+sudo: false
+
