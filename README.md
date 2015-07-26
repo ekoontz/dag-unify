@@ -87,19 +87,23 @@ For the special keyword `:fail`, the following is true:
 
 - `(unify X :fail) => :fail` for all `X`.
 
-`:fail` will be returned if the result of trying to unify values where
-the result of unification would result in having incompatible values
-for the same reference. For example:
+`:fail` will also be returned if the result of trying to unify values
+where the result of unification would result in having incompatible
+values for the same reference. For example:
 
 ```
-(let [reference (ref :top)
-      foo {:a reference
-           :b reference}
+(let [myref (ref :top)
+      foo {:a myref
+           :b myref}
       bar {:a 42
            :b 43}]
   (unify foo bar))
 :fail
 ```
+
+because the `:a` value and `:b` values of `bar` must be unified becase
+of the ref shared between the `:a` and `:b` values in `foo`, but the
+values themselves are atomic and not equal.
 
 ## Usage
 
