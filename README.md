@@ -48,9 +48,9 @@ If one argument to `unify` is a map with a key whose value is a
 reference, then the resulting unified map's value will also be a reference:
 
 ```
-user> (let [foo {:a (ref {:b 42})}
-            bar {:a {:c 43}}]
-        (unify foo bar))
+(let [foo {:a (ref {:b 42})}
+      bar {:a {:c 43}}]
+  (unify foo bar))
 {:a #<Ref@344dc027: {:c 43, :b 42}>}
 ```
 
@@ -62,11 +62,11 @@ There are two special keywords, `:top` and `:fail`, for which the following are 
 References work with `:top` as in the following example:
 
 ```
-user> (let [reference (ref :top)
-            foo {:a reference
-	            :b reference}
-	    bar {:a 42}]
-        (unify foo bar))
+(let [reference (ref :top)
+      foo {:a reference
+           :b reference}
+      bar {:a 42}]
+  (unify foo bar))
 {:b #<Ref@51670b57: 42>, :a #<Ref@51670b57: 42>}
 ```
 
@@ -75,12 +75,12 @@ the result of unification would result in having incompatible values
 for the same reference. For example:
 
 ```
-user> (let [reference (ref :top)
-            foo {:a reference
-                 :b reference}
-            bar {:a 42
-                 :b 43}]
-         (unify foo bar))
+(let [reference (ref :top)
+      foo {:a reference
+           :b reference}
+      bar {:a 42
+           :b 43}]
+  (unify foo bar))
 :fail
 ```
 
