@@ -106,9 +106,9 @@ equal to `:fail`. For example:
 is no different from `:fail` as far as unification is concerned.
 
 
-`:fail` will also be returned if the result of trying to unify values
-where the result of unification would result in having incompatible
-values for the same reference. For example:
+`:fail` is used to represent a failed attempt of trying to unify
+values which are not equal (if atomic values) or have some part that
+is not equal. For example:
 
 ```
 (let [myref (ref :top)
@@ -120,9 +120,11 @@ values for the same reference. For example:
 => :fail
 ```
 
-Above, the `:a` value and `:b` values of `bar` must be unified because
-of the ref shared between the `:a` and `:b` values in `foo`. However the
-values themselves are atomic and not equal.
+Above, the `:a` value and `:b` values of `bar` should be identical
+because `:foo` has a shared value which `:a` and `:b` both point to.
+point to. However, these two atomic values (42 and 43) are not equal
+to one another. The result is that the unification of `foo` and `bar`
+is `:fail`.
 
 ## Usage
 
