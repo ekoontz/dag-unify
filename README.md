@@ -17,7 +17,7 @@ For example:
 (let [foo {:a {:b 42}}
       bar {:a {:c 43}}]
   (merge foo bar))
-{:a {:c 43}}
+=> {:a {:c 43}}
 ```
 
 Note that the `{:b 42}` is lost from the return value - it was
@@ -28,7 +28,7 @@ preserve both arguments' values for `:a` and combine them as follows:
 (let [foo {:a {:b 42}}
       bar {:a {:c 43}}]
    (unify foo bar))
-{:a {:c 43, :b 42}}
+=> {:a {:c 43, :b 42}}
 ```
 
 For unification of atomic values (numbers, strings, keywords) are
@@ -37,12 +37,12 @@ compared by equality. If they are not equal, then the special keyword
 
 ```
 (unify 1 1)
-1
+=> 1
 ```
 
 ```
 (unify 1 2)
-:fail
+=> :fail
 ```
 
 ## Refs
@@ -60,14 +60,16 @@ the value `{:b 42}`:
 (let [foo {:a (ref {:b 42})}
       bar {:a {:c 43}}]
   (unify foo bar))
-{:a #<Ref@344dc027: {:c 43, :b 42}>}
+=> {:a #<Ref@344dc027: {:c 43, :b 42}>}
 ```
 
 ## `:top`
 
-For the special keyword `:top`, the following is true:
+For the special keyword `:top`, the following is true for all `X`:
 
-- `(unify X :top) => X` for all `X`.
+```
+(unify X :top) => X
+```
 
 In mathematical terms, `:top` is the identity element of
 unification. References work with `:top` as in the following example:
@@ -78,17 +80,19 @@ unification. References work with `:top` as in the following example:
            :b reference}
       bar {:a 42}]
   (unify foo bar))
-{:b #<Ref@51670b57: 42>, :a #<Ref@51670b57: 42>}
+=> {:b #<Ref@51670b57: 42>, :a #<Ref@51670b57: 42>}
 ```
 
 ## `:fail`
 
-For the special keyword `:fail`, the following is true:
+For the special keyword `:fail`, the following is true for all `X`:
 
-- `(unify X :fail) => :fail` for all `X`.
+```
+(unify X :fail) => :fail
+```
 
 In any map, if any key's value is equal to `:fail`, the entire map is
-equal to `:fail`. For example: `{:a {:b {:c :fail}}}` is equivalent to
+equal to `:fail`. For example: `{:a 42 :b {:c {:d :fail}}}` is equivalent to
 `:fail` as far as unification is concerned.
 
 
@@ -103,7 +107,7 @@ values for the same reference. For example:
       bar {:a 42
            :b 43}]
   (unify foo bar))
-:fail
+=> :fail
 ```
 
 Above, the `:a` value and `:b` values of `bar` must be unified because
