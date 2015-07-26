@@ -4,13 +4,12 @@
 
 # dag-unify
 
-A Clojure library designed to combine directed acyclic graphs (DAGs)
-via unification. In Clojure, a DAG may be represented by Clojure map
-where the values of keys may be refs
-(http://clojure.org/refs). Unification is similar to merge
+A Clojure library for combining directed acyclic graphs (DAGs) via
+unification. Unification is similar to merge
 (http://clojure.github.io/clojure/clojure.core-api.html#clojure.core/merge),
-except that if the arguments to unification have the same key, their
-values will be recursively unified rather than only one key's value being used.
+except that if arguments have the same keys, in the return value, the
+arguments' values for those keys will be recursively combined via
+unification, rather than only one key's value being used.
 
 For example:
 
@@ -21,8 +20,9 @@ For example:
 {:a {:c 43}}
 ```
 
-Note that the `{:b 42}` is lost from the return value - it was overwritten by the `bar`'s `:a` value.
-However with `unify`, we preserve both arguments' values for `:a` :
+Note that the `{:b 42}` is lost from the return value - it was
+overwritten by `bar`'s value for `:a`.  With `unify`, however, we
+preserve both arguments' values for `:a` and combine them as follows:
 
 ```
 (let [foo {:a {:b 42}}
@@ -45,8 +45,16 @@ compared by equality. If they are not equal, then the special keyword
 :fail
 ```
 
-If one argument to `unify` is a map with a key whose value is a
-reference, then the resulting unified map's value will also be a reference:
+## Refs
+
+In Clojure, a DAG may be represented by Clojure map where the values
+of keys may be refs (http://clojure.org/refs).
+
+If one argument or more arguments to `unify` is a map with a key whose
+value is a reference, then the return value for that key will also be
+a reference, and the reference's value will be combined recursively
+via unification. For example, `foo`'s value for `:a` is a reference to
+the value `{:b 42}`:
 
 ```
 (let [foo {:a (ref {:b 42})}
@@ -55,12 +63,14 @@ reference, then the resulting unified map's value will also be a reference:
 {:a #<Ref@344dc027: {:c 43, :b 42}>}
 ```
 
-There are two special keywords, `:top` and `:fail`, for which the following are true:
+## `:top`
+
+For the special keyword `:top`, the following is true:
 
 - `(unify X :top) => X` for all `X`.
-- `(unify X :fail) => :fail` for all `X`.
 
-References work with `:top` as in the following example:
+In mathematical terms, `:top` is the identity element of
+unification. References work with `:top` as in the following example:
 
 ```
 (let [reference (ref :top)
@@ -70,6 +80,12 @@ References work with `:top` as in the following example:
   (unify foo bar))
 {:b #<Ref@51670b57: 42>, :a #<Ref@51670b57: 42>}
 ```
+
+## `:fail`
+
+For the special keyword `:fail`, the following is true:
+
+- `(unify X :fail) => :fail` for all `X`.
 
 `:fail` will be returned if the result of trying to unify values where
 the result of unification would result in having incompatible values
