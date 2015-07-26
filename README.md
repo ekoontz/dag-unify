@@ -21,7 +21,8 @@ For example:
 {:a {:c 43}}
 ```
 
-but:
+Note that the `{:b 42}` is lost from the return value - it was overwritten by the `bar`'s `:a` value.
+However with `unify`, we preserve both arguments' values for `:a` :
 
 ```
 (let [foo {:a {:b 42}}
