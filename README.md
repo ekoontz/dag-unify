@@ -94,13 +94,15 @@ For the special keyword `:fail`, the following is true for all `X`:
 ```
 
 In any map, if any key's value is equal to `:fail`, the entire map is
-equal to `:fail`. For example:
+equal to `:fail`. For example, the following map, despite its
+complicated structure:
 
 ```
 {:a 42
  :b {:c {:d :fail
-         :e 43}}
- :f {:g "hello"}}	 
+         :e {:f 43}
+	 :g 44}}
+ :h {:i "hello"}}
 ```
 
 is no different from `:fail` as far as unification is concerned.
