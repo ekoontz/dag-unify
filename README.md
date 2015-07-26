@@ -71,8 +71,8 @@ For the special keyword `:top`, the following is true for all `X`:
 (unify X :top) => X
 ```
 
-In other words, `:top` is the [[identity
-element](https://en.wikipedia.org/wiki/Identity_element)] of
+In other words, `:top` is the [identity
+element (https://en.wikipedia.org/wiki/Identity_element)] of
 unification.
 
 References work with `:top` as in the following example:
