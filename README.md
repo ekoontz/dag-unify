@@ -87,6 +87,11 @@ For the special keyword `:fail`, the following is true:
 
 - `(unify X :fail) => :fail` for all `X`.
 
+In any map, if any key's value is equal to `:fail`, the entire map is
+equal to `:fail`. For example: `{:a {:b {:c :fail}}}` is equivalent to
+`:fail` as far as unification is concerned.
+
+
 `:fail` will also be returned if the result of trying to unify values
 where the result of unification would result in having incompatible
 values for the same reference. For example:
@@ -101,8 +106,8 @@ values for the same reference. For example:
 :fail
 ```
 
-because the `:a` value and `:b` values of `bar` must be unified becase
-of the ref shared between the `:a` and `:b` values in `foo`, but the
+Above, the `:a` value and `:b` values of `bar` must be unified because
+of the ref shared between the `:a` and `:b` values in `foo`. However the
 values themselves are atomic and not equal.
 
 ## Usage
