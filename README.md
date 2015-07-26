@@ -7,9 +7,9 @@
 A Clojure library for combining directed acyclic graphs (DAGs) via
 unification. Unification is similar to merge
 (http://clojure.github.io/clojure/clojure.core-api.html#clojure.core/merge),
-except that if arguments have the same keys, in the return value, the
-arguments' values for those keys will be recursively combined via
-unification, rather than only one key's value being used.
+except that if arguments have the same keys, the arguments' values for
+those keys will be recursively combined via unification to yield the
+value for the key in the combined map.
 
 For example:
 
