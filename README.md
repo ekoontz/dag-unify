@@ -124,7 +124,7 @@ is not equal. For example:
 
 Above, the `:a` value and `:b` values of `bar` should be identical
 because `:foo` has a shared value which `:a` and `:b` both point to.
-point to. However, these two atomic values (42 and 43) are not equal
+However, these two atomic values (42 and 43) are not equal
 to one another. The result is that the unification of `foo` and `bar`
 is `:fail`.
 
