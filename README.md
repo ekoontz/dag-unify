@@ -77,9 +77,9 @@ unification.
 References work with `:top` as in the following example:
 
 ```
-(let [reference (ref :top)
-      foo {:a reference
-           :b reference}
+(let [myref (ref :top)
+      foo {:a myref
+           :b myref}
       bar {:a 42}]
   (unify foo bar))
 => {:b #<Ref@51670b57: 42>, :a #<Ref@51670b57: 42>}
