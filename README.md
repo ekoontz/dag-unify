@@ -85,6 +85,10 @@ References work with `:top` as in the following example:
 => {:b #<Ref@51670b57: 42>, :a #<Ref@51670b57: 42>}
 ```
 
+In the immediately above case, `foo` had an unspecified value that was
+shared by `foo`'s `:a` and `:b` key. `bar` had a specific value for
+`:a`. The result is a map with `:a` and `:b` both sharing the same value `42`.
+
 ## `:fail`
 
 For the special keyword `:fail`, the following is true for all `X`:
