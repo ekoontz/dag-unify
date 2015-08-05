@@ -52,16 +52,22 @@ of keys may be refs (http://clojure.org/refs).
 
 If one argument or more arguments to `unify` is a map with a key whose
 value is a reference, then the return value for that key will also be
-a reference, and the reference's value will be combined recursively
-via unification. For example, `foo`'s value for `:a` is a reference to
-the value `{:b 42}`:
+the same reference, with its value being the unification of the
+arguments. For example:
 
 ```
-(let [foo {:a (ref {:b 42})}
+(let [myref (ref {:b 42})
+      foo {:a myref}
       bar {:a {:c 43}}]
   (unify foo bar))
 => {:a #<Ref@344dc027: {:c 43, :b 42}>}
 ```
+
+Above, `foo`'s value for `:a` is a reference to the value `{:b
+42}`. `foo`'s value for `:a` is unified with `bar`'s value for `:a`
+(`{:c 43}`), and the result `{:b 42, c 43}` is the new value of the
+reference, and this reference is the value `:a` for the unification of
+`foo` and `bar`.
 
 ## `:top`
 
