@@ -11,7 +11,7 @@ except that if arguments have the same keys, the arguments' values for
 those keys will be recursively combined via unification to yield the
 value for the key in the combined map.
 
-For example:
+First consider the behavior of Clojure's `merge`:
 
 ```
 (let [foo {:a {:b 42}}
@@ -21,8 +21,10 @@ For example:
 ```
 
 Note that the `{:b 42}` is lost from the return value - it was
-overwritten by `bar`'s value for `:a`.  With `unify`, however, we
-preserve both arguments' values for `:a` and combine them as follows:
+overwritten by `bar`'s value for `:a`.
+
+With `unify`, however, we preserve both arguments' values for `:a` and
+combine them as follows:
 
 ```
 (let [foo {:a {:b 42}}
