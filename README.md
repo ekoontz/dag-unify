@@ -94,7 +94,7 @@ References work with `:top` as in the following example:
 ```
 
 In the immediately above case, `foo` had an unspecified value that was
-shared by `foo`'s `:a` and `:b` key. `bar` had a specific value for
+shared by `foo`'s `:a` and `:b` key. `bar` had a specific value (42) for
 `:a`, but no `:b` key. The result is a map with `:a` and `:b` both
 sharing the same value `42`.
 
