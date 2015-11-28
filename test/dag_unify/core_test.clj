@@ -722,27 +722,6 @@ when run from a REPL."
         constraints-expanded (expand-disj constraints)]
     (is (= (.size constraints-expanded) 2))))
 
-(deftest unify-with-set-test
-  (let [result (unify {:b 42}
-                      {:c #{1 2}})]
-    (is (set? result))
-    (is (= 2 (.size result)))
-    (is (or (= (get-in (first result) '(:c)) 1)
-            (= (get-in (first result) '(:c)) 2)))))
-
-(deftest unify-with-set-test2
-  (let [result (unify {:b 42}
-                      {:c #{1 2}})]
-    (is (set? result))))
-
-(deftest unify-with-set-and-ref
-  (let [result (unifyc {:a (ref :top)} {:a {:b #{1 2}}})]
-    (is (= (.size result) 2))
-    (is (not (fail? (first result))))
-    (is (not (fail? (second result))))))
-
-
-
 (deftest cycle-is-fail
   "unification that would lead to a cycle results in fail, and avoids a StackOverflowError."
   (let [ref1 (ref :top)
