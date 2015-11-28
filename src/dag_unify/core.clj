@@ -208,12 +208,6 @@
                                                (set (list result)))))
                                      val2))))
            
-           (has-set? val1)
-           (unify (expand-disj val1) val2)
-           
-           (has-set? val2)
-           (unify val1 (expand-disj val2))
-           
            (and (= val1 '())
                 (= val2 :top))
            val1
@@ -650,12 +644,6 @@
                                          (set (list result)))))
                                val2))))
 
-     (has-set? val1)
-     (merge (expand-disj val1) val2)
-
-     (has-set? val2)
-     (merge val1 (expand-disj val2))
-
      (= (.count args) 1)
      (first args)
 
@@ -956,9 +944,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
        (sort-shortest-path-ascending-r serialization (rest path-length-pairs))))))
 
 (defn ser-intermed [input-map]
-  (cond (has-set? input-map)
-        (ser-intermed (expand-disj input-map))
-        (set? input-map)
+  (cond (set? input-map)
         (set (map (fn [each]
                     (ser-intermed each))
                   input-map))
@@ -1028,9 +1014,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    (set (map (fn [each]
                (serialize each))
              input-map))
-   (has-set? input-map)
-   (serialize (expand-disj input-map))
-
    true
    (let [memoized (core/get input-map :serialized :none)]
      (if (not (= memoized :none))
@@ -1081,11 +1064,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         (map (fn [each]
                (copy each))
              input)
-        (has-set? input)
-        (set
-         (map (fn [each]
-                (copy each))
-              (expand-disj input)))
         true
         (deserialize (serialize input))))
 
@@ -1157,7 +1135,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         (path-to-ref-index (rest serialized) path (+ n 1))))))
 
 (defn compare-bytewise [a b index]
-  "compare two byte by casting each byte to short."
+  "compare two byte arrays by casting each byte to short."
   (if (> (alength a) index)
     (if (> (alength b) index)
       (if (= (nth a index)
