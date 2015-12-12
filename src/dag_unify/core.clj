@@ -16,20 +16,14 @@
    [clojure.string :as string]
    [clojure.tools.logging :as log]))
 
-(declare ref?)
-
-(def use-atom-or-ref :atom)
-
 (defn alter [x fn]
-  (if (= use-atom-or-ref :ref)
-    (dosync
-     (core/alter x fn))
-    (swap! x fn)))
+  (swap! x fn))
 
+;; only for backward compatibility: remove this and use core/atom directly instead.
 (defn ref [x]
-  (if (= use-atom-or-ref :ref)
-    (core/ref x)
-    (core/atom x)))
+  (core/atom x))
+
+(declare ref?)
 
 (defn get-head [sign]
   (if (core/get sign :head)
@@ -306,7 +300,7 @@
             (not (ref? val2)))
            (do
              (log/debug (str "val1 is a ref, but not val2."))
-             (alter val1
+             (swap! val1
                      (fn [x] (unify @val1 val2)))
              ;; alternative to the above (not tested yet):  (fn [x] (unify (copy @val1) val2))))
              ;; TODO: why is this false-disabled? (document and test) or remove
@@ -319,7 +313,7 @@
             (not (ref? val1)))
            (do
              (log/debug (str "val2 is a ref, but not val1."))
-             (alter val2
+             (swap! val2
                     (fn [x] (unify val1 @val2)))
              ;; alternative to the above (not tested yet): (fn [x] (unify val1 (fs/copy @val2)))))
              ;; TODO: why is this false-disabled? (document and test) or remove.
@@ -359,9 +353,9 @@
                 (log/debug (str " whose values are: " @val1 " and " @val2))
                 (log/debug (str " refs of @val1: " (get-refs-in @val1)))
                 (log/debug (str " refs of @val2: " (get-refs-in @val2)))
-                (alter val1
+                (swap! val1
                        (fn [x] (unify @val1 @val2)))
-                (alter val2
+                (swap! val2
                        (fn [x] val1)) ;; note that now val2 is a ref to a ref.
                 (log/debug (str "returning ref: " val1))
                 ;; TODO: remove, since it's disabled, or add a global setting to en/dis-able.
@@ -543,7 +537,7 @@
      (and
       (ref? val1)
       (not (ref? val2)))
-     (do (alter val1
+     (do (swap! val1
                 (fn [x] (match @val1 val2)))
          ;; TODO: remove or parameterize this false-disabled code.
          (if (and false (fail? @val1)) :fail
@@ -551,7 +545,7 @@
      (and
       (ref? val2)
       (not (ref? val1)))
-     (do (alter val2
+     (do (swap! val2
                 (fn [x] (match val1 @val2)))
          (if (and false (fail? @val2)) :fail
              val2))
@@ -566,9 +560,9 @@
            val2
            (do
              (log/debug (str "unifying two refs: " val1 " and " val2))
-             (alter val1
+             (swap! val1
                     (fn [x] (match @val1 @val2)))
-             (alter val2
+             (swap! val2
                     (fn [x] val1)) ;; note that now val2 is a ref to a ref.
              (log/debug (str "returning ref: " val1))
              (if (and false (fail? @val1)) :fail
@@ -663,21 +657,21 @@
      (and
       (ref? val1)
       (not (ref? val2)))
-     (do (alter val1
+     (do (swap! val1
                 (fn [x] (merge @val1 val2)))
          val1)
 
      (and
       (ref? val2)
       (not (ref? val1)))
-     (do (alter val2
+     (do (swap! val2
                 (fn [x] (merge val1 @val2)))
          val2)
 
      (and
       (ref? val1)
       (ref? val2))
-     (do (alter val1
+     (do (swap! val1
                 (fn [x] (merge @val1 @val2)))
          val1)
 

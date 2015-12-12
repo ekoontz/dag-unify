@@ -1,7 +1,7 @@
 (ns dag-unify.core-test
   (:require [clojure.test :refer :all]
             [dag-unify.core :refer :all])
-  (:refer-clojure :exclude [alter get-in merge resolve find ref])
+  (:refer-clojure :exclude [alter get-in merge resolve find])
   (:use [clojure.test]))
 
 ;; TODO: add more tests for (isomorphic?)
@@ -58,7 +58,7 @@
     (is (= result {:foo nil}))))
 
 (deftest unify-atomic-values-with-references
-  (let [myref (ref :top)
+  (let [myref (atom :top)
         val 42
         result (unify myref val)]
     (is (ref? result))
@@ -71,7 +71,7 @@
 ;; {:a [1] 42
 ;;  :b [1] }
 (deftest merging-references-with-top-and-references
-  (let [myref (ref :top)
+  (let [myref (atom :top)
         fs1 {:a myref :b myref}
         fs2 {:a 42}
         result (merge fs1 fs2)]
@@ -81,7 +81,7 @@
     (is (= (:a result) (:b result)))))
 
 (deftest merging-with-references-with-top-and-references-2
-  (let [myref (ref :top)
+  (let [myref (atom :top)
         fs1 {:a myref}
         fs2 {:a :foo}
         result (merge fs1 fs2)]
@@ -89,7 +89,7 @@
     (is (= @(:a result) :foo))))
 
 (deftest merging-with-inner-reference-keyset
-  (let [fs1 {:b (ref :top)}
+  (let [fs1 {:b (atom :top)}
         fs2 {:b 42}
         maps (list fs1 fs2)
         result (seq (set (mapcat #'keys maps)))] ;; mapcat->set->seq removes duplicates.
@@ -98,7 +98,7 @@
       ;; [b [1] :top], [b 42] => [b [1] 42]
 (deftest merging-with-reference
   "merging with reference"
-  (let [fs1 {:b (ref :top)}
+  (let [fs1 {:b (atom :top)}
         fs2 {:b 42}
         result (merge fs1 fs2)]
     (is (ref? (:b result)))
@@ -107,7 +107,7 @@
 ;; [a [b [1] :top]], [a [b 42]] => [a [b [1] 42]]
 (deftest merging-with-inner-reference
   "merging with inner reference"
-  (let [fs1 {:a {:b (ref :top)}}
+  (let [fs1 {:a {:b (atom :top)}}
         fs2 {:a {:b 42}}
         result (merge fs1 fs2)]
     (is (ref? (:b (:a result))))
@@ -116,7 +116,7 @@
 ;; [a [b [1] top]], [a [b 42]] => [a [b [1] 42]]
 (deftest merging-with-inner-reference-second-position
   (let [fs1 {:a {:b 42}}
-        fs2 {:a {:b (ref :top)}}
+        fs2 {:a {:b (atom :top)}}
         result (merge fs1 fs2)]
     (is (ref? (:b (:a result))))
     (is (= @(:b (:a result))) 42)))
@@ -124,7 +124,7 @@
 (deftest merging-with-reference-second-position
   "merging with reference, second position"
   (let [fs1 {:a 42}
-        fs2 {:a (ref :top)}
+        fs2 {:a (atom :top)}
         result (merge fs1 fs2)]
     (is (ref? (:a result)))
     (is (= @(:a result) 42))))
@@ -239,24 +239,24 @@
 
 (deftest top-string-and-keyword-equiv
   "'top' and :top are equivalent when unifying with reference to keyword."
-  (let [result (unify "top" (ref :foo))]
+  (let [result (unify "top" (atom :foo))]
     (is (ref? result))
     (is (= @result :foo))))
 
 (deftest top-ref
   "@'top' and @:top are equivalent when unifying to a keyword."
-  (let [result (unify (ref "top") :foo)]
+  (let [result (unify (atom "top") :foo)]
     (is (ref? result))
     (is (= @result :foo))))
 
 (deftest top-ref-2
   "@'top' and @:top are equivalent when unifying to a string."
-  (let [result (unify (ref "top") "foo")]
+  (let [result (unify (atom "top") "foo")]
     (is (ref? result))
     (is (= @result "foo"))))
 
 (deftest map-with-reference
-  (let [fs1 {:a (ref 42)}
+  (let [fs1 {:a (atom 42)}
         fs2 {:b (get fs1 :a)}
         result (unify fs1 fs2)]
     (is (ref? (:a result)))
@@ -265,7 +265,7 @@
 
 (deftest unify-two-maps-one-with-references
   "unifying two maps, one with references."
-  (let [fs1 {:a (ref :top)}
+  (let [fs1 {:a (atom :top)}
         fs2 {:b (get fs1 :a)}
         fs3 (unify fs1 fs2)
         fs4 {:a 42}
@@ -277,10 +277,10 @@
 
 (deftest unify-two-maps-with-references
   "unifying two maps, both with references, same features"
-  (let [fs1 {:a (ref 42)}
+  (let [fs1 {:a (atom 42)}
         fs2 {:b (get fs1 :a)}
         fs3 (unify fs1 fs2)
-        fs4 {:a (ref 42)}
+        fs4 {:a (atom 42)}
         fs5 {:b (get fs4 :a)}
         fs6 (unify fs4 fs5)
         result (unify fs3 fs6)]
@@ -295,9 +295,9 @@
         fs2 {:a :fail}]
     (is (= (fail? fs1) false))
     (is (= (fail? fs2) true))
-    (is (= (fail? {:a (ref :fail)}) true))
-    (is (= (fail? {:a (ref 42)}) false)))
-    (is (= (fail? {:a (ref {:b :fail})}) true)))
+    (is (= (fail? {:a (atom :fail)}) true))
+    (is (= (fail? {:a (atom 42)}) false)))
+    (is (= (fail? {:a (atom {:b :fail})}) true)))
 
 
 ;(deftest pathify-no-references
@@ -309,7 +309,7 @@
 (deftest paths-to-values-1
   "test path-to-value, which returns a list of all ways of reaching
 a given value in a given map."
-  (let [ref1 (ref 42)
+  (let [ref1 (atom 42)
         mymap {:a ref1 :b ref1}
         ptf (paths-to-value mymap ref1 nil)]
     (is (= ptf '((:a)(:b))))))
@@ -317,8 +317,8 @@ a given value in a given map."
 (deftest paths-to-values-2
   "test path-to-value, which returns a list of all ways of reaching
 a given value in a given map."
-  (let [ref2 (ref 42)
-        ref1 (ref {:c ref2})
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
         mymap {:a ref1
                :b ref1
                :d ref2}
@@ -328,8 +328,8 @@ a given value in a given map."
 (deftest paths-to-values-3
   "test path-to-value, which returns a list of all ways of reaching
 a given value in a given map."
-  (let [ref2 (ref 42)
-        ref1 (ref {:c ref2})
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
         mymap {:a ref1
                :b ref1
                :d ref2}
@@ -337,36 +337,36 @@ a given value in a given map."
     (is (= paths-to-ref2 '((:a :c)(:b :c)(:d))))))
 
 (deftest all-refs1
-  (let [ref1 (ref 42)
+  (let [ref1 (atom 42)
         mymap {:a ref1, :b ref1}
         refs (seq (set (flatten (all-refs mymap))))]
     (is (= refs (list ref1)))))
 
 (deftest all-refs2
-  (let [ref1 (ref 42)
-        ref2 (ref 43)
+  (let [ref1 (atom 42)
+        ref2 (atom 43)
         mymap {:a ref1, :b ref2}
         refs (seq (set (flatten (all-refs mymap))))]
     (is (or (= refs (list ref1 ref2))
             (= refs (list ref2 ref1))))))
 
 (deftest all-refs3
-  (let [ref1 (ref 42)
-        ref2 (ref 43)
+  (let [ref1 (atom 42)
+        ref2 (atom 43)
         mymap {:a ref1 :b {:c ref2}}
         refs (seq (set (flatten (all-refs mymap))))]
     (is (or (= refs (list ref1 ref2))
             (= refs (list ref2 ref1))))))
 
 (deftest all-refs4
-  (let [ref1 (ref 42)
+  (let [ref1 (atom 42)
         mymap {:a ref1 :b {:c ref1}}
         refs (seq (set (flatten (all-refs mymap))))]
     (is (= refs (list ref1)))))
 
 (deftest all-refs5
-  (let [ref2 (ref 42)
-        ref1 (ref {:c ref2})
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
         mymap {:a ref1 :b ref1 :d ref2}
         refs (seq (set (flatten (all-refs mymap))))]
     (is (or (= refs (list ref1 ref2))
@@ -377,18 +377,18 @@ a given value in a given map."
     (is (= (skeletize mymap) mymap))))
 
 (deftest skeletize-2
-  (let [ref1 (ref 42)
+  (let [ref1 (atom 42)
         mymap {:a 42 :b ref1}]
     (is (= (skeletize mymap) {:a 42 :b :top}))))
 
 (deftest skeletize-3
-  (let [ref1 (ref 42)
-        ref2 (ref 43)
+  (let [ref1 (atom 42)
+        ref2 (atom 43)
         mymap {:a ref1 :b ref2}]
     (is (= (skeletize mymap) {:a :top :b :top}))))
 
 (deftest ser-db-1
-  (let [ref1 (ref 42)
+  (let [ref1 (atom 42)
         mymap {:a ref1, :b ref1}
         ser (ser-db mymap)]
     (is (= ser
@@ -398,8 +398,8 @@ a given value in a given map."
 
 ;; TODO: this test is unnecessarily strict: see below for specifics
 (deftest ser-db-2
-  (let [ref2 (ref 42)
-        ref1 (ref {:c ref2})
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
         mymap {:a ref1 :b ref1 :d ref2}
         ser (ser-db mymap)]
     (is (=
@@ -415,7 +415,7 @@ a given value in a given map."
           }))))
 
 (deftest serialize-1
-  (let [ref1 (ref 42)
+  (let [ref1 (atom 42)
         mymap {:a ref1, :b ref1}
         ser (serialize mymap)]
     (is (= ser
@@ -426,8 +426,8 @@ a given value in a given map."
              (((:a)(:b)) 42))))))
 
 (deftest serialize-2
-  (let [ref2 (ref 42)
-        ref1 (ref {:c ref2})
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
         mymap {:a ref1, :b ref1 :d ref2}
         ser (serialize mymap)]
     (is (= ser
@@ -441,13 +441,13 @@ a given value in a given map."
              (((:a :c) (:b :c) (:d)) 42))))))
 
 (deftest serialize-3
-  (let [mymap {:a 42 :b (ref 43)}]
+  (let [mymap {:a 42 :b (atom 43)}]
     (is (not (nil? (serialize mymap))))))
 
 (deftest serialize-4
-  (let [ref3 (ref "avere")
-        ref2 (ref {:italian "fatto"})
-        ref1 (ref {:infl :infinitive
+  (let [ref3 (atom "avere")
+        ref2 (atom {:italian "fatto"})
+        ref1 (atom {:infl :infinitive
                    :italian ref3})
         vp {:a ref1
             :b {:italian ref2
@@ -464,8 +464,8 @@ a given value in a given map."
     (= (.size serialized) 4)))
 
 (deftest create-shared-values-1
-  (let [ref2 (ref 42)
-        ref1 (ref {:c ref2})
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
         mymap {:a ref1, :b ref1 :d ref2}
         my-ser (serialize mymap)
         create-shared-vals (create-shared-values my-ser)
@@ -502,8 +502,8 @@ a given value in a given map."
 
 ;; deserialize a map's serialized form
 (deftest deser-1
-  (let [ref2 (ref 42)
-        ref1 (ref {:c ref2})
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
         mymap {:a ref1, :b ref1 :d ref2}
         my-ser (serialize mymap)
         my-deser (deserialize my-ser)]
@@ -534,9 +534,9 @@ a given value in a given map."
            42))))
 
 (deftest deser-2
-  (let [ref3 (ref "avere")
-        ref2 (ref {:italian "fatto"})
-        ref1 (ref {:infl :infinitive
+  (let [ref3 (atom "avere")
+        ref2 (atom {:italian "fatto"})
+        ref1 (atom {:infl :infinitive
                    :italian ref3})
         vp {:a ref1
             :b {:italian ref2
@@ -553,17 +553,17 @@ a given value in a given map."
 
 ;(if false (deftest pathify-one-atomic-reference
 ;  "a map with one atom (42) shared"
-;  (let [ref1 (ref 42)
+;  (let [ref1 (atom 42)
 ;        mymap {:a ref1 :b ref1}
 ;        pathify (pathify mymap)]
 ;    (is (= pathify '((:a) 42 (:b) 42))))))
 
 ;;      (deftest
 ;;       "unifying two maps, both with references, overlapping features"
-;;       (let [fs1 {:a (ref 42)}
+;;       (let [fs1 {:a (atom 42)}
 ;;             fs2 {:b (get fs1 :a)}
 ;;             fs3 (unify fs1 fs2)
-;;             fs4 {:b (ref 42)}
+;;             fs4 {:b (atom 42)}
 ;;             fs5 {:c (get fs4 :b)}
 ;;             fs6 (unify fs4 fs5)]
 ;;         (unify fs3 fs6))
@@ -576,7 +576,7 @@ a given value in a given map."
 ;;              (= @(:a result) 42))))
 
 (deftest copy-with-not
-  (let [fs1 {:a (ref {:not 42})}
+  (let [fs1 {:a (atom {:not 42})}
         fs1-copy (copy fs1)]
     (is (not (fail? fs1-copy)))))
 
@@ -597,10 +597,10 @@ a given value in a given map."
    Code works as expected if merge is replaced with unify. However, this test passes - the SOE seems to only happen
 when run from a REPL."
   (unify
-   (get-in (merge (let [head-cat (ref :top)
-                                    head-is-pronoun (ref :top)
-                                    head-sem (ref :top)
-                                    head-infl (ref :top)]
+   (get-in (merge (let [head-cat (atom :top)
+                                    head-is-pronoun (atom :top)
+                                    head-sem (atom :top)
+                                    head-infl (atom :top)]
                                 {:synsem {:cat head-cat
                                           :pronoun head-is-pronoun
                                           :sem head-sem
@@ -610,8 +610,8 @@ when run from a REPL."
                                                  :infl head-infl
                                                  :sem head-sem}}})
 
-                              (let [essere (ref :top)
-                                    infl (ref :top)]
+                              (let [essere (atom :top)
+                                    infl (atom :top)]
                                 {:italian {:a {:infl infl}}
                                  :english {:a {:infl infl}}
                                  :synsem {:infl infl
@@ -623,7 +623,7 @@ when run from a REPL."
                  '(:head))
    (unify
     {:italian {:foo 42}}
-    (let [infl (ref :top)]
+    (let [infl (atom :top)]
       {:italian {:infl infl}
        :english {:infl infl}
        :synsem {:infl infl}}))))
@@ -661,7 +661,7 @@ when run from a REPL."
     (is (= result #{(list (list nil 1)) (list (list nil 2))}))))
 
 (deftest refset2map-test
-  (let [myref (ref #{1 2})
+  (let [myref (atom #{1 2})
         input {:a myref
                :b #{{:c myref} {:d 3}}}
         result (refset2map input)]
@@ -676,7 +676,7 @@ when run from a REPL."
 ))
 
 (deftest step2-test
-  (let [myref (ref #{1 2})
+  (let [myref (atom #{1 2})
         input {:a myref
                :b #{{:c myref} {:d 3}}}
         result (refset2map input)
@@ -686,14 +686,14 @@ when run from a REPL."
 
 (deftest test-final
   (let [input
-        (let [myref (ref #{1 2})]
+        (let [myref (atom #{1 2})]
           {:a myref
            :b #{{:c myref} {:d 3}}})
         final (expand-disj input)]
     (= (.size final) 2)))
 
 (def parent
-  (let [catref (ref :top)]
+  (let [catref (atom :top)]
     {:head {:cat catref}
      :cat catref}))
 
@@ -701,7 +701,7 @@ when run from a REPL."
                 {:cat :verb}})
 
 (def parent-with-disj
-  (let [catref (ref #{{:cat :noun}
+  (let [catref (atom #{{:cat :noun}
                       {:cat :verb}})]
     {:head {:cat catref}
      :cat catref}))
@@ -720,8 +720,8 @@ when run from a REPL."
 
 (deftest cycle-is-fail
   "unification that would lead to a cycle results in fail, and avoids a StackOverflowError."
-  (let [ref1 (ref :top)
-        ref2 (ref :top)
+  (let [ref1 (atom :top)
+        ref2 (atom :top)
         foo1 {:a ref1 :b ref1}
         foo2 {:a ref2 :b {:a ref2}}]
     ;; Test both copy and non-copy - first two are both copying before unification, so should be equivalent,
