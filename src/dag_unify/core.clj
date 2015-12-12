@@ -16,6 +16,8 @@
    [clojure.string :as string]
    [clojure.tools.logging :as log]))
 
+(declare ref?)
+
 (defn get-head [sign]
   (if (core/get sign :head)
     (get-head (core/get sign :head))
@@ -23,7 +25,7 @@
 
 (defn resolve [arg]
   "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
-  (if (= (type arg) clojure.lang.Ref)
+  (if (ref? arg)
     (resolve @arg)
     arg))
 
@@ -45,7 +47,7 @@
                   (if (= result not-found) not-found
                       (get-in (resolve result) (rest path) not-found)))
                 in-map)]
-          (if (= (type result) clojure.lang.Ref)
+          (if (ref? val)
             @result
             result))))
 
@@ -54,7 +56,9 @@
           (get-in the-map path :does-not-exist))))
 
 (defn ref? [val]
-  (= (type val) clojure.lang.Ref))
+  (or 
+   (= (type val) clojure.lang.Ref)
+   (= (type val) clojure.lang.Atom)))
 
 ;; TODO: use multi-methods.
 ;; TODO: keep list of already-seen references to avoid
@@ -285,8 +289,8 @@
            
            ;; val1 is a ref, val2 is not a ref.
            (and
-            (= (type val1) clojure.lang.Ref)
-            (not (= (type val2) clojure.lang.Ref)))
+            (ref? val1)
+            (not (ref? val2)))
            (do
              (log/debug (str "val1 is a ref, but not val2."))
              (dosync
@@ -299,8 +303,8 @@
            
            ;; val2 is a ref, val1 is not a ref.
            (and
-            (= (type val2) clojure.lang.Ref)
-            (not (= (type val1) clojure.lang.Ref)))
+            (ref? val2)
+            (not (ref? val1)))
            (do
              (log/debug (str "val2 is a ref, but not val1."))
              (dosync
@@ -312,8 +316,8 @@
                  val2))
 
            (and
-            (= (type val1) clojure.lang.Ref)
-            (= (type val2) clojure.lang.Ref))
+            (ref? val1)
+            (ref? val2))
            (let [refs-in-val1 (get-refs-in @val1)
                  refs-in-val2 (get-refs-in @val2)]
              
@@ -528,8 +532,8 @@
          (do ;(println (str "no fail in: " vals))
              tmp-result)))
      (and
-      (= (type val1) clojure.lang.Ref)
-      (not (= (type val2) clojure.lang.Ref)))
+      (ref? val1)
+      (not (ref? val2)))
      (do (dosync
           (alter val1
                  (fn [x] (match @val1 val2))))
@@ -537,16 +541,16 @@
          (if (and false (fail? @val1)) :fail
              val1))
      (and
-      (= (type val2) clojure.lang.Ref)
-      (not (= (type val1) clojure.lang.Ref)))
+      (ref? val2)
+      (not (ref? val1)))
      (do (dosync
           (alter val2
                  (fn [x] (match val1 @val2))))
          (if (and false (fail? @val2)) :fail
              val2))
      (and
-      (= (type val1) clojure.lang.Ref)
-      (= (type val2) clojure.lang.Ref))
+      (ref? val1)
+      (ref? val2))
      (do
        (if (or (= val1 val2) ;; same reference.
                (= val1 @val2)) ;; val1 <- val2
@@ -652,24 +656,24 @@
      (reduce #(merge-with merge %1 %2) args)
 
      (and
-      (= (type val1) clojure.lang.Ref)
-      (not (= (type val2) clojure.lang.Ref)))
+      (ref? val1)
+      (not (ref? val2)))
      (do (dosync
           (alter val1
                  (fn [x] (merge @val1 val2))))
          val1)
 
      (and
-      (= (type val2) clojure.lang.Ref)
-      (not (= (type val1) clojure.lang.Ref)))
+      (ref? val2)
+      (not (ref? val1)))
      (do (dosync
           (alter val2
                  (fn [x] (merge val1 @val2))))
          val2)
 
      (and
-      (= (type val1) clojure.lang.Ref)
-      (= (type val2) clojure.lang.Ref))
+      (ref? val1)
+      (ref? val2))
      (do (dosync
           (alter val1
                  (fn [x] (merge @val1 @val2))))
@@ -747,7 +751,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                   (do
 ;                    (println (str "PAM"))
                     (pathify-r val (concat prefix (list key))))
-                  (if (and (= (type val) clojure.lang.Ref)
+                  (if (and (ref? val)
                            (let [val @val]
                              (or (= (type val) clojure.lang.PersistentArrayMap) ;; TODO: just use (map?)
                                  (= (type val) clojure.lang.PersistentHashMap))))
@@ -755,7 +759,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                   (do
 ;                    (println (str "not PAM" (type val)))
                     (list {(concat prefix (list key))
-                           (if (= (type val) clojure.lang.Ref) @val ;; simply resolve references rather than trying to search for graph isomorphism.
+                           (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
                                val)})))))))
           fs))
 
@@ -794,7 +798,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn paths-to-value [map value path]
   (if (= map value) (list path)
-      (if (= (type map) clojure.lang.Ref)
+      (if (ref? map)
         (paths-to-value @map value path)
         (if (or (= (type map) clojure.lang.PersistentArrayMap)
                 (= (type map) clojure.lang.PersistentHashMap))
@@ -808,12 +812,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
       (if false ;; debug instrumentation
         (do (println "")
             (println (str "input: " input))
-            (if (= (type input) clojure.lang.Ref)
+            (if (ref? input)
               (println (str "@input: " @input)))
             (println "")))
-      (if (= (type input) clojure.lang.Ref)
+      (if (ref? input)
         (cons
-         (if (= (type @input) clojure.lang.Ref)
+         (if (ref? @input)
            ;; dereference double-references (references to another reference) :
            (do
 ;             (println (str "double ref(i): " input " -> " @input " -> " @@input))
@@ -827,16 +831,16 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (concat
            (mapcat (fn [key]
                      (let [val (core/get input key)]
-                       (if (= (type input) clojure.lang.Ref)
-                         (if (= (type @val) clojure.lang.Ref)
+                       (if (ref? input)
+                         (if (ref? @val)
                            (list @val)
                            (list val)))))
                    input)
            (all-refs
             (map (fn [val]
                    ;; dereference double-references (references to another reference) :
-                   (if (and (= (type val) clojure.lang.Ref)
-                            (= (type @val) clojure.lang.Ref))
+                   (if (and (ref? val)
+                            (ref? @val))
                      (do
 ;                       (println (str "double ref: " val " -> " @val " -> " @@val))
                        @val)
@@ -854,7 +858,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (= (type input-val) clojure.lang.PersistentHashMap))
     (zipmap (keys (dissoc input-val :serialized))
             (map (fn [val]
-                   (if (= (type val) clojure.lang.Ref)
+                   (if (ref? val)
                      :top
                      (if (or (= (type val) clojure.lang.PersistentArrayMap)
                              (= (type val) clojure.lang.PersistentHashMap))
@@ -1203,7 +1207,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
        (conj
         {first-key (strip-refs val)}
         (strip-refs (dissoc map-with-refs first-key)))))
-   (= (type map-with-refs) clojure.lang.Ref)
+   (ref? map-with-refs)
    (strip-refs (deref map-with-refs))
    :else
    map-with-refs))
@@ -1235,7 +1239,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
          {first-key (remove-top-values val)}
          (remove-top-values (dissoc fs first-key))))))
 
-   (= (type fs) clojure.lang.Ref)
+   (ref? fs)
    ;; strip refs for readability.
    (remove-top-values (deref fs))
 
@@ -1268,7 +1272,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
          {k (remove-matching-values v pred)}
          (remove-matching-values (dissoc fs k) pred)))))
 
-   (= (type fs) clojure.lang.Ref)
+   (ref? fs)
    ;; strip refs for readability.
    (remove-matching-values (deref fs) pred)
 

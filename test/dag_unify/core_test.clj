@@ -61,7 +61,7 @@
   (let [myref (ref :top)
         val 42
         result (unify myref val)]
-    (is (= (type result) clojure.lang.Ref))
+    (is (ref? result))
     (is (= @result 42))))
       
 ;; {:a [1] :top
@@ -75,7 +75,7 @@
         fs1 {:a myref :b myref}
         fs2 {:a 42}
         result (merge fs1 fs2)]
-    (is (= (type (:a result)) clojure.lang.Ref))
+    (is (ref? (:a result)))
     (is (= @(:a result) 42))
     (is (= @(:b result) 42))
     (is (= (:a result) (:b result)))))
@@ -85,7 +85,7 @@
         fs1 {:a myref}
         fs2 {:a :foo}
         result (merge fs1 fs2)]
-    (is (= (type (:a result)) clojure.lang.Ref))
+    (is (ref? (:a result)))
     (is (= @(:a result) :foo))))
 
 (deftest merging-with-inner-reference-keyset
@@ -101,7 +101,7 @@
   (let [fs1 {:b (ref :top)}
         fs2 {:b 42}
         result (merge fs1 fs2)]
-    (is (= (type (:b result)) clojure.lang.Ref))
+    (is (ref? (:b result)))
     (is (= @(:b result)) 42)))
 
 ;; [a [b [1] :top]], [a [b 42]] => [a [b [1] 42]]
@@ -110,7 +110,7 @@
   (let [fs1 {:a {:b (ref :top)}}
         fs2 {:a {:b 42}}
         result (merge fs1 fs2)]
-    (is (= (type (:b (:a result))) clojure.lang.Ref))
+    (is (ref? (:b (:a result))))
     (is (= @(:b (:a result))) 42)))
 
 ;; [a [b [1] top]], [a [b 42]] => [a [b [1] 42]]
@@ -118,7 +118,7 @@
   (let [fs1 {:a {:b 42}}
         fs2 {:a {:b (ref :top)}}
         result (merge fs1 fs2)]
-    (is (= (type (:b (:a result))) clojure.lang.Ref))
+    (is (ref? (:b (:a result))))
     (is (= @(:b (:a result))) 42)))
 
 (deftest merging-with-reference-second-position
@@ -126,7 +126,7 @@
   (let [fs1 {:a 42}
         fs2 {:a (ref :top)}
         result (merge fs1 fs2)]
-    (is (= (type (:a result)) clojure.lang.Ref))
+    (is (ref? (:a result)))
     (is (= @(:a result) 42))))
 
 (deftest merging-fail-with-not-1
@@ -240,27 +240,27 @@
 (deftest top-string-and-keyword-equiv
   "'top' and :top are equivalent when unifying with reference to keyword."
   (let [result (unify "top" (ref :foo))]
-    (is (= (type result) clojure.lang.Ref))
+    (is (ref? result))
     (is (= @result :foo))))
 
 (deftest top-ref
   "@'top' and @:top are equivalent when unifying to a keyword."
   (let [result (unify (ref "top") :foo)]
-    (is (= (type result) clojure.lang.Ref))
+    (is (ref? result))
     (is (= @result :foo))))
 
 (deftest top-ref-2
   "@'top' and @:top are equivalent when unifying to a string."
   (let [result (unify (ref "top") "foo")]
-    (is (= (type result) clojure.lang.Ref))
+    (is (ref? result))
     (is (= @result "foo"))))
 
 (deftest map-with-reference
   (let [fs1 {:a (ref 42)}
         fs2 {:b (get fs1 :a)}
         result (unify fs1 fs2)]
-    (is (= (type (:a result)) clojure.lang.Ref))
-    (is (= (type (:b result)) clojure.lang.Ref))
+    (is (ref? (:a result)))
+    (is (ref? (:b result)))
     (is (= (:a result) (:b result)))))
 
 (deftest unify-two-maps-one-with-references
@@ -270,8 +270,8 @@
         fs3 (unify fs1 fs2)
         fs4 {:a 42}
         result (unify fs3 fs4)]
-    (is (= (type (:a result)) clojure.lang.Ref))
-    (is (= (type (:b result)) clojure.lang.Ref))
+    (is (ref? (:a result)))
+    (is (ref? (:b result)))
     (is (= (:a result) (:b result)))
     (is (= @(:a result) 42))))
 
@@ -284,8 +284,8 @@
         fs5 {:b (get fs4 :a)}
         fs6 (unify fs4 fs5)
         result (unify fs3 fs6)]
-    (is (= (type (:a result)) clojure.lang.Ref))
-    (is (= (type (:b result)) clojure.lang.Ref))
+    (is (ref? (:a result)))
+    (is (ref? (:b result)))
     (is (= (:a result) (:b result)))
     (is (= @(:a result) 42))))
 
@@ -469,9 +469,9 @@ a given value in a given map."
         mymap {:a ref1, :b ref1 :d ref2}
         my-ser (serialize mymap)
         create-shared-vals (create-shared-values my-ser)
-        types (map (fn [val]
-                     (type val))
-                   create-shared-vals)
+        are-refs? (map (fn [val]
+                         (ref? val))
+                      create-shared-vals)
         derefs (map (fn [val]
                       @val)
                     create-shared-vals)]
@@ -485,10 +485,7 @@ a given value in a given map."
     (is (= (nth derefs 2)
            42))
     
-    (is (= types (list
-                  clojure.lang.Ref
-                  clojure.lang.Ref
-                  clojure.lang.Ref)))))
+    (is (= are-refs? (list true true true)))))
 
 (deftest create-path-in-1
   (let [path '(:a :b :c :d :e)
@@ -500,7 +497,7 @@ a given value in a given map."
   (let [serialized [[nil {:a "PH"}] [[["a"]] 42]]
         deserialized (deserialize serialized)]
     (is (not (nil? deserialized)))
-    (is (= (type (:a deserialized)) clojure.lang.Ref))
+    (is (= (ref? (:a deserialized))))
     (is (= @(:a deserialized) 42))))
 
 ;; deserialize a map's serialized form
@@ -511,13 +508,12 @@ a given value in a given map."
         my-ser (serialize mymap)
         my-deser (deserialize my-ser)]
     (is (not (= my-ser nil)))
-    (is (= (type (:a my-deser)) clojure.lang.Ref))
-    (is (= (type (:a my-deser)) clojure.lang.Ref))
+    (is (ref? (:a my-deser)))
 
     ;; a)
-    (is (= (type (get @(get my-deser :a) :c)) clojure.lang.Ref))
-    (is (= (type (get @(get my-deser :b) :c)) clojure.lang.Ref))
-    (is (= (type (:d my-deser)) clojure.lang.Ref))
+    (is (= (ref? (get @(get my-deser :a) :c))))
+    (is (= (ref? (get @(get my-deser :b) :c))))
+    (is (= (ref? (:d my-deser))))
     (is (= (:a my-deser) (:b my-deser)))
     (is (= (get @(get my-deser :a) :c)
            (get my-deser :d)))
@@ -572,9 +568,9 @@ a given value in a given map."
 ;;             fs6 (unify fs4 fs5)]
 ;;         (unify fs3 fs6))
 ;;       (fn [result]
-;;         (and (= (type (:a result)) clojure.lang.Ref)
-;;              (= (type (:b result)) clojure.lang.Ref)
-;;              (= (type (:c result)) clojure.lang.Ref)
+;;         (and (ref? (:a result))
+;;              (ref? (:b result))
+;;              (ref? (:c result))
 ;;              (= (:a result) (:b result))
 ;;              (= (:b result) (:c result))
 ;;              (= @(:a result) 42))))
