@@ -43,10 +43,6 @@
         (map (fn [each]
                (get-in each path not-found))
              in-map)
-        (set? in-map)
-        (set (map (fn [each]
-                    (get-in each path not-found))
-                  in-map))
         true
         (let [result
               (if (first path)
@@ -133,15 +129,6 @@
 
     ;; members is empty.
     false))
-
-(defn has-set? [fs]
-  (cond (map? fs)
-        (or (any? set? (vals fs))
-            (any? has-set? (vals fs)))
-        (ref? fs)
-        (has-set? @fs)
-        true
-        false))
 
 (declare expand-disj) ;; needed by unify.
 (declare copy)
