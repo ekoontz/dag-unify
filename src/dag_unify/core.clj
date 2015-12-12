@@ -9,7 +9,7 @@
 ;; use special values that *are* maps.
 ;; e.g. {:fail :fail} rather than simply :fail,
 ;; and {:top :top} rather than simply :top.
-  (:refer-clojure :exclude [alter get get-in merge resolve ref])
+  (:refer-clojure :exclude [alter get-in merge resolve ref])
   (:require
    [clojure.core :as core]
    [clojure.set :refer :all]
@@ -18,7 +18,7 @@
 
 (declare ref?)
 
-(def use-atom-or-ref :ref)
+(def use-atom-or-ref :atom)
 
 (defn alter [x fn]
   (if (= use-atom-or-ref :ref)
@@ -872,7 +872,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 ;; TODO s/map/input-map/
 ;; TODO: merge or distinguish from all-refs (above)
 (defn get-refs [input-map]
-  (uniq (sort (all-refs input-map))))
+  (seq (set (all-refs input-map))))
 
 ;; TODO s/map/input-map/
 (defn skels [input-map refs]

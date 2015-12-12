@@ -1,7 +1,7 @@
 (ns dag-unify.core-test
   (:require [clojure.test :refer :all]
             [dag-unify.core :refer :all])
-  (:refer-clojure :exclude [get-in merge resolve find])
+  (:refer-clojure :exclude [alter get-in merge resolve find ref])
   (:use [clojure.test]))
 
 ;; TODO: add more tests for (isomorphic?)
@@ -339,14 +339,14 @@ a given value in a given map."
 (deftest all-refs1
   (let [ref1 (ref 42)
         mymap {:a ref1, :b ref1}
-        refs (uniq (flatten (all-refs mymap)))]
+        refs (seq (set (flatten (all-refs mymap))))]
     (is (= refs (list ref1)))))
 
 (deftest all-refs2
   (let [ref1 (ref 42)
         ref2 (ref 43)
         mymap {:a ref1, :b ref2}
-        refs (uniq (flatten (all-refs mymap)))]
+        refs (seq (set (flatten (all-refs mymap))))]
     (is (or (= refs (list ref1 ref2))
             (= refs (list ref2 ref1))))))
 
@@ -354,21 +354,21 @@ a given value in a given map."
   (let [ref1 (ref 42)
         ref2 (ref 43)
         mymap {:a ref1 :b {:c ref2}}
-        refs (uniq (flatten (all-refs mymap)))]
+        refs (seq (set (flatten (all-refs mymap))))]
     (is (or (= refs (list ref1 ref2))
             (= refs (list ref2 ref1))))))
 
 (deftest all-refs4
   (let [ref1 (ref 42)
         mymap {:a ref1 :b {:c ref1}}
-        refs (uniq (sort (all-refs mymap)))]
+        refs (seq (set (flatten (all-refs mymap))))]
     (is (= refs (list ref1)))))
 
 (deftest all-refs5
   (let [ref2 (ref 42)
         ref1 (ref {:c ref2})
         mymap {:a ref1 :b ref1 :d ref2}
-        refs (uniq (sort (all-refs mymap)))]
+        refs (seq (set (flatten (all-refs mymap))))]
     (is (or (= refs (list ref1 ref2))
             (= refs (list ref2 ref1))))))
 
