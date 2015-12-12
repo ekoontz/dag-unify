@@ -18,12 +18,18 @@
 
 (declare ref?)
 
+(def use-atom-or-ref :ref)
+
 (defn alter [x fn]
-  (dosync
-   (core/alter x fn)))
+  (if (= use-atom-or-ref :ref)
+    (dosync
+     (core/alter x fn))
+    (swap! x fn)))
 
 (defn ref [x]
-  (core/ref x))
+  (if (= use-atom-or-ref :ref)
+    (core/ref x)
+    (core/atom x)))
 
 (defn get-head [sign]
   (if (core/get sign :head)
