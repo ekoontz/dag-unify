@@ -9,7 +9,7 @@
 ;; use special values that *are* maps.
 ;; e.g. {:fail :fail} rather than simply :fail,
 ;; and {:top :top} rather than simply :top.
-  (:refer-clojure :exclude [get get-in merge resolve ref])
+  (:refer-clojure :exclude [alter get get-in merge resolve ref])
   (:require
    [clojure.core :as core]
    [clojure.set :refer :all]
@@ -17,6 +17,10 @@
    [clojure.tools.logging :as log]))
 
 (declare ref?)
+
+(defn alter [x fn]
+  (dosync
+   (core/alter x fn)))
 
 (defn ref [x]
   (core/ref x))
@@ -296,9 +300,8 @@
             (not (ref? val2)))
            (do
              (log/debug (str "val1 is a ref, but not val2."))
-             (dosync
-              (alter val1
-                     (fn [x] (unify @val1 val2))))
+             (alter val1
+                     (fn [x] (unify @val1 val2)))
              ;; alternative to the above (not tested yet):  (fn [x] (unify (copy @val1) val2))))
              ;; TODO: why is this false-disabled? (document and test) or remove
              (if (and false (fail? @val1)) :fail
@@ -310,9 +313,8 @@
             (not (ref? val1)))
            (do
              (log/debug (str "val2 is a ref, but not val1."))
-             (dosync
-              (alter val2
-                     (fn [x] (unify val1 @val2))))
+             (alter val2
+                    (fn [x] (unify val1 @val2)))
              ;; alternative to the above (not tested yet): (fn [x] (unify val1 (fs/copy @val2)))))
              ;; TODO: why is this false-disabled? (document and test) or remove.
              (if (and false (fail? @val2)) :fail
@@ -351,12 +353,10 @@
                 (log/debug (str " whose values are: " @val1 " and " @val2))
                 (log/debug (str " refs of @val1: " (get-refs-in @val1)))
                 (log/debug (str " refs of @val2: " (get-refs-in @val2)))
-                (dosync
-                 (alter val1
-                        (fn [x] (unify @val1 @val2))))
-                (dosync
-                 (alter val2
-                        (fn [x] val1))) ;; note that now val2 is a ref to a ref.
+                (alter val1
+                       (fn [x] (unify @val1 @val2)))
+                (alter val2
+                       (fn [x] val1)) ;; note that now val2 is a ref to a ref.
                 (log/debug (str "returning ref: " val1))
                 ;; TODO: remove, since it's disabled, or add a global setting to en/dis-able.
                 (if (and false (fail? @val1)) :fail
@@ -537,18 +537,16 @@
      (and
       (ref? val1)
       (not (ref? val2)))
-     (do (dosync
-          (alter val1
-                 (fn [x] (match @val1 val2))))
+     (do (alter val1
+                (fn [x] (match @val1 val2)))
          ;; TODO: remove or parameterize this false-disabled code.
          (if (and false (fail? @val1)) :fail
              val1))
      (and
       (ref? val2)
       (not (ref? val1)))
-     (do (dosync
-          (alter val2
-                 (fn [x] (match val1 @val2))))
+     (do (alter val2
+                (fn [x] (match val1 @val2)))
          (if (and false (fail? @val2)) :fail
              val2))
      (and
@@ -562,12 +560,10 @@
            val2
            (do
              (log/debug (str "unifying two refs: " val1 " and " val2))
-             (dosync
-              (alter val1
-                     (fn [x] (match @val1 @val2))))
-             (dosync
-              (alter val2
-                     (fn [x] val1))) ;; note that now val2 is a ref to a ref.
+             (alter val1
+                    (fn [x] (match @val1 @val2)))
+             (alter val2
+                    (fn [x] val1)) ;; note that now val2 is a ref to a ref.
              (log/debug (str "returning ref: " val1))
              (if (and false (fail? @val1)) :fail
                  val1)))))
@@ -661,25 +657,22 @@
      (and
       (ref? val1)
       (not (ref? val2)))
-     (do (dosync
-          (alter val1
-                 (fn [x] (merge @val1 val2))))
+     (do (alter val1
+                (fn [x] (merge @val1 val2)))
          val1)
 
      (and
       (ref? val2)
       (not (ref? val1)))
-     (do (dosync
-          (alter val2
-                 (fn [x] (merge val1 @val2))))
+     (do (alter val2
+                (fn [x] (merge val1 @val2)))
          val2)
 
      (and
       (ref? val1)
       (ref? val2))
-     (do (dosync
-          (alter val1
-                 (fn [x] (merge @val1 @val2))))
+     (do (alter val1
+                (fn [x] (merge @val1 @val2)))
          val1)
 
      (and (= val2 :top)
