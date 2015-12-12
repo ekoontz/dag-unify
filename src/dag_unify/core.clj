@@ -9,7 +9,7 @@
 ;; use special values that *are* maps.
 ;; e.g. {:fail :fail} rather than simply :fail,
 ;; and {:top :top} rather than simply :top.
-  (:refer-clojure :exclude [get get-in merge resolve])
+  (:refer-clojure :exclude [get get-in merge resolve ref])
   (:require
    [clojure.core :as core]
    [clojure.set :refer :all]
@@ -17,6 +17,9 @@
    [clojure.tools.logging :as log]))
 
 (declare ref?)
+
+(defn ref [x]
+  (core/ref x))
 
 (defn get-head [sign]
   (if (core/get sign :head)
