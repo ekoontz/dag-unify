@@ -1,7 +1,7 @@
 (ns dag-unify.core-test
   (:require [clojure.test :refer :all]
             [dag-unify.core :refer :all])
-  (:refer-clojure :exclude [alter get-in merge resolve find])
+  (:refer-clojure :exclude [get-in merge resolve find])
   (:use [clojure.test]))
 
 ;; TODO: add more tests for (isomorphic?)
