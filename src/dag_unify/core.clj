@@ -47,9 +47,7 @@
           (get-in the-map path :does-not-exist))))
 
 (defn ref? [val]
-  (or 
-   (= (type val) clojure.lang.Ref)
-   (= (type val) clojure.lang.Atom)))
+  (= (type val) clojure.lang.Atom))
 
 ;; TODO: use multi-methods.
 ;; TODO: keep list of already-seen references to avoid
@@ -939,7 +937,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (map (fn [paths-vals]
          (let [val (second paths-vals)]
            ;; TODO: why/why not do copy val rather than just val(?)
-           (ref val)))
+           (atom val)))
        serialized))
 
 (defn create-path-in [path value]
@@ -976,7 +974,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                   (flatten
                                    (map (fn [paths-val]
                                           (let [paths (first paths-val)
-                                                val (ref (second paths-val))]
+                                                val (atom (second paths-val))]
                                             (map (fn [path]
                                                    (create-path-in path val))
                                                  paths)))
@@ -1164,7 +1162,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         (core/get butlast-val2 (last path2) :none2)))))
 
 (defn strip-refs [map-with-refs]
-  "return a map like map-with-refs, but without refs - (e.g. {:foo (ref 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
+  "return a map like map-with-refs, but without refs - (e.g. {:foo (atom 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
   (cond
    (or (vector? map-with-refs)
        (seq? map-with-refs))
@@ -1358,7 +1356,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (if (not (empty? assignments))
     (let [assignment (first assignments)
           old-ref (:ref assignment)
-          new-ref (ref (:val assignment))]
+          new-ref (atom (:val assignment))]
       (copy-with-assignments
        (copy-with-ref-substitute fs old-ref new-ref)
        (rest assignments)))
