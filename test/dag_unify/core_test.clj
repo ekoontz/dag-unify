@@ -767,26 +767,66 @@ when run from a REPL."
 
 
 (deftest big-example
-  (let [number-agr (atom :top)
-        common {:synsem {:cat :verb
-                         :subcat {:1 {:agr number-agr} ;; In "to be" sentences, agreement exists with respect to :num :
-                                  :2 {:pronoun false ;; ;; don't allow strange but grammatical "I am me", "you are him", etc.
-                                      :agr number-agr}}} ;; e.g. : "they are cats" but *"they are cat".
-                :english {:present {:1sing "am"
-                                    :2sing "are"
-                                    :3sing "is"
-                                    :1plur "are"
-                                    :2plur "are"
-                                    :3plur "are"}
-                          :past {:1sing "was"
-                                 :2sing "were"
-                                 :3sing "was"
-                                 :1plur "were"
-                                 :2plur "were"
-                                 :3plur "were"}}}]
-    (let [result
-          (unify common
-                 {:synsem {:subcat {:1 {:cat :noun}
-                                    :2 '()}
-                           :sem {:pred :be}}})]
-      (is (not (fail? result))))))
+  (let [be (let [number-agr (atom :top)
+                 common {:synsem {:cat :verb}
+                         :english {:present {:1sing "am"
+                                             :2sing "are"
+                                             :3sing "is"
+                                             :1plur "are"
+                                             :2plur "are"
+                                             :3plur "are"}
+                                   :past {:1sing "was"
+                                          :2sing "were"
+                                          :3sing "was"
+                                          :1plur "were"
+                                          :2plur "were"
+                                          :3plur "were"}}}]
+             [;; intransitive
+              (unify common
+                     {:synsem {:subcat {:1 {:cat :noun}
+                                        :2 '()}
+                               :sem {:pred :be}}})
+             
+             
+              ;; be + propernoun, e.g. "I am John"
+              (let [subject-verb-agreement
+                    (let [infl (atom :top)
+                          agr (atom :top)]
+                      {:english {:agr agr
+                                 :infl infl}
+                       :synsem {:infl infl
+                                :subcat {:1 {:agr agr}}}})
+
+                    subj-agr (atom :top)
+                    infl (atom :top)
+                    the-real-subj (atom :top)
+                    the-obj (atom :top)]
+                (unify common
+                       subject-verb-agreement
+                       {:intransitivize false
+                        :transitivize false
+                        :synsem {:agr subj-agr
+                                 :sem {:aspect :progressive
+                                       :pred :be-called
+                                       :tense :present
+                                       :subj the-real-subj
+                                       :obj the-obj}
+                                 :subcat {:1 {:cat :noun
+                                              :agr subj-agr
+                                              :sem {:pred :name
+                                                    :subj the-real-subj}
+                                             
+                                              }
+                                          :2 {:cat :noun
+                                              :agr subj-agr
+                                              :sem the-obj
+                                              :propernoun true ;; "I am John"
+                                              }
+                                          } ;; subcat {
+                                 } ;; synsem {
+                        } ;; end of map
+                       ))])]
+    (is (not (fail? be)))))
+
+
+
