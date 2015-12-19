@@ -766,4 +766,27 @@ when run from a REPL."
     (is (fail? result))))
 
 
-
+(deftest big-example
+  (let [number-agr (atom :top)
+        common {:synsem {:cat :verb
+                         :subcat {:1 {:agr number-agr} ;; In "to be" sentences, agreement exists with respect to :num :
+                                  :2 {:pronoun false ;; ;; don't allow strange but grammatical "I am me", "you are him", etc.
+                                      :agr number-agr}}} ;; e.g. : "they are cats" but *"they are cat".
+                :english {:present {:1sing "am"
+                                    :2sing "are"
+                                    :3sing "is"
+                                    :1plur "are"
+                                    :2plur "are"
+                                    :3plur "are"}
+                          :past {:1sing "was"
+                                 :2sing "were"
+                                 :3sing "was"
+                                 :1plur "were"
+                                 :2plur "were"
+                                 :3plur "were"}}}]
+    (let [result
+          (unify common
+                 {:synsem {:subcat {:1 {:cat :noun}
+                                    :2 '()}
+                           :sem {:pred :be}}})]
+      (is (not (fail? result))))))
