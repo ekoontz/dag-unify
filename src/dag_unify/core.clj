@@ -9,19 +9,12 @@
 ;; use special values that *are* maps.
 ;; e.g. {:fail :fail} rather than simply :fail,
 ;; and {:top :top} rather than simply :top.
-  (:refer-clojure :exclude [alter get-in merge resolve ref])
+  (:refer-clojure :exclude [get-in merge resolve])
   (:require
    [clojure.core :as core]
    [clojure.set :refer :all]
    [clojure.string :as string]
    [clojure.tools.logging :as log]))
-
-(defn alter [x fn]
-  (swap! x fn))
-
-;; only for backward compatibility: remove this and use core/atom directly instead.
-(defn ref [x]
-  (core/atom x))
 
 (declare ref?)
 
