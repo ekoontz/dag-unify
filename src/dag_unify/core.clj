@@ -18,11 +18,6 @@
 
 (declare ref?)
 
-(defn get-head [sign]
-  (if (core/get sign :head)
-    (get-head (core/get sign :head))
-    sign))
-
 (defn resolve [arg]
   "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
   (if (ref? arg)
