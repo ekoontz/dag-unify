@@ -1,4 +1,4 @@
-(ns dag-unify.core
+(ns dag_unify.core
 
 ;; TODO: define a dissoc that works with special values 
 ;; which are not maps but keywords, like :fail; 
@@ -9,14 +9,22 @@
 ;; use special values that *are* maps.
 ;; e.g. {:fail :fail} rather than simply :fail,
 ;; and {:top :top} rather than simply :top.
-  (:refer-clojure :exclude [get-in merge resolve])
+  (:refer-clojure :exclude [exists? get-in merge resolve])
   (:require
-   [clojure.core :as core]
-   [clojure.set :refer :all]
-   [clojure.string :as string]
-   [clojure.tools.logging :as log]))
+   [clojure.set :refer [intersection subset? union]]
+   [clojure.string :as string]))
 
-(declare ref?)
+(defn exception [error-string]
+  #?(:clj
+     (throw (Exception. error-string)))
+  #?(:cljs
+     (throw (js/Error. error-string))))
+
+(defn ref? [val]
+  #?(:clj
+     (= (type val) clojure.lang.Atom))
+  #?(:cljs
+     (= (type val) cljs.core.Atom)))
 
 (defn resolve [arg]
   "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
@@ -34,7 +42,7 @@
         true
         (let [result
               (if (first path)
-                (let [result (core/get in-map (first path) not-found)]
+                (let [result (get in-map (first path) not-found)]
                   (if (= result not-found) not-found
                       (get-in (resolve result) (rest path) not-found)))
                 in-map)]
@@ -46,15 +54,11 @@
   (not (= :does-not-exist
           (get-in the-map path :does-not-exist))))
 
-(defn ref? [val]
-  (= (type val) clojure.lang.Atom))
-
 ;; TODO: use multi-methods.
 ;; TODO: keep list of already-seen references to avoid
 ;; cost of traversing substructures more than once.
 (defn fail? [fs]
   "(fail? fs) <=> true if at least one of fs's path's value is :fail."
-  (log/debug (str "doing fail? " fs " with type: " (type fs)))
   (cond (= :fail fs) true
         (seq? fs) false ;; a sequence is never fail.
         (= fs :fail) true ;; :fail is always fail.
@@ -64,16 +68,6 @@
 
        (fn? fs) false ;; a function is never fail.
 
-        ;; TODO: make cycle-checking work with other features (not just :subj).
-        (and
-         (log/trace (str "cycle-detect:"
-                         (and (ref? fs)
-                              (map? @fs)
-                              (= (resolve fs) (resolve (:subj (resolve fs)))))
-                         (throw (Exception. (str "Fatal error: cycle detected in map with keys: " (keys @fs) "; without cycle: "
-                                                 (dissoc @fs :subj))))))
-         false) false
-
         (ref? fs)
         (do
           (fail? @fs))
@@ -81,18 +75,16 @@
 
         :else
         ;; otherwise, check recursively.
-        (let [debug
-              (log/debug (str "doing fail? on map with keys: " (keys fs) "; size=" (.size (keys fs))))]
-          (do
-            (defn failr? [fs keys]
-              (and (not (empty? keys))
-                   (or (fail? (core/get fs (first keys)))
-                       (failr? fs (rest keys)))))
-            (cond
-             (= fs :fail) true
-             (map? fs)
-             (failr? fs (keys fs))
-             :else false)))))
+        (do
+          (defn failr? [fs keys]
+            (and (not (empty? keys))
+                 (or (fail? (get fs (first keys)))
+                     (failr? fs (rest keys)))))
+          (cond
+            (= fs :fail) true
+            (map? fs)
+            (failr? fs (keys fs))
+            :else false))))
 
 (defn nonfail [maps]
   (filter (fn [each-map]
@@ -103,7 +95,7 @@
   "find the first failing path in a fs."
   (if (map? fs)
     (let [fs-keys (if fs-keys fs-keys (keys fs))]
-      (if (> (.size fs-keys) 0)
+      (if (> (count fs-keys) 0)
         (if (fail? (get-in fs (list (first fs-keys))))
           (cons (first fs-keys) (fail-path (get-in fs (list (first fs-keys)))))
           (fail-path fs (rest fs-keys)))))))
@@ -150,6 +142,58 @@
 
 (declare merge)
 (declare merge-with-keys)
+(declare simple-unify)
+
+(defn merge-with-keys-simple [arg1 arg2]
+  (let [keys1 (keys arg1)
+        key1 (first keys1)]
+    (if (not (nil? key1))
+      (cond
+       (and (string? (key1 arg1))
+            (contains? string-unifier-keys key1)
+            (contains? (set (keys arg2)) key1)
+            (map? (key1 arg2)))
+       :TODO
+       
+       (contains? (set (keys arg2)) key1)
+       (simple-unify {key1 (simple-unify (key1 arg1)
+                           (key1 arg2))}
+              (merge-with-keys-simple (dissoc arg1 key1)
+                                      (dissoc arg2 key1)))
+
+       true
+       (simple-unify {key1 (key1 arg1)}
+              (merge-with-keys-simple (dissoc arg1 key1)
+                                      (dissoc arg2 key1)))))))
+
+(defn simple-unify [& args]
+  (let [val1 (first args)
+        val2 (second args)
+        result
+        (cond (and (= val1 '())
+                   (= val2 :top))
+              val1
+
+              (and (= val1 '())
+                   (= val2 '()))
+              val1
+
+              (and (= val1 '()))
+              :fail
+
+              (and (= val1 nil)
+                   (= val2 :top))
+              val1
+
+              (= val1 nil)
+              :fail
+
+              (and (map? val1)
+                   (map? val2))
+              (merge-with-keys-simple val1 val2)
+
+              true :fail)]
+    result))
 
 (defn unify [& args]
   (cond (empty? (rest args))
@@ -216,7 +260,7 @@
            
            (nil? args) nil
            
-           (= (.count args) 1)
+           (= (count args) 1)
            (first args)
            
            (= :fail (first args))
@@ -235,11 +279,9 @@
            ;;
            (and (map? val1)
                 (map? val2))
-           (let [debug (log/debug "map? val1 true; map? val2 true")
-                 result (merge-with-keys val1 val2)
+           (let [result (merge-with-keys val1 val2)
                  use-merge-with-fail false
                  ]
-             (log/debug (str "result: " result))
              (if (fail? result)
                (if use-merge-with-fail
                  ;; this doesn't work yet: use-merge-with-fail will be enabled when it works.
@@ -257,22 +299,18 @@
                 (map? val2)
                 (some #(= val1 %) (get-refs-in val2)))
            (do
-             (log/debug (str "unification would create a cycle: returning fail."))
              :fail)
 
            (and (ref? val2)
                 (map? val1)
                 (some #(= val2 %) (get-refs-in val1)))
-           (do
-             (log/debug (str "unification would create a cycle: returning fail."))
-             :fail)
+           :fail
            
            ;; val1 is a ref, val2 is not a ref.
            (and
             (ref? val1)
             (not (ref? val2)))
            (do
-             (log/debug (str "val1 is a ref, but not val2."))
              (swap! val1
                      (fn [x] (unify @val1 val2)))
              ;; alternative to the above (not tested yet):  (fn [x] (unify (copy @val1) val2))))
@@ -285,7 +323,6 @@
             (ref? val2)
             (not (ref? val1)))
            (do
-             (log/debug (str "val2 is a ref, but not val1."))
              (swap! val2
                     (fn [x] (unify val1 @val2)))
              ;; alternative to the above (not tested yet): (fn [x] (unify val1 (fs/copy @val2)))))
@@ -298,13 +335,6 @@
             (ref? val2))
            (let [refs-in-val1 (get-refs-in @val1)
                  refs-in-val2 (get-refs-in @val2)]
-             
-             (log/debug (str "val1 and val2 are both refs."))
-             (log/debug (str "=? val1 val2 : " (= val1 val2)))
-             (log/debug (str "=? val1 @val2 : " (= val1 @val2)))
-             
-             (log/debug (str " refs of @val1: " refs-in-val1))
-             (log/debug (str " refs of @val2: " refs-in-val2))
              
              (cond
               (or (= val1 val2) ;; same reference.
@@ -322,15 +352,10 @@
 
               :else
               (do
-                (log/debug (str "unifying two refs: " val1 " and " val2))
-                (log/debug (str " whose values are: " @val1 " and " @val2))
-                (log/debug (str " refs of @val1: " (get-refs-in @val1)))
-                (log/debug (str " refs of @val2: " (get-refs-in @val2)))
                 (swap! val1
                        (fn [x] (unify @val1 @val2)))
                 (swap! val2
                        (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-                (log/debug (str "returning ref: " val1))
                 ;; TODO: remove, since it's disabled, or add a global setting to en/dis-able.
                 (if (and false (fail? @val1)) :fail
                     val1))))
@@ -341,9 +366,7 @@
                                         ;       :top ;; special case: (unify :top {:not X}) => :top
              val1
              ;; else
-             (let [debug1 (log/debug (str "VAL1: " val1))
-                   debug2 (log/debug (str "VAL2: " val2))
-                   result (unify (:not val1) val2)]
+             (let [result (unify (:not val1) val2)]
                (if (= result :fail)
                  val2
                  :fail)))
@@ -353,9 +376,7 @@
            (if (= val1 :top)
                                         ;       val1 ;; special case mentioned above in comments preceding this function.
              val2
-             (let [debug1 (log/debug (str "VAL1: " val1))
-                   debug2 (log/debug (str "VAL2: " val2))
-                   result (unify val1 (:not val2))]
+             (let [result (unify val1 (:not val2))]
                (if (= result :fail)
                  val1
                  :fail)))
@@ -373,15 +394,15 @@
 
            ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
            ;; :foo,"foo" => :foo
-           (and (= (type val1) clojure.lang.Keyword)
-                (= (type val2) java.lang.String)
+           (and (keyword? val1)
+                (string? val2)
                 (= (string/replace-first (str val1) ":" "") val2))
            val1
 
            ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
            ;; "foo",:foo => :foo
-           (and (= (type val2) clojure.lang.Keyword)
-                (= (type val1) java.lang.String)
+           (and (keyword? val2)
+                (string? val1)
                 (= (string/replace-first (str val2) ":" "") val1))
            val2
 
@@ -396,7 +417,6 @@
             (map? val1)
             (string? val2))
            (do
-             (log/debug "unifying a map and a string: ignoring the former and returning the latter: 'val2'")
              val2)
 
            (and
@@ -404,17 +424,12 @@
             (string? val1)
             (map? val2))
            (do
-             (log/debug (str "unifying a string and a map: ignoring the latter and returning the former: '" val1 "'"))
              val1)
 
            :else ;; fail.
-           (do
-             (log/debug (str "(" val1 ", " val2 ") => :fail"))
-             :fail)))))
+           :fail))))
 
 (defn merge-with-keys [arg1 arg2]
-  (log/debug (str "merge-with-keys: arg1:" arg1))
-  (log/debug (str "merge-with-keys: arg2" arg2))
   (let [keys1 (keys arg1)
         key1 (first keys1)]
     (if key1
@@ -479,7 +494,7 @@
 ;    (println (str "match(" val1 "," val2 ")"))
     (cond
 
-     (= (.count args) 1)
+     (= (count args) 1)
      (first args)
 
      (= :fail (first args))
@@ -532,12 +547,10 @@
          (if (= @val1 val2) ;; val1 -> val2
            val2
            (do
-             (log/debug (str "unifying two refs: " val1 " and " val2))
              (swap! val1
                     (fn [x] (match @val1 @val2)))
              (swap! val2
                     (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-             (log/debug (str "returning ref: " val1))
              (if (and false (fail? @val1)) :fail
                  val1)))))
 
@@ -570,14 +583,14 @@
      (= val2 "top") val1
 
      ;; :foo,"foo" => :foo
-     (and (= (type val1) clojure.lang.Keyword)
-          (= (type val2) java.lang.String)
+     (and (keyword? val1)
+          (string? val2)
           (= (string/replace-first (str val1) ":" "") val2))
      val1
 
      ;; "foo",:foo => :foo
-     (and (= (type val2) clojure.lang.Keyword)
-          (= (type val1) java.lang.String)
+     (and (keyword? val2)
+          (string? val1)
           (= (string/replace-first (str val2) ":" "") val1))
      val2
 
@@ -620,7 +633,7 @@
                                          (set (list result)))))
                                val2))))
 
-     (= (.count args) 1)
+     (= (count args) 1)
      (first args)
 
      (and (map? val1)
@@ -690,13 +703,8 @@
      (apply merge (rest args)))))
 
 (defn merge-debug [& args]
-  (log/debug (str "mergeD  v1:" (first args)))
-  (log/debug (str "mergeD: v2:" (second args)))
   (let [retval (apply merge args)]
-    (log/debug (str "retvalD: " retval))
     retval))
-
-(def ^:dynamic *exclude-keys* #{:_id})
 
 (defn deref-map [input]
   input)
@@ -715,15 +723,13 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                   val (second kv)]
 ;              (println (str "K:" key))
               (if (not (contains? *exclude-keys* key))
-                (if (or (= (type val) clojure.lang.PersistentArrayMap) ;; TODO: just use (map?)
-                        (= (type val) clojure.lang.PersistentHashMap))
+                (if (map? val)
                   (do
 ;                    (println (str "PAM"))
                     (pathify-r val (concat prefix (list key))))
                   (if (and (ref? val)
                            (let [val @val]
-                             (or (= (type val) clojure.lang.PersistentArrayMap) ;; TODO: just use (map?)
-                                 (= (type val) clojure.lang.PersistentHashMap))))
+                             (map? val)))
                     (pathify-r @val (concat prefix (list key)))
                   (do
 ;                    (println (str "not PAM" (type val)))
@@ -769,37 +775,27 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (if (= map value) (list path)
       (if (ref? map)
         (paths-to-value @map value path)
-        (if (or (= (type map) clojure.lang.PersistentArrayMap)
-                (= (type map) clojure.lang.PersistentHashMap))
+        (if (map? map)
           (mapcat (fn [key]
-                    (paths-to-value (core/get map key) value (concat path (list key))))
+                    (paths-to-value (get map key) value (concat path (list key))))
                   (keys map))))))
 
 (defn all-refs [input]
   (if input
     (do
-      (if false ;; debug instrumentation
-        (do (println "")
-            (println (str "input: " input))
-            (if (ref? input)
-              (println (str "@input: " @input)))
-            (println "")))
       (if (ref? input)
         (cons
          (if (ref? @input)
            ;; dereference double-references (references to another reference) :
-           (do
-;             (println (str "double ref(i): " input " -> " @input " -> " @@input))
-           @input)
+           @input
            ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
            input)
          (all-refs @input))
-        (if (or (= (type input) clojure.lang.PersistentArrayMap)
-                (= (type input) clojure.lang.PersistentHashMap))
+        (if (map? input)
           ;; TODO: fix bug here: vals resolves @'s
           (concat
            (mapcat (fn [key]
-                     (let [val (core/get input key)]
+                     (let [val (get input key)]
                        (if (ref? input)
                          (if (ref? @val)
                            (list @val)
@@ -817,20 +813,18 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                      val))
                  (vals input))))
           (if (and (seq? input)
-                   (> (.size input) 0))
+                   (> (count input) 0))
             (concat
              (all-refs (first input))
              (all-refs (rest input)))))))))
 
 (defn skeletize [input-val]
-  (if (or (= (type input-val) clojure.lang.PersistentArrayMap)
-          (= (type input-val) clojure.lang.PersistentHashMap))
+  (if (map? input-val)
     (zipmap (keys (dissoc input-val :serialized))
             (map (fn [val]
                    (if (ref? val)
                      :top
-                     (if (or (= (type val) clojure.lang.PersistentArrayMap)
-                             (= (type val) clojure.lang.PersistentHashMap))
+                     (if (map? val)
                        (skeletize val)
                        val)))
                  (vals (dissoc input-val :serialized))))
@@ -864,7 +858,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
      ;; associate each ref with its skeleton.
      (map (fn [ref]
             {:ref ref
-             :skel (core/get skels ref)})
+             :skel (get skels ref)})
           refs)
 
      ;; list of all paths that point to each ref in _input-map_.
@@ -888,18 +882,17 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 ;; }
 (defn max-lengths [serialization]
   ;; check type (TODO: use multimethods instead)
-
   (if (= (first (first serialization)) ())
-    (throw (Exception. (str "Serializing a map failed because one of the map's keys had a sequence as its value. For now, only maps and atoms are supported as values of keys.")))
-    (let [keys (keys serialization)]
-      (zipmap
-       keys
-       (map (fn [paths]
-              (cond (nil? paths) 0
-                    (= 0 (.size paths)) 0
-                    true
-                    (apply max (map (fn [path] (if (nil? path) 0 (.size path))) paths))))
-            keys)))))
+    (exception "Serializing a map failed because one of the map's keys had a sequence as its value. For now, only maps and atoms are supported as values of keys."))
+  (let [keys (keys serialization)]
+    (zipmap
+     keys
+     (map (fn [paths]
+            (cond (nil? paths) 0
+                  (= 0 (count paths)) 0
+                  true
+                  (apply max (map (fn [path] (if (nil? path) 0 (count path))) paths))))
+          keys))))
 
 (defn sort-by-max-lengths [serialization]
   (let [max-lengths (max-lengths serialization)]
@@ -913,7 +906,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           max-length (second path-length-pair)]
       (cons
        (list paths
-             (core/get serialization paths))
+             (get serialization paths))
        (sort-shortest-path-ascending-r serialization (rest path-length-pairs))))))
 
 (defn ser-intermed [input-map]
@@ -988,10 +981,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                (serialize each))
              input-map))
    true
-   (let [memoized (core/get input-map :serialized :none)]
+   (let [memoized (get input-map :serialized :none)]
      (if (not (= memoized :none))
-       (let [debug (log/debug "using cached serialization.")]
-         memoized)
+       memoized
        (let [ser (ser-intermed input-map)]
         ;; ser is a intermediate (but fully-serialized) representation
          ;; of the input map, as a map from pathsets to reference-free maps
@@ -1032,7 +1024,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     serialized))
 
 (defn copy [input]
-  (log/debug (str "copy: " input))
   (cond (seq? input)
         (map (fn [each]
                (copy each))
@@ -1081,11 +1072,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
        serialized))
 
 (defn copy-trunc [map]
-  (log/debug (str "copy: " map))
   (deserialize (trunc (serialize map))))
 
 (defn unifyc [& args]
-  (log/debug (str "unifyc: " args))
   "like fs/unify, but fs/copy each argument before unifying."
   (apply unify
          (map (fn [arg]
@@ -1121,10 +1110,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn sorted-paths-1 [paths]
   (sort (fn [x y]
-          (let [size-x (.size x)
-                size-y (.size y)]
-            (cond (< (.size x) (.size y)) true
-                  (> (.size x) (.size y)) false
+          (let [size-x (count x)
+                size-y (count y)]
+            (cond (< (count x) (count y)) true
+                  (> (count x) (count y)) false
                   true (compare-bytewise (.getBytes (str x)) (.getBytes (str y)) 0))))
           paths))
 
@@ -1135,15 +1124,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn is-first-path [serialized path n index]
   (if (nil? index)
-    (throw (Exception. (str "Index was null in serialized feature structure: " serialized)))
-    (let [lookup (nth serialized index)
+    (exception "Index was null in serialized feature structure: " serialized))
+  (let [lookup (nth serialized index)
           firstpath (seq (first (sorted-paths serialized path n index)))]
-      (if (or true (= (seq path) firstpath))
-        (do ;(println (str "path: " (seq path) " is first of " (sorted-paths serialized path n index)))
-            true)
-        (do ;(println (str "path: " (seq path) " is NOT first of " (sorted-paths serialized path n index)))
-            false)))))
-
+      true))
 
 (defn first-path [serialized path n index]
   (let [lookup (nth serialized index)
@@ -1158,8 +1142,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (and
      (not (= butlast-val1 :none))
      (not (= butlast-val2 :none))
-     (= (core/get butlast-val1 (last path1) :none1)
-        (core/get butlast-val2 (last path2) :none2)))))
+     (= (get butlast-val1 (last path1) :none1)
+        (get butlast-val2 (last path2) :none2)))))
 
 (defn strip-refs [map-with-refs]
   "return a map like map-with-refs, but without refs - (e.g. {:foo (atom 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
@@ -1172,7 +1156,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    (map? map-with-refs)
    (let [map-keys (sort (keys map-with-refs))]
      (let [first-key (first (keys map-with-refs))
-           val (core/get map-with-refs first-key)]
+           val (get map-with-refs first-key)]
        (conj
         {first-key (strip-refs val)}
         (strip-refs (dissoc map-with-refs first-key)))))
@@ -1191,7 +1175,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    (map? fs)
    (let [map-keys (sort (keys fs))]
      (let [first-key (first (keys fs))
-           val (core/get fs first-key)]
+           val (get fs first-key)]
        (cond
         (and (not (= first-key :1)) 
              (not (= first-key :2)) 
@@ -1225,7 +1209,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    (map? fs)
    (let [map-keys (sort (keys fs))]
      (let [k (first (keys fs))
-           v (core/get fs k)]
+           v (get fs k)]
        (cond
         (and (ref? v)
              (pred k @v))
@@ -1249,9 +1233,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    fs))
 
 (defn remove-top-values-log [fs]
-  (log/debug (str "remove-top-values: input: " fs))
   (let [result (remove-top-values fs)]
-    (log/debug (str "remove-top-values: output: " result))
     ;; TODO: should not need to re-call this: workaround for the fact that remove-top-values doesn't work correctly,
     ;; but does seem to work correctly if called again on its own output.
     (remove-top-values result)))
@@ -1419,7 +1401,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                (map (fn [each-ref-in-fs]
                                       {:ref each-ref-in-fs
                                     :val (get-unified-value-for each-fs each-ref-in-fs)})
-                                    (core/get refs-per-fs each-fs))})
+                                    (get refs-per-fs each-fs))})
                             step2-set)]
     (set (filter (fn [each]
                    (not (fail? each)))
@@ -1431,7 +1413,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn dissoc-paths [fs & [paths]]
   "dissoc a path from a map; e.g.: (dissoc-paths {:a {:b 42 :c 43}} '(:a :b)) => {:a {:c 43}}."
-  (let [debug (log/debug (str "remove path from fs: " fs " with paths: " paths))]
+  (do
     (cond (empty? paths)
           fs
 
@@ -1480,7 +1462,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                             true
                             (dissoc-paths fs (rest paths)))))
 
-                   true (throw (Exception. (str "dissoc-paths: don't know what to do with this input argument (fs): " fs))))
+                   true
+                   (exception
+                    (str "dissoc-paths: don't know what to do with this input argument (fs): "
+                         fs)))
              (rest paths))))))
 
 (def use-lazy-shuffle true)
@@ -1545,8 +1530,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         false ;; two maps whose key cardinality (different number of keys) is different are not equal.
         (and (map? a)
              (map? b))
-        (and (isomorphic? (core/get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
-                          (core/get b (first (keys a))))
+        (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
+                          (get b (first (keys a))))
              (isomorphic? (dissoc a (first (keys a)))
                           (dissoc b (first (keys a)))))
         (and (ref? a)
@@ -1573,4 +1558,17 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (let [paths-in-fs1 (map #(first (first %)) (pathify-r fs1))
         paths-in-fs2 (map #(first (first %)) (pathify-r fs2))]
     (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
+
+#?(:clj (require 'cljs.repl))
+#?(:clj (require 'cljs.build.api))
+#?(:clj (require 'cljs.repl.browser))
+
+;#?(:clj (cljs.build.api/build "src"
+;                              {:main 'hello-world.core
+;                               :output-to "out/main.js"
+;                               :verbose true}))
+
+;#?(:clj (cljs.repl/repl (cljs.repl.browser/repl-env)
+;                        :watch "src"
+;                        :output-dir "out"))
 

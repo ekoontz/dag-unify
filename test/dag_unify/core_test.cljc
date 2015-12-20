@@ -1,8 +1,13 @@
-(ns dag-unify.core-test
-  (:require [clojure.test :refer :all]
-            [dag-unify.core :refer :all])
-  (:refer-clojure :exclude [get-in merge resolve find])
-  (:use [clojure.test]))
+(ns dag_unify.core-test
+  (:require #?(:clj [clojure.test :refer [deftest is]])
+            #?(:cljs [cljs.test :refer-macros [deftest is]])
+            [dag_unify.core :refer [all-refs create-path-in copy create-shared-values
+                                    deserialize expand-disj fail? get-in
+                                    isomorphic? merge paths-to-value ref?
+                                    refset2map ser-db serialize
+                                    simple-unify
+                                    skeletize step2 strict unify unifyc]])
+  (:refer-clojure :exclude [get-in merge resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
 
@@ -461,7 +466,7 @@ a given value in a given map."
         ]
     (not (nil? vp))
     (not (nil? serialized))
-    (= (.size serialized) 4)))
+    (= (count serialized) 4)))
 
 (deftest create-shared-values-1
   (let [ref2 (atom 42)
@@ -523,9 +528,9 @@ a given value in a given map."
            42))
 
     ;; similar tests as a) above, but using fs/get-in
-    (is (= (type (get-in my-deser '(:a :c))) java.lang.Long))
-    (is (= (type (get-in my-deser '(:b :c))) java.lang.Long))
-    (is (= (type (get-in my-deser '(:d))) java.lang.Long))
+    (is (number? (get-in my-deser '(:a :c))))
+    (is (number? (get-in my-deser '(:b :c))))
+    (is (number? (get-in my-deser '(:d))))
     (is (= (get-in my-deser '(:a :c))
            (get-in my-deser '(:d))))
     (is (= (get-in my-deser '(:b :c))
@@ -672,7 +677,7 @@ when run from a REPL."
     (is (= myref (:ref (second (get-in result '(:a))))))
     (is (or (= 1 (:val (first (get-in result '(:a)))))
             (= 2 (:val (first (get-in result '(:a)))))))
-    (is (= 2 (.size (get-in result '(:b)))))
+    (is (= 2 (count (get-in result '(:b)))))
 ))
 
 (deftest step2-test
@@ -682,7 +687,7 @@ when run from a REPL."
         result (refset2map input)
         step2-result (step2 result)]
     (is (set? step2-result))
-    (is (= (.size step2-result) 6))))
+    (is (= (count step2-result) 6))))
 
 (deftest test-final
   (let [input
@@ -690,7 +695,7 @@ when run from a REPL."
           {:a myref
            :b #{{:c myref} {:d 3}}})
         final (expand-disj input)]
-    (= (.size final) 2)))
+    (= (count final) 2)))
 
 (def parent
   (let [catref (atom :top)]
@@ -708,7 +713,7 @@ when run from a REPL."
 
 (deftest category-disjunction
   (let [result (expand-disj parent-with-disj)]
-    (is (= (.size result) 2))))
+    (is (= (count result) 2))))
 
 (deftest expand-constraints
   (let [constraints {:constraints #{{:synsem {:infl :futuro
@@ -716,7 +721,7 @@ when run from a REPL."
                                     {:synsem {:infl :present
                                               :sem {:tense :present}}}}}
         constraints-expanded (expand-disj constraints)]
-    (is (= (.size constraints-expanded) 2))))
+    (is (= (count constraints-expanded) 2))))
 
 (deftest cycle-is-fail
   "unification that would lead to a cycle results in fail, and avoids a StackOverflowError."
@@ -827,6 +832,3 @@ when run from a REPL."
                         } ;; end of map
                        ))])]
     (is (not (fail? be)))))
-
-
-
