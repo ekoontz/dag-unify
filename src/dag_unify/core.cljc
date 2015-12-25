@@ -1124,7 +1124,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn is-first-path [serialized path n index]
   (if (nil? index)
-    (exception "Index was null in serialized feature structure: " serialized))
+    (exception (str "Index was null in serialized feature structure: " serialized)))
   (let [lookup (nth serialized index)
           firstpath (seq (first (sorted-paths serialized path n index)))]
       true))
