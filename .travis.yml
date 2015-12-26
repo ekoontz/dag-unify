@@ -1,6 +1,6 @@
 language: clojure
 lein: lein2
-script: lein with-profile travis-ci test
+script: lein2 doo phantom test once
 sudo: false
 jdk:
   - oraclejdk8
