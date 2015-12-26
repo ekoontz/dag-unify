@@ -13,7 +13,7 @@
   ;; run clojure tests with "lein test"
   ;; run clojurescript tests with "lein doo phantom test"
   :cljsbuild {:builds [{:id "test"
-                        :source-paths ["src" "test" "out"]
+                        :source-paths ["src" "test"]
                         :compiler {:output-to "resources/public/js/testable.js"
                                    ;; you must have {:optimizations :whitespace}
                                    ;; to avoid "ReferenceError: Can't find variable: goog"
