@@ -144,7 +144,7 @@ is `:fail`.
 ## Usage
 
 ```
-(require '[dag-unify.core :refer [unify unifyc]])
+(require '[dag_unify.core :refer [unify unifyc]])
 ```
 
 `unify` is destructive: it will modify its arguments if they contain
