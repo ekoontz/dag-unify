@@ -23,5 +23,6 @@
                 :karma "karma --port=9881 --no-colors"
                 :rhino "rhino -strict"
                 :node "node --trace-gc --trace-gc-verbose"}}
-
-  :hooks [leiningen.cljsbuild])
+  ;; doesn't seem to work as expected: 'No such namespace: doo.runner'
+  ;;  :hooks [leiningen.cljsbuild]
+  )
