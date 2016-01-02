@@ -11,7 +11,7 @@
             [lein-cljsbuild "1.1.2"]]
 
   ;; run clojure tests with "lein test"
-  ;; run clojurescript tests with "lein doo phantom test"
+  ;; run clojurescript tests with "lein doo phantom test once"
   :cljsbuild {:builds [{:id "test"
                         :source-paths ["src" "test" "out"]
                         :compiler {:output-to "resources/public/js/testable.js"
