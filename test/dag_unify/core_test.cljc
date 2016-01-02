@@ -831,4 +831,6 @@ when run from a REPL."
                                  } ;; synsem {
                         } ;; end of map
                        ))])]
-    (is (not (fail? be)))))
+    (is (= (count be) 2))
+    (is (not (fail? (nth be 0))))
+    (is (not (fail? (nth be 1))))))
