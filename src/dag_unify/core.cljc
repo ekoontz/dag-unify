@@ -781,42 +781,39 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                   (keys map))))))
 
 (defn all-refs [input]
-  (if input
-    (do
-      (if (ref? input)
-        (cons
-         (if (ref? @input)
-           ;; dereference double-references (references to another reference) :
-           @input
-           ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
-           input)
-         (all-refs @input))
-        (if (map? input)
-          ;; TODO: fix bug here: vals resolves @'s
-          (concat
-           (mapcat (fn [key]
-                     (let [val (get input key)]
-                       (if (ref? input)
-                         (if (ref? @val)
-                           (list @val)
-                           (list val)))))
-                   input)
-           (all-refs
-            (map (fn [val]
-                   ;; dereference double-references (references to another reference) :
-                   (if (and (ref? val)
-                            (ref? @val))
-                     (do
-;                       (println (str "double ref: " val " -> " @val " -> " @@val))
-                       @val)
-                     ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
-                     val))
-                 (vals input))))
-          (if (and (seq? input)
-                   (> (count input) 0))
-            (concat
-             (all-refs (first input))
-             (all-refs (rest input)))))))))
+  (cond
+    (ref? input)
+    (cons
+     (if (ref? @input)
+       ;; dereference double-references (references to another reference) :
+       @input
+       ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
+       input)
+     (all-refs @input))
+    (map? input)
+    ;; TODO: fix bug here: vals resolves @'s
+    (concat
+     (mapcat (fn [key]
+               (let [val (get input key)]
+                 (if (ref? input)
+                   (if (ref? @val)
+                     (list @val)
+                     (list val)))))
+             input)
+     (all-refs
+      (map (fn [val]
+             ;; dereference double-references (references to another reference) :
+             (if (and (ref? val)
+                      (ref? @val))
+               @val
+               ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
+               val))
+           (vals input))))
+    (and (seq? input)
+         (> (count input) 0))
+    (concat
+     (all-refs (first input))
+     (all-refs (rest input)))))
 
 (defn skeletize [input-val]
   (if (map? input-val)
