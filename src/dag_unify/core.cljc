@@ -702,10 +702,6 @@
      :else ;override with remainder of arguments, like core/merge.
      (apply merge (rest args)))))
 
-(defn merge-debug [& args]
-  (let [retval (apply merge args)]
-    retval))
-
 (defn deref-map [input]
   input)
 
@@ -958,7 +954,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                     (deserialize each))
                   serialized))
         true (let [base (second (first serialized))]
-               (apply merge-debug
+               (apply merge
                       (let [all
                             (cons base
                                   (flatten
@@ -1563,7 +1559,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           val1 (get-in fs1 path :top)
           val2 (get-in fs2 path :top)]
       (if (fail? (unify val1 val2))
-        {:fail-path path
+        {:fail-path (str "/" (string/join "/" path))
          :val1 val1
          :val2 val2}
         (find-fail-in fs1 fs2 (rest paths))))))
