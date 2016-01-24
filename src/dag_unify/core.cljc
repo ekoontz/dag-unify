@@ -974,6 +974,52 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                         (rest serialized))))]
                         all)))))
 
+(defn recursive-dissoc [a-map pred]
+  "like dissoc, but works recursively. Only works on reference-free maps (contains no atoms)."
+  (if (not (empty? a-map))
+    (let [k (first (first a-map))
+          v (second (first a-map))]
+      (if (pred k)
+        (recursive-dissoc (dissoc a-map k)
+                          pred)
+        (conj
+         {k (cond (map? v)
+                  (recursive-dissoc v pred)
+                  true v)}
+         (recursive-dissoc (dissoc a-map k)
+                           pred))))
+    {}))
+
+(defn deserialize-with-remove [serialized pred]
+  (cond (set? serialized)
+        (set (map (fn [each]
+                    (deserialize each))
+                  serialized))
+        true (let [base (recursive-dissoc (second (first serialized)) pred)]
+               (apply merge
+                      (let [all
+                            (cons base
+                                  (flatten
+                                   (map (fn [paths-val]
+                                          (let [paths (first paths-val)
+                                                val (atom
+                                                     (cond (map? atom)
+                                                           (recursive-dissoc
+                                                            (second paths-val)
+                                                            pred)
+                                                           true
+                                                           (second paths-val)))]
+                                            (map (fn [path]
+                                                   (if (empty?
+                                                        (remove false?
+                                                                (map (fn [key-in-path]
+                                                                       (pred key-in-path))
+                                                                     path)))
+                                                     (create-path-in path val)))
+                                                 paths)))
+                                        (rest serialized))))]
+                        all)))))
+
 (defn serialize [input-map]
   (cond
    (set? input-map)
@@ -1199,38 +1245,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    :else
    fs))
 
-(defn remove-matching-values [fs pred]
-  "Use case is same as remove-top-values, but more general by use of pred: pred is a function that takes a key and a value; if (pred k v) or (pred k @v) is true, remove the kv from the fs."
-  (cond
-
-   (= fs {})
-   {}
-
-   (map? fs)
-   (let [map-keys (sort (keys fs))]
-     (let [k (first (keys fs))
-           v (get fs k)]
-       (cond
-        (and (ref? v)
-             (pred k @v))
-        (remove-matching-values (dissoc fs k) pred)
-
-        (pred k v)
-        ;; remove (k v) from the map.
-        (remove-matching-values (dissoc fs k) pred)
-
-         ;; else keep (k v), but if v is itself a map, recursively remove things that match pred within v.
-        true
-        (conj
-         {k (remove-matching-values v pred)}
-         (remove-matching-values (dissoc fs k) pred)))))
-
-   (ref? fs)
-   ;; strip refs for readability.
-   (remove-matching-values (deref fs) pred)
-
-   :else
-   fs))
+(defn remove-matching-keys [fs pred]
+  (let [serialized (serialize fs)]
+    (deserialize-with-remove serialized pred)))
 
 (defn remove-top-values-log [fs]
   (let [result (remove-top-values fs)]

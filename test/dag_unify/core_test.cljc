@@ -2,9 +2,12 @@
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [dag_unify.core :refer [all-refs create-path-in copy create-shared-values
-                                    deserialize expand-disj fail? get-in
+                                    deserialize deserialize-with-remove
+                                    expand-disj fail? get-in
                                     isomorphic? merge paths-to-value ref?
+                                    recursive-dissoc
                                     refset2map ser-db serialize
+                                    remove-matching-keys
                                     simple-unify
                                     skeletize step2 strict unify unifyc]])
   (:refer-clojure :exclude [get-in merge resolve]))
@@ -770,7 +773,6 @@ when run from a REPL."
         result (unify arg1 arg2)]
     (is (fail? result))))
 
-
 (deftest big-example
   (let [be (let [number-agr (atom :top)
                  common {:synsem {:cat :verb}
@@ -791,7 +793,6 @@ when run from a REPL."
                      {:synsem {:subcat {:1 {:cat :noun}
                                         :2 '()}
                                :sem {:pred :be}}})
-             
              
               ;; be + propernoun, e.g. "I am John"
               (let [subject-verb-agreement
@@ -834,3 +835,20 @@ when run from a REPL."
     (is (= (count be) 2))
     (is (not (fail? (nth be 0))))
     (is (not (fail? (nth be 1))))))
+
+(deftest recursive-dissoc-test
+  (let [fs {:a 42 :b {:c 43}}
+        result (recursive-dissoc fs
+                                 (fn [k] (= k :c)))]
+    (is (= (get-in result [:b]) {}))))
+
+(deftest remove-matching-keys-test
+  (let [fs
+        (let [myref (atom 42)]
+          {:a myref :b {:c myref} :d {:e 43}})
+        removed
+        (remove-matching-keys fs (fn [k]
+                                     (= k :c)))]
+    (is (map? removed))
+    (is (= 42 (get-in removed [:a])))
+    (is (= :none (get-in removed [:b :c] :none)))))
