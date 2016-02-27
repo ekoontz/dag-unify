@@ -8,7 +8,8 @@
                  [org.clojure/clojurescript "1.7.170"]]
   :plugins [[cider/cider-nrepl "0.10.2"]
             [lein-doo "0.1.6"]
-            [lein-cljsbuild "1.1.2"]]
+            [lein-cljsbuild "1.1.2"]
+            [s3-wagon-private "1.2.0"]]
 
   ;; run clojure tests with "lein test"
   ;; run clojurescript tests with "lein doo phantom test once"
@@ -18,6 +19,10 @@
                                    ;; you must have {:optimizations :whitespace}
                                    ;; to avoid "ReferenceError: Can't find variable: goog"
                                    :optimizations :whitespace}}]}
+  :repositories {"s3" {:url "s3p://ekoontz-repo/releases/"
+                       :username :env/aws_access_key ;; gets environment variable AWS_ACCESS_KEY
+                       :passphrase :env/aws_secret_key}} ;; gets environment variable AWS_SECRET_KEY
+
   :doo {:paths {:phantom "phantomjs --web-security=false"
                 :slimer "slimerjs --ignore-ssl-errors=true"
                 :karma "karma --port=9881 --no-colors"
