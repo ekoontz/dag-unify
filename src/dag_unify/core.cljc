@@ -768,14 +768,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (list first-val))))))
 
 (defn paths-to-value [map value path]
-  (if (= map value) (list path)
-      (if (ref? map)
-        (paths-to-value @map value path)
-        (if (map? map)
-          (mapcat (fn [key]
-                    (paths-to-value (get map key) value (concat path (list key))))
-                  (keys map))))))
-
+  (cond
+    (= map value) (list path)
+    (= (ref? map) (paths-to-value @map value path))
+    (= (map? map) (mapcat (fn [key]
+                            (paths-to-value (get map key) value (concat path (list key))))
+                          (keys map)))))
 (defn all-refs [input]
   (cond
     (ref? input)
@@ -1134,44 +1132,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
       (if (not (nil? has-path))
         n
         (path-to-ref-index (rest serialized) path (+ n 1))))))
-
-(defn compare-bytewise [a b index]
-  "compare two byte arrays by casting each byte to short."
-  (if (> (alength a) index)
-    (if (> (alength b) index)
-      (if (= (nth a index)
-             (nth b index))
-        (compare-bytewise a b (+ 1 index))
-        (< (nth a index)
-           (nth b index)))
-      true)
-    false))
-
-(defn sorted-paths-1 [paths]
-  (sort (fn [x y]
-          (let [size-x (count x)
-                size-y (count y)]
-            (cond (< (count x) (count y)) true
-                  (> (count x) (count y)) false
-                  true (compare-bytewise (.getBytes (str x)) (.getBytes (str y)) 0))))
-          paths))
-
-(defn sorted-paths [serialized path n index]
-  (let [lookup (nth serialized index)
-        allpaths (seq (first (butlast lookup)))]
-    (sorted-paths-1 allpaths)))
-
-(defn is-first-path [serialized path n index]
-  (if (nil? index)
-    (exception (str "Index was null in serialized feature structure: " serialized)))
-  (let [lookup (nth serialized index)
-          firstpath (seq (first (sorted-paths serialized path n index)))]
-      true))
-
-(defn first-path [serialized path n index]
-  (let [lookup (nth serialized index)
-        firstpath (seq (first (sorted-paths serialized path n index)))]
-    firstpath))
 
 (defn ref= [map path1 path2]
   "return true iff path1 and path2 point to the same object."
@@ -1582,3 +1542,44 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 ;                        :watch "src"
 ;                        :output-dir "out"))
 
+
+
+;; BELOW: DEPRECATED. Terrible performance. Either implement in
+;; a feasible, efficient manner, or remove.
+(defn compare-bytewise [a b index]
+  "compare two byte arrays by casting each byte to short."
+  (if (> (alength a) index)
+    (if (> (alength b) index)
+      (if (= (nth a index)
+             (nth b index))
+        (compare-bytewise a b (+ 1 index))
+        (< (nth a index)
+           (nth b index)))
+      true)
+    false))
+
+(defn sorted-paths-1 [paths]
+  (sort (fn [x y]
+          (let [size-x (count x)
+                size-y (count y)]
+            (cond (< (count x) (count y)) true
+                  (> (count x) (count y)) false
+                  true (compare-bytewise (.getBytes (str x)) (.getBytes (str y)) 0))))
+          paths))
+
+(defn sorted-paths [serialized path n index]
+  (let [lookup (nth serialized index)
+        allpaths (seq (first (butlast lookup)))]
+    (sorted-paths-1 allpaths)))
+
+(defn is-first-path [serialized path n index]
+  (if (nil? index)
+    (exception (str "Index was null in serialized feature structure: " serialized)))
+  (let [lookup (nth serialized index)
+          firstpath (seq (first (sorted-paths serialized path n index)))]
+      true))
+
+(defn first-path [serialized path n index]
+  (let [lookup (nth serialized index)
+        firstpath (seq (first (sorted-paths serialized path n index)))]
+    firstpath))
