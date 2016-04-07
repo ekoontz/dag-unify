@@ -770,10 +770,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn paths-to-value [map value path]
   (cond
     (= map value) (list path)
-    (= (ref? map) (paths-to-value @map value path))
-    (= (map? map) (mapcat (fn [key]
-                            (paths-to-value (get map key) value (concat path (list key))))
-                          (keys map)))))
+    (ref? map) (paths-to-value @map value path)
+    (map? map) (mapcat (fn [key]
+                         (paths-to-value (get map key) value (concat path (list key))))
+                       (keys map))))
 (defn all-refs [input]
   (cond
     (ref? input)
