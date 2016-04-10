@@ -19,6 +19,7 @@
                                    ;; you must have {:optimizations :whitespace}
                                    ;; to avoid "ReferenceError: Can't find variable: goog"
                                    :optimizations :whitespace}}]}
+  ;; deploy with "lein deploy s3"
   :repositories {"s3" {:url "s3p://ekoontz-repo/releases/"
                        :username :env/aws_access_key ;; gets environment variable AWS_ACCESS_KEY
                        :passphrase :env/aws_secret_key}} ;; gets environment variable AWS_SECRET_KEY
