@@ -7,3 +7,9 @@ pom.xml.asc
 *.class
 /.lein-*
 /.nrepl-port
+/.repl-1.7.170/
+/out
+*.orig
+*.rej
+*~
+resources/public/js/testable.js
