@@ -1520,8 +1520,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           val2 (get-in fs2 path :top)]
       (if (fail? (unify val1 val2))
         {:fail-path (str "/" (string/join "/" path))
-         :val1 val1
-         :val2 val2}
+         :val1 (strip-refs val1)
+         :val2 (strip-refs val2)}
         (find-fail-in fs1 fs2 (rest paths))))))
 
 (defn fail-path-between [fs1 fs2]
