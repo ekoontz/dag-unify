@@ -91,14 +91,14 @@
             (not (fail? each-map)))
           maps))
 
-(defn fail-path [fs & [ fs-keys ] ]
+(defn fail-path-r [fs & [ fs-keys ] ]
   "find the first failing path in a fs."
   (if (map? fs)
     (let [fs-keys (if fs-keys fs-keys (keys fs))]
       (if (> (count fs-keys) 0)
         (if (fail? (get-in fs (list (first fs-keys))))
-          (cons (first fs-keys) (fail-path (get-in fs (list (first fs-keys)))))
-          (fail-path fs (rest fs-keys)))))))
+          (cons (first fs-keys) (fail-path-r (get-in fs (list (first fs-keys)))))
+          (fail-path-r fs (rest fs-keys)))))))
 
 (defn any? [fn members]
   (if (not (empty? members))
@@ -1531,9 +1531,15 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         (find-fail-in fs1 fs2 (rest paths))))))
 
 (defn fail-path-between [fs1 fs2]
+  "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (let [paths-in-fs1 (map #(first (first %)) (pathify-r fs1))
         paths-in-fs2 (map #(first (first %)) (pathify-r fs2))]
     (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
+
+;; shorter alternative to the above.
+(defn fail-path [fs1 fs2]
+  "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
+  (fail-path-between fs1 fs2))
 
 #?(:clj (require 'cljs.repl))
 #?(:clj (require 'cljs.build.api))
