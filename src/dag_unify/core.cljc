@@ -438,13 +438,15 @@
             (contains? string-unifier-keys key1)
             (contains? (set (keys arg2)) key1)
             (map? (key1 arg2)))
+
+       ;; TODO: rewrite this using (reduce).
        (merge
         {key1 (unify {key1 (key1 arg1)}
                      (key1 arg2))}
         (merge-with-keys (dissoc arg1 key1)
                          (dissoc arg2 key1)))
 
-
+       ;; TODO: rewrite this using (reduce).
        (and (string? (key1 arg2))
             (contains? string-unifier-keys key1)
             (contains? (set (keys arg1)) key1)
@@ -455,12 +457,14 @@
         (merge-with-keys (dissoc arg1 key1)
                          (dissoc arg2 key1)))
 
+       ;; TODO: rewrite this using (reduce).
        (contains? (set (keys arg2)) key1)
        (merge {key1 (unify (key1 arg1)
                            (key1 arg2))}
               (merge-with-keys (dissoc arg1 key1)
                                (dissoc arg2 key1)))
 
+       ;; TODO: rewrite this using (reduce).
        true
        (merge {key1 (key1 arg1)}
               (merge-with-keys (dissoc arg1 key1)
@@ -1513,6 +1517,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn label-of [parent]
   (if (:rule parent) (:rule parent) (:comment parent)))
 
+;; TODO: use a reduce or recur here rather
+;; than simply recursion
 (defn find-fail-in [fs1 fs2 paths]
   (if (not (empty? paths))
     (let [path (first paths)
