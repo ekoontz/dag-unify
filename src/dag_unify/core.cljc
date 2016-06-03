@@ -876,14 +876,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           max-lengths)))
 
 (defn sort-shortest-path-ascending-r [serialization path-length-pairs]
-  (if (first path-length-pairs)
-    (let [path-length-pair (first path-length-pairs)
-          paths (first path-length-pair)
-          max-length (second path-length-pair)]
-      (cons
-       (list paths
-             (get serialization paths))
-       (sort-shortest-path-ascending-r serialization (rest path-length-pairs))))))
+  (pmap (fn [path-length-pair]
+          (let [paths (first path-length-pair)
+                max-length (second path-length-pair)]
+            (list paths
+                  (get serialization paths))))
+        path-length-pairs))
 
 (defn ser-intermed [input-map]
   (cond (set? input-map)
