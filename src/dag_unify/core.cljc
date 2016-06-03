@@ -759,18 +759,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn uniq [sorted-vals]
   (reverse (uniq-using-recur sorted-vals)))
 
-;; by comparison (causes stack overflow on large lists):
-(defn uniq-recursive [sorted-vals]
-  (let [first-val (first sorted-vals)]
-    (if first-val
-      (let [second-val (second sorted-vals)]
-        (if second-val
-          (if (= first-val second-val)
-            (uniq-recursive (rest sorted-vals))
-            (cons first-val
-                  (uniq-recursive (rest sorted-vals))))
-          (list first-val))))))
-
 (defn paths-to-value [map value path]
   (cond
     (= map value) (list path)
