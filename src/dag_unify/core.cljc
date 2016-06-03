@@ -795,11 +795,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                 ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
                val))
            (vals input))))
-    (and (seq? input)
-         (> (count input) 0))
-    (concat
-     (all-refs (first input))
-     (all-refs (rest input)))))
+    (seq? input)
+    (mapcat (fn [each-input]
+              (all-refs each-input))
+            input)))
 
 (defn skeletize [input-val]
   (if (map? input-val)
