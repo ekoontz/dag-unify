@@ -825,7 +825,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         ]
     (zipmap
      refs
-     (map (fn [ref]
+     (pmap (fn [ref]
             (skeletize @ref))
           refs))))
 
