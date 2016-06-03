@@ -95,7 +95,7 @@
   "find the first failing path in a fs."
   (if (map? fs)
     (let [fs-keys (if fs-keys fs-keys (keys fs))]
-      (if (> (count fs-keys) 0)
+      (if (not (empty? fs-keys))
         (if (fail? (get-in fs (list (first fs-keys))))
           (cons (first fs-keys) (fail-path-r (get-in fs (list (first fs-keys)))))
           (fail-path-r fs (rest fs-keys)))))))
