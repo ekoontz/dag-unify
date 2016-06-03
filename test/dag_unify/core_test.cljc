@@ -3,13 +3,13 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [dag_unify.core :refer [all-refs create-path-in copy create-shared-values
                                     deserialize deserialize-with-remove
-                                    expand-disj fail? get-in
+                                    expand-disj fail? get-in get-refs
                                     isomorphic? merge paths-to-value ref?
                                     recursive-dissoc
-                                    refset2map serialize
+                                    refset2map ref-skel-map serialize
                                     remove-matching-keys
                                     simple-unify
-                                    skeletize step2 strict unify unifyc]])
+                                    skeletize skels step2 strict unify unifyc]])
   (:refer-clojure :exclude [get-in merge resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
