@@ -815,14 +815,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 ;; TODO s/map/input-map/
 ;; TODO: merge or distinguish from all-refs (above)
 (defn get-refs [input-map]
-  (seq (set (all-refs input-map))))
+  (all-refs input-map))
 
 ;; TODO s/map/input-map/
 (defn skels [input-map refs]
   "create map from reference to their skeletons."
-  (let [
-        refs (get-refs input-map)
-        ]
+  (let [refs (get-refs input-map)]
     (zipmap
      refs
      (pmap (fn [ref]
@@ -863,12 +861,13 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (let [keys (keys serialization)]
     (zipmap
      keys
-     (map (fn [paths]
-            (cond (nil? paths) 0
-                  (= 0 (count paths)) 0
-                  true
-                  (apply max (map (fn [path] (if (nil? path) 0 (count path))) paths))))
-          keys))))
+     (pmap (fn [paths]
+             (cond (nil? paths) 0
+                   (empty? paths) 0
+                   true
+                   (apply max (pmap (fn [path] (if (nil? path) 0 (count path)))
+                                    paths))))
+           keys))))
 
 (defn sort-by-max-lengths [serialization]
   (let [max-lengths (max-lengths serialization)]
@@ -877,8 +876,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn sort-shortest-path-ascending-r [serialization path-length-pairs]
   (pmap (fn [path-length-pair]
-          (let [paths (first path-length-pair)
-                max-length (second path-length-pair)]
+          (let [paths (first path-length-pair)]
             (list paths
                   (get serialization paths))))
         path-length-pairs))
@@ -1421,7 +1419,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                          fs)))
              (rest paths))))))
 
-(def use-lazy-shuffle true)
+(def use-lazy-shuffle false)
 
 ;; thanks to Boris V. Schmid for lazy-shuffle:
 ;; https://groups.google.com/forum/#!topic/clojure/riyVxj1Qbbs
