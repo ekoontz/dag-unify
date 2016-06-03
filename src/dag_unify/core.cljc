@@ -1095,9 +1095,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn unifyc [& args]
   "like fs/unify, but fs/copy each argument before unifying."
   (apply unify
-         (map (fn [arg]
-                (copy arg))
-              args)))
+         (pmap (fn [arg]
+                 (copy arg))
+               args)))
 
 (defn has-path [path paths]
   (if (first paths)
