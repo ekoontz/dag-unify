@@ -14,6 +14,10 @@
    [clojure.set :refer [intersection subset? union]]
    [clojure.string :as string]))
 
+;; use map or pmap.
+#?(:clj (def ^:const mapfn pmap))
+#?(:cljs (def ^:const mapfn map))
+
 (defn exception [error-string]
   #?(:clj
      (throw (Exception. error-string)))
@@ -787,7 +791,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                      (list val)))))
              input)
      (all-refs
-      (pmap (fn [val]
+      (mapfn (fn [val]
               ;; dereference double-references (references to another reference) :
               (if (and (ref? val)
                        (ref? @val))
@@ -803,7 +807,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn skeletize [input-val]
   (if (map? input-val)
     (zipmap (keys (dissoc input-val :serialized))
-            (pmap (fn [val]
+            (mapfn (fn [val]
                     (if (ref? val)
                       :top
                       (if (map? val)
@@ -823,7 +827,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (let [refs (get-refs input-map)]
     (zipmap
      refs
-     (pmap (fn [ref]
+     (mapfn (fn [ref]
             (skeletize @ref))
           refs))))
 
@@ -836,13 +840,13 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         skels (skels input-map refs)]
     (zipmap
      ;; associate each ref with its skeleton.
-     (pmap (fn [ref]
+     (mapfn (fn [ref]
              {:ref ref
               :skel (get skels ref)})
            refs)
 
      ;; list of all paths that point to each ref in _input-map_.
-     (pmap (fn [eachref]
+     (mapfn (fn [eachref]
              (paths-to-value input-map eachref nil))
            refs))))
 
@@ -861,11 +865,11 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (let [keys (keys serialization)]
     (zipmap
      keys
-     (pmap (fn [paths]
+     (mapfn (fn [paths]
              (cond (nil? paths) 0
                    (empty? paths) 0
                    true
-                   (apply max (pmap (fn [path] (if (nil? path) 0 (count path)))
+                   (apply max (mapfn (fn [path] (if (nil? path) 0 (count path)))
                                     paths))))
            keys))))
 
@@ -875,7 +879,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           max-lengths)))
 
 (defn sort-shortest-path-ascending-r [serialization path-length-pairs]
-  (pmap (fn [path-length-pair]
+  (mapfn (fn [path-length-pair]
           (let [paths (first path-length-pair)]
             (list paths
                   (get serialization paths))))
@@ -889,7 +893,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         true
         (let [top-level (skeletize input-map)
               rsk (ref-skel-map input-map)
-              sk (pmap (fn [ref-skel]
+              sk (mapfn (fn [ref-skel]
                          (:skel ref-skel))
                        (keys rsk))]
           (merge
@@ -899,7 +903,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             sk)))))
 
 (defn create-shared-values [serialized]
-  (pmap (fn [paths-vals]
+  (mapfn (fn [paths-vals]
           (let [val (second paths-vals)]
             ;; TODO: why/why not do copy val rather than just val(?)
             (atom val)))
@@ -1095,7 +1099,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn unifyc [& args]
   "like fs/unify, but fs/copy each argument before unifying."
   (apply unify
-         (pmap (fn [arg]
+         (mapfn (fn [arg]
                  (copy arg))
                args)))
 
