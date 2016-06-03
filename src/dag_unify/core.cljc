@@ -848,12 +848,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
              (paths-to-value input-map eachref nil))
            refs))))
 
-;; only used for testing: move to test.fs.
-(defn ser-db [input-map]
-  (let [refs (get-refs input-map)
-        skels (skels input-map refs)]
-    (ref-skel-map input-map)))
-
 ;; (((:a :c) (:b :c) (:d))
 ;;  ((:a) (:b))
 ;;  nil)

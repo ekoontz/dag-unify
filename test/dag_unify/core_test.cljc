@@ -6,13 +6,18 @@
                                     expand-disj fail? get-in
                                     isomorphic? merge paths-to-value ref?
                                     recursive-dissoc
-                                    refset2map ser-db serialize
+                                    refset2map serialize
                                     remove-matching-keys
                                     simple-unify
                                     skeletize step2 strict unify unifyc]])
   (:refer-clojure :exclude [get-in merge resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
+
+(defn ser-db [input-map]
+  (let [refs (get-refs input-map)
+        skels (skels input-map refs)]
+    (ref-skel-map input-map)))
 
 (deftest simple-merge-test
   (let [result (merge {:foo 99} {:bar 42})]
