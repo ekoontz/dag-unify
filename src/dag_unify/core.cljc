@@ -799,12 +799,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                      (list val)))))
              input)
      (all-refs
-      (map (fn [val]
-             ;; dereference double-references (references to another reference) :
-             (if (and (ref? val)
-                      (ref? @val))
-               @val
-               ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
+      (pmap (fn [val]
+              ;; dereference double-references (references to another reference) :
+              (if (and (ref? val)
+                       (ref? @val))
+                @val
+                ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
                val))
            (vals input))))
     (and (seq? input)
@@ -816,13 +816,13 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn skeletize [input-val]
   (if (map? input-val)
     (zipmap (keys (dissoc input-val :serialized))
-            (map (fn [val]
-                   (if (ref? val)
-                     :top
-                     (if (map? val)
-                       (skeletize val)
-                       val)))
-                 (vals (dissoc input-val :serialized))))
+            (pmap (fn [val]
+                    (if (ref? val)
+                      :top
+                      (if (map? val)
+                        (skeletize val)
+                        val)))
+                  (vals (dissoc input-val :serialized))))
     input-val))
 
 ;; TODO s/map/input-map/
@@ -851,15 +851,15 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         skels (skels input-map refs)]
     (zipmap
      ;; associate each ref with its skeleton.
-     (map (fn [ref]
-            {:ref ref
-             :skel (get skels ref)})
-          refs)
+     (pmap (fn [ref]
+             {:ref ref
+              :skel (get skels ref)})
+           refs)
 
      ;; list of all paths that point to each ref in _input-map_.
-     (map (fn [eachref]
-            (paths-to-value input-map eachref nil))
-          refs))))
+     (pmap (fn [eachref]
+             (paths-to-value input-map eachref nil))
+           refs))))
 
 ;; only used for testing: move to test.fs.
 (defn ser-db [input-map]
@@ -912,9 +912,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         true
         (let [top-level (skeletize input-map)
               rsk (ref-skel-map input-map)
-              sk (map (fn [ref-skel]
-                        (:skel ref-skel))
-                      (keys rsk))]
+              sk (pmap (fn [ref-skel]
+                         (:skel ref-skel))
+                       (keys rsk))]
           (merge
            {nil top-level}
            (zipmap
@@ -922,11 +922,11 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             sk)))))
 
 (defn create-shared-values [serialized]
-  (map (fn [paths-vals]
-         (let [val (second paths-vals)]
-           ;; TODO: why/why not do copy val rather than just val(?)
-           (atom val)))
-       serialized))
+  (pmap (fn [paths-vals]
+          (let [val (second paths-vals)]
+            ;; TODO: why/why not do copy val rather than just val(?)
+            (atom val)))
+        serialized))
 
 (defn create-path-in [path value]
   "create a path starting at map through all keys in map:
