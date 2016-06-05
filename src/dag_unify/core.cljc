@@ -1040,11 +1040,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
          (sort-shortest-path-ascending-r ser (sort-by-max-lengths ser)))))))
 
-(defn optimized-ser [input-map]
-  "generate a better serialized form that removes intermediate refs (refs to other refs)"
-  (let [serialized (serialize input-map)]
-    serialized))
-
 (defn copy [input]
   (cond (seq? input)
         (map (fn [each]
@@ -1457,20 +1452,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
         true
         spec))
-
-(defn show-spec [spec]
-  (cond (seq? spec)
-        (map show-spec spec)
-        true
-        (remove-top-values-log (dissoc-paths spec '((:english :initial)
-                                                    (:italiano :initial)
-                                                    (:synsem :essere)
-                                                    (:synsem :agr)
-                                                    (:synsem :pronoun)
-                                                    (:synsem :sem :tense)
-                                                    (:synsem :sem :obj :tense)
-                                                    (:synsem :sem :mod)
-                                                    (:synsem :infl))))))
 
 (defn isomorphic? [a b]
   (cond (and (map? a)
