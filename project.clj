@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/clojurescript "1.7.170"]]
-  :plugins [[cider/cider-nrepl "0.10.2"]
+  :plugins [[cider/cider-nrepl "0.11.0"]
             [lein-doo "0.1.6"]
             [lein-cljsbuild "1.1.2"]
             [s3-wagon-private "1.2.0"]]
