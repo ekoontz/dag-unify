@@ -255,6 +255,10 @@
                 (= val2 :top))
            val1
 
+           (and (= val1 nil)
+                (= val2 nil))
+           val1
+
            (= val1 nil)
            :fail
 
