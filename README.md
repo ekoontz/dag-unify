@@ -58,7 +58,7 @@ the same reference, with its value being the unification of the
 arguments. For example:
 
 ```
-(let [myref (ref {:b 42})
+(let [myref (atom {:b 42})
       foo {:a myref}
       bar {:a {:c 43}}]
   (unify foo bar))
@@ -85,7 +85,7 @@ unification.
 References work with `:top` as in the following example:
 
 ```
-(let [myref (ref :top)
+(let [myref (atom :top)
       foo {:a myref
            :b myref}
       bar {:a 42}]
@@ -126,7 +126,7 @@ values which are not equal (if atomic values) or have some part that
 is not equal. For example:
 
 ```
-(let [myref (ref :top)
+(let [myref (atom :top)
       foo {:a myref
            :b myref}
       bar {:a 42
