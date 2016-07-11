@@ -1491,21 +1491,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (fail-path-between fs1 fs2))
 
-#?(:clj (require 'cljs.repl))
-#?(:clj (require 'cljs.build.api))
-#?(:clj (require 'cljs.repl.browser))
-
-;#?(:clj (cljs.build.api/build "src"
-;                              {:main 'hello-world.core
-;                               :output-to "out/main.js"
-;                               :verbose true}))
-
-;#?(:clj (cljs.repl/repl (cljs.repl.browser/repl-env)
-;                        :watch "src"
-;                        :output-dir "out"))
-
-
-
 ;; BELOW: DEPRECATED. Terrible performance. Either implement in
 ;; a feasible, efficient manner, or remove.
 (defn compare-bytewise [a b index]
