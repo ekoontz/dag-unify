@@ -272,7 +272,6 @@
       ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
       (not (= :notfound (:not val2 :notfound)))
       (if (= val1 :top)
-                                        ;       val1 ;; special case mentioned above in comments preceding this function.
         val2
         (let [result (unify val1 (:not val2))]
           (if (= result :fail)
@@ -285,24 +284,6 @@
 
       (= val1 :top) val2
       (= val2 :top) val1
-           
-      ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
-      (= val1 "top") val2
-      (= val2 "top") val1
-
-      ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
-      ;; :foo,"foo" => :foo
-      (and (keyword? val1)
-           (string? val2)
-           (= (string/replace-first (str val1) ":" "") val2))
-      val1
-
-      ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
-      ;; "foo",:foo => :foo
-      (and (keyword? val2)
-           (string? val1)
-           (= (string/replace-first (str val2) ":" "") val1))
-      val2
 
       (= val1 val2) val1
 

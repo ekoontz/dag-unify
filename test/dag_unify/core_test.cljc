@@ -189,11 +189,6 @@
   "(reversed argument order as preceding): unifying :top with {:not X} should return {:not X} if X != top."
   (let [result (unify :top {:not 42})]
     (is (= result {:not 42}))))
-
-(deftest keywords-and-strings-equiv
-  "keywords and strings are equivalent for unification (due to accomodating mongo serialization), but canonicalize to keyword."
-  (let [result (unify :foo "foo")]
-    (is (= result :foo))))
       
 (deftest complicated-merge
   (let [mycon (list {:comp {:number :singular, :cat :det}} {:gender :masc} {:comp {:def {:not :indef}}, :mass true} {:comp {}, :sport true})
@@ -229,43 +224,6 @@
 (deftest unify-override
   (let [result (unify '{:a 42} '{:a 43})]
     (is (fail? result))))
-
-      
-;;      (deftest
-;;       "merge should union :not-values"
-;;       (merge {:not 41} {:not 42})
-;;       (fn [result]
-;;         (= (set (:not result)) (set 41 42)))
-
-;;      
-;;      (deftest
-;;       "unify should union :not-values"
-;;       (unify {:not 41} {:not 42})
-;;       (fn [result]
-;;         (= (set (:not result)) (set 41 42)))
-
-(deftest unify-with-top
-  "'top' and :top are equivalent when unifying with keyword."
-  (let [result (unify "top" :foo)]
-    (is (= result :foo))))
-
-(deftest top-string-and-keyword-equiv
-  "'top' and :top are equivalent when unifying with reference to keyword."
-  (let [result (unify "top" (atom :foo))]
-    (is (ref? result))
-    (is (= @result :foo))))
-
-(deftest top-ref
-  "@'top' and @:top are equivalent when unifying to a keyword."
-  (let [result (unify (atom "top") :foo)]
-    (is (ref? result))
-    (is (= @result :foo))))
-
-(deftest top-ref-2
-  "@'top' and @:top are equivalent when unifying to a string."
-  (let [result (unify (atom "top") "foo")]
-    (is (ref? result))
-    (is (= @result "foo"))))
 
 (deftest map-with-reference
   (let [fs1 {:a (atom 42)}
