@@ -947,13 +947,13 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                       (let [all
                             (cons base
                                   (flatten
-                                   (map (fn [paths-val]
-                                          (let [paths (first paths-val)
-                                                val (atom (second paths-val))]
-                                            (map (fn [path]
-                                                   (create-path-in path val))
-                                                 paths)))
-                                        (rest serialized))))]
+                                   (mapfn (fn [paths-val]
+                                            (let [paths (first paths-val)
+                                                  val (atom (second paths-val))]
+                                              (mapfn (fn [path]
+                                                       (create-path-in path val))
+                                                     paths)))
+                                          (rest serialized))))]
                         all)))))
 
 (defn recursive-dissoc [a-map pred]
