@@ -294,6 +294,14 @@
      (= (count args) 1)
      (first args)
 
+     (or (= val1 :fail)
+         (= val2 :fail))
+     :fail
+
+     (= val1 :top) val2
+     (= val2 :top) val1
+     (= val1 nil) val2
+
      (and (map? val1)
           (map? val2))
      (reduce #(merge-with merge %1 %2) args)
@@ -338,14 +346,6 @@
         (if (= result :fail)
           val1
           :fail))
-
-     (or (= val1 :fail)
-         (= val2 :fail))
-     :fail
-
-     (= val1 :top) val2
-     (= val2 :top) val1
-     (= val1 nil) val2
 
      ;; note difference in behavior between nil and :nil!:
      ;; (nil is ignored, while :nil! is not).
