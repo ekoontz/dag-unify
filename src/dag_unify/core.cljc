@@ -291,34 +291,6 @@
         val2 (second args)]
     (cond
 
-     (set? val1)
-     (set (filter (fn [each]
-                    (not (fail? each)))
-                  (reduce union
-                          (map (fn [each]
-                                 (let [result (merge (copy each) (copy val2))]
-                                   (cond (set? result)
-                                         result
-                                         (seq? result)
-                                         (set result)
-                                         true
-                                         (set (list result)))))
-                               val1))))
-
-     (set? val2)
-     (set (filter (fn [each]
-                    (not (fail? each)))
-                  (reduce union
-                          (map (fn [each]
-                                 (let [result (merge (copy each) (copy val1))]
-                                   (cond (set? result)
-                                         result
-                                         (seq? result)
-                                         (set result)
-                                         true
-                                         (set (list result)))))
-                               val2))))
-
      (= (count args) 1)
      (first args)
 
