@@ -131,7 +131,9 @@
    nil))
 
 ;; TODO: remove this variable (strict) in favor of string-unifier-keys.
-(def strict true) ;; strict means: don't try to get smart with "foo" {:italiano "foo"} => {:italiano "foo"}; instead just :fail.
+(def strict true) ;; strict means: don't try to get smart with:
+;; (unify "foo" {:italiano "foo"}) => {:italiano "foo"};
+;; instead just (unify "foo" {:italiano "foo"}) => :fail.
 
 ;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
 ;; either consider all args, or change signature of (unify) to take only val1 val2.
