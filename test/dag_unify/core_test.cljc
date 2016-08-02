@@ -649,14 +649,6 @@ when run from a REPL."
   (is (fail?
        (unify '() {:foo 42}))))
 
-(deftest set-and-top
-  (is (= (unify #{1 2 3} :top)
-         #{1 2 3})))
-
-(deftest set-and-set-is-intersection
-  (is (= (unify #{1 2} #{2 3})
-     #{2})))
-
 (deftest serialized-set
   (let [result (serialize (set (list 1 2)))]
     (is (= result #{(list (list nil 1)) (list (list nil 2))}))))
