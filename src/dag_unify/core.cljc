@@ -170,6 +170,23 @@
       (= (count args) 1)
       (first args)
            
+      (or (= val1 :fail)
+          (= val2 :fail))
+      :fail
+
+      (= val1 :top) val2
+      (= val2 :top) val1
+
+      (= val1 val2) val1
+
+      (= val1 '())
+      :fail
+
+      (= val1 nil)
+      :fail
+
+      (nil? args) nil
+
       (= :fail (first args))
       :fail
            
@@ -253,23 +270,6 @@
           (if (= result :fail)
             val1
             :fail)))
-           
-      (or (= val1 :fail)
-          (= val2 :fail))
-      :fail
-
-      (= val1 :top) val2
-      (= val2 :top) val1
-
-      (= val1 val2) val1
-
-      (= val1 '())
-      :fail
-
-      (= val1 nil)
-      :fail
-
-      (nil? args) nil
       
       :else
       :fail)))
