@@ -153,173 +153,169 @@
                args)))
 
 (defn unify [& args]
-  (cond (empty? (rest args))
-        (first args)
-        true
-        (let [val1 (first args)
-              val2 (second args)]
-          (cond
-
-           ;; This is the canonical unification case: unifying two DAGs
-           ;; (maps with possible references within them).
-           ;;
-           (and (map? val1)
-                (map? val2))
-           (let [result (merge-with-keys val1 val2 (keys val1))]
-             (if (empty? (rest (rest args)))
-               result
-               (unify result
-                      (apply unify (rest (rest args))))))
+  (let [val1 (first args)
+        val2 (second args)]
+    (cond
+      ;; This is the canonical unification case: unifying two DAGs
+      ;; (maps with possible references within them).
+      ;;
+      (and (map? val1)
+           (map? val2))
+      (let [result (merge-with-keys val1 val2 (keys val1))]
+        (if (empty? (rest (rest args)))
+          result
+          (unify result
+                 (apply unify (rest (rest args))))))
             
-           (and (= val1 '())
-                (= val2 :top))
-           val1
+      (and (= val1 '())
+           (= val2 :top))
+      val1
 
-           (and (= val1 '())
-                (= val2 '()))
-           val1
+      (and (= val1 '())
+           (= val2 '()))
+      val1
 
-           (and (= val1 '()))
-           :fail
+      (and (= val1 '()))
+      :fail
 
-           (and (= val1 nil)
-                (= val2 :top))
-           val1
+      (and (= val1 nil)
+           (= val2 :top))
+      val1
 
-           (and (= val1 nil)
-                (= val2 nil))
-           val1
+      (and (= val1 nil)
+           (= val2 nil))
+      val1
 
-           (= val1 nil)
-           :fail
+      (= val1 nil)
+      :fail
 
-           (nil? args) nil
+      (nil? args) nil
            
-           (= (count args) 1)
-           (first args)
+      (= (count args) 1)
+      (first args)
            
-           (= :fail (first args))
-           :fail
+      (= :fail (first args))
+      :fail
            
-           (= :fail (second args))
-           :fail
+      (= :fail (second args))
+      :fail
            
-           ;; val1 is a ref, val2 is a map that contains val1: return fail.
-           (and (ref? val1)
-                (map? val2)
-                (some #(= val1 %) (get-refs-in val2)))
-           :fail
+      ;; val1 is a ref, val2 is a map that contains val1: return fail.
+      (and (ref? val1)
+           (map? val2)
+           (some #(= val1 %) (get-refs-in val2)))
+      :fail
 
-           ;; val2 is a ref, val1 is a map that contains val2: return fail.
-           (and (ref? val2)
-                (map? val1)
-                (some #(= val2 %) (get-refs-in val1)))
-           :fail
+      ;; val2 is a ref, val1 is a map that contains val2: return fail.
+      (and (ref? val2)
+           (map? val1)
+           (some #(= val2 %) (get-refs-in val1)))
+      :fail
            
-           ;; val1 is a ref, val2 is not a ref.
-           (and
-            (ref? val1)
-            (not (ref? val2)))
-           (do
-             (swap! val1
-                     (fn [x] (unify @val1 val2)))
-             ;; alternative to the above (not tested yet):  (fn [x] (unify (copy @val1) val2))))
-             ;; TODO: why is this false-disabled? (document and test) or remove
-             (if (and false (fail? @val1)) :fail
-                 val1))
+      ;; val1 is a ref, val2 is not a ref.
+      (and
+       (ref? val1)
+       (not (ref? val2)))
+      (do
+        (swap! val1
+               (fn [x] (unify @val1 val2)))
+        ;; alternative to the above (not tested yet):  (fn [x] (unify (copy @val1) val2))))
+        ;; TODO: why is this false-disabled? (document and test) or remove
+        (if (and false (fail? @val1)) :fail
+            val1))
            
-           ;; val2 is a ref, val1 is not a ref.
-           (and
-            (ref? val2)
-            (not (ref? val1)))
-           (do
-             (swap! val2
-                    (fn [x] (unify val1 @val2)))
-             ;; alternative to the above (not tested yet): (fn [x] (unify val1 (fs/copy @val2)))))
-             ;; TODO: why is this false-disabled? (document and test) or remove.
-             (if (and false (fail? @val2)) :fail
-                 val2))
+      ;; val2 is a ref, val1 is not a ref.
+      (and
+       (ref? val2)
+       (not (ref? val1)))
+      (do
+        (swap! val2
+               (fn [x] (unify val1 @val2)))
+        ;; alternative to the above (not tested yet): (fn [x] (unify val1 (fs/copy @val2)))))
+        ;; TODO: why is this false-disabled? (document and test) or remove.
+        (if (and false (fail? @val2)) :fail
+            val2))
 
-           (and
-            (ref? val1)
-            (ref? val2))
-           (let [refs-in-val1 (get-refs-in @val1)
-                 refs-in-val2 (get-refs-in @val2)]
+      (and
+       (ref? val1)
+       (ref? val2))
+      (let [refs-in-val1 (get-refs-in @val1)
+            refs-in-val2 (get-refs-in @val2)]
              
-             (cond
-              (or (= val1 val2) ;; same reference.
-                  (= val1 @val2)) ;; val1 <- val2
-              val1
+        (cond
+          (or (= val1 val2) ;; same reference.
+              (= val1 @val2)) ;; val1 <- val2
+          val1
 
-              (= @val1 val2) ;; val1 -> val2
-              val2
+          (= @val1 val2) ;; val1 -> val2
+          val2
               
-              (some #(= val2 %) refs-in-val1)
-              :fail
+          (some #(= val2 %) refs-in-val1)
+          :fail
 
-              (some #(= val1 %) refs-in-val2)
-              :fail
+          (some #(= val1 %) refs-in-val2)
+          :fail
 
-              :else
-              (do
-                (swap! val1
-                       (fn [x] (unify @val1 @val2)))
-                (swap! val2
-                       (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-                ;; TODO: remove, since it's disabled, or add a global setting to en/dis-able.
-                (if (and false (fail? @val1)) :fail
-                    val1))))
+          :else
+          (do
+            (swap! val1
+                   (fn [x] (unify @val1 @val2)))
+            (swap! val2
+                   (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+            ;; TODO: remove, since it's disabled, or add a global setting to en/dis-able.
+            (if (and false (fail? @val1)) :fail
+                val1))))
 
-           ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
-           (not (= :notfound (:not val1 :notfound)))
-           (if (= val2 :top)
+      ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
+      (not (= :notfound (:not val1 :notfound)))
+      (if (= val2 :top)
                                         ;       :top ;; special case: (unify :top {:not X}) => :top
-             val1
-             ;; else
-             (let [result (unify (:not val1) val2)]
-               (if (= result :fail)
-                 val2
-                 :fail)))
+        val1
+        ;; else
+        (let [result (unify (:not val1) val2)]
+          (if (= result :fail)
+            val2
+            :fail)))
            
-           ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
-           (not (= :notfound (:not val2 :notfound)))
-           (if (= val1 :top)
+      ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
+      (not (= :notfound (:not val2 :notfound)))
+      (if (= val1 :top)
                                         ;       val1 ;; special case mentioned above in comments preceding this function.
-             val2
-             (let [result (unify val1 (:not val2))]
-               (if (= result :fail)
-                 val1
-                 :fail)))
+        val2
+        (let [result (unify val1 (:not val2))]
+          (if (= result :fail)
+            val1
+            :fail)))
            
-           (or (= val1 :fail)
-               (= val2 :fail))
-           :fail
+      (or (= val1 :fail)
+          (= val2 :fail))
+      :fail
 
-           (= val1 :top) val2
-           (= val2 :top) val1
+      (= val1 :top) val2
+      (= val2 :top) val1
            
-           ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
-           (= val1 "top") val2
-           (= val2 "top") val1
+      ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
+      (= val1 "top") val2
+      (= val2 "top") val1
 
-           ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
-           ;; :foo,"foo" => :foo
-           (and (keyword? val1)
-                (string? val2)
-                (= (string/replace-first (str val1) ":" "") val2))
-           val1
+      ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
+      ;; :foo,"foo" => :foo
+      (and (keyword? val1)
+           (string? val2)
+           (= (string/replace-first (str val1) ":" "") val2))
+      val1
 
-           ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
-           ;; "foo",:foo => :foo
-           (and (keyword? val2)
-                (string? val1)
-                (= (string/replace-first (str val2) ":" "") val1))
-           val2
+      ;; TODO: verify that these keyword/string exceptions are necessary - otherwise remove them.
+      ;; "foo",:foo => :foo
+      (and (keyword? val2)
+           (string? val1)
+           (= (string/replace-first (str val2) ":" "") val1))
+      val2
 
-           (= val1 val2) val1
-           
-           :else ;; fail.
-           :fail))))
+      (= val1 val2) val1
+
+      :else ;; fail.
+      :fail)))
 
 (defn merge-with-keys [arg1 arg2 keys1]
   (if (not (empty? keys1))
