@@ -376,24 +376,17 @@
            :fail))))
 
 (defn merge-with-keys [arg1 arg2]
-  (let [keys1 (keys arg1)
-        key1 (first keys1)]
-    (if key1
-      (cond
-       ;; TODO: rewrite this using (reduce).
-       (contains? (set (keys arg2)) key1)
-       (merge {key1 (unify (key1 arg1)
-                           (key1 arg2))}
-              (merge-with-keys (dissoc arg1 key1)
-                               (dissoc arg2 key1)))
-
-       ;; TODO: rewrite this using (reduce).
-       true
-       (merge {key1 (key1 arg1)}
-              (merge-with-keys (dissoc arg1 key1)
-                               (dissoc arg2 key1))))
+  (let [keys1 (keys arg1)]
+    (if (not (empty? keys1))
+      (let [key1 (first keys1)
+            result (unify (key1 arg1 :top)
+                          (key1 arg2 :top))]
+        (if (fail? result)
+          :fail
+          (merge {key1 result}
+                 (merge-with-keys (dissoc arg1 key1)
+                                  (dissoc arg2 key1)))))
       arg2)))
-
 
 ;; unify vs. match:
 ;;
