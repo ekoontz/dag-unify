@@ -166,31 +166,7 @@
           result
           (unify result
                  (apply unify (rest (rest args))))))
-            
-      (and (= val1 '())
-           (= val2 :top))
-      val1
-
-      (and (= val1 '())
-           (= val2 '()))
-      val1
-
-      (and (= val1 '()))
-      :fail
-
-      (and (= val1 nil)
-           (= val2 :top))
-      val1
-
-      (and (= val1 nil)
-           (= val2 nil))
-      val1
-
-      (= val1 nil)
-      :fail
-
-      (nil? args) nil
-           
+                       
       (= (count args) 1)
       (first args)
            
@@ -287,6 +263,31 @@
 
       (= val1 val2) val1
 
+      (and (= val1 '())
+           (= val2 :top))
+      val1
+
+      (and (= val1 '())
+           (= val2 '()))
+      val1
+
+      (= val1 '())
+      :fail
+
+      (and (= val1 nil)
+           (= val2 :top))
+      val1
+
+      (and (= val1 nil)
+           (= val2 nil))
+      val1
+
+      (= val1 nil)
+      :fail
+
+      (nil? args) nil
+
+      
       :else ;; fail.
       :fail)))
 
