@@ -201,44 +201,10 @@
 (defn unify [& args]
   (cond (empty? (rest args))
         (first args)
-        (and (seq? args)
-             (empty? (rest args)))
-        (first args)
-        (and (seq? args)
-             (not (empty? (rest (rest args)))))
-        (unify (first args) (apply unify (rest args)))
         true
         (let [val1 (first args)
               val2 (second args)]
           (cond
-           (set? val1)
-           (set (filter (fn [each]
-                          (not (fail? each)))
-                        (reduce union
-                                (map (fn [each]
-                                       (let [result (unifyc each val2)]
-                                         (cond (set? result)
-                                               result
-                                               (seq? result)
-                                               (set result)
-                                               true
-                                               (set (list result)))))
-                                     val1))))
-
-           (set? val2)
-           (set (filter (fn [each]
-                          (not (fail? each)))
-                        (reduce union
-                                (map (fn [each]
-                                       (let [result (unifyc each val1)]
-                                         (cond (set? result)
-                                               result
-                                               (seq? result)
-                                               (set result)
-                                               true
-                                               (set (list result)))))
-                                     val2))))
-           
            (and (= val1 '())
                 (= val2 :top))
            val1
@@ -261,10 +227,6 @@
            (= val1 nil)
            :fail
 
-           (and (set? val1)
-                (set? val2))
-           (intersection val1 val2)
-           
            (nil? args) nil
            
            (= (count args) 1)
@@ -276,11 +238,6 @@
            (= :fail (second args))
            :fail
            
-           (seq? val1)
-           (map (fn [each]
-                  (unify each val2))
-                val1)
-
            ;; This is the canonical unification case: unifying two DAGs
            ;; (maps with possible references within them).
            ;;
