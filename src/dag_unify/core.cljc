@@ -207,8 +207,7 @@
            (and (ref? val1)
                 (map? val2)
                 (some #(= val1 %) (get-refs-in val2)))
-           (do
-             :fail)
+           :fail
 
            (and (ref? val2)
                 (map? val1)
