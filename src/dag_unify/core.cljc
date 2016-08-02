@@ -186,12 +186,6 @@
       :fail
 
       (nil? args) nil
-
-      (= :fail (first args))
-      :fail
-           
-      (= :fail (second args))
-      :fail
            
       ;; val1 is a ref, val2 is a map that contains val1: return fail.
       (and (ref? val1)
