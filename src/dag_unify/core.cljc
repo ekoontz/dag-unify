@@ -284,7 +284,7 @@
                             rest-result)))
     arg2))
 
-(defn- merge [& args]
+(defn merge [& args]
   "warning: {} is the identity value, not nil; that is: (merge X {}) => X, but (merge X nil) => nil, (not X)."
   (if (empty? (rest args)) (first args))
   (let [val1 (first args)
