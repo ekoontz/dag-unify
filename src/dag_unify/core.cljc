@@ -159,6 +159,18 @@
         (let [val1 (first args)
               val2 (second args)]
           (cond
+
+           ;; This is the canonical unification case: unifying two DAGs
+           ;; (maps with possible references within them).
+           ;;
+           (and (map? val1)
+                (map? val2))
+           (let [result (merge-with-keys val1 val2 (keys val1))]
+             (if (empty? (rest (rest args)))
+               result
+               (unify result
+                      (apply unify (rest (rest args))))))
+            
            (and (= val1 '())
                 (= val2 :top))
            val1
@@ -192,23 +204,13 @@
            (= :fail (second args))
            :fail
            
-           ;; This is the canonical unification case: unifying two DAGs
-           ;; (maps with possible references within them).
-           ;;
-           (and (map? val1)
-                (map? val2))
-           (let [result (merge-with-keys val1 val2 (keys val1))]
-             (if (empty? (rest (rest args)))
-               result
-               (unify result
-                      (apply unify (rest (rest args))))))
-
            ;; val1 is a ref, val2 is a map that contains val1: return fail.
            (and (ref? val1)
                 (map? val2)
                 (some #(= val1 %) (get-refs-in val2)))
            :fail
 
+           ;; val2 is a ref, val1 is a map that contains val2: return fail.
            (and (ref? val2)
                 (map? val1)
                 (some #(= val2 %) (get-refs-in val1)))
