@@ -242,7 +242,7 @@
            ;;
            (and (map? val1)
                 (map? val2))
-           (let [result (merge-with-keys val1 val2)]
+           (let [result (merge-with-keys val1 val2 (keys val1))]
              (if (empty? (rest (rest args)))
                result
                (unify result
@@ -365,18 +365,18 @@
            :else ;; fail.
            :fail))))
 
-(defn merge-with-keys [arg1 arg2]
-  (let [keys1 (keys arg1)]
-    (if (not (empty? keys1))
-      (let [key1 (first keys1)
-            result (unify (key1 arg1 :top)
-                          (key1 arg2 :top))]
-        (if (fail? result)
-          :fail
-          (merge {key1 result}
-                 (merge-with-keys (dissoc arg1 key1)
-                                  (dissoc arg2 key1)))))
-      arg2)))
+(defn merge-with-keys [arg1 arg2 keys1]
+  (if (not (empty? keys1))
+    (let [key1 (first keys1)
+          result (unify (key1 arg1 :top)
+                        (key1 arg2 :top))]
+      (if (fail? result)
+        :fail
+        (merge {key1 result}
+               (merge-with-keys (dissoc arg1 key1)
+                                (dissoc arg2 key1)
+                                (rest keys1)))))
+    arg2))
 
 ;; unify vs. match:
 ;;
