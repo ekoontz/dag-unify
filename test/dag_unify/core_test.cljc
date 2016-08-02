@@ -8,7 +8,6 @@
                                     recursive-dissoc
                                     refset2map ref-skel-map serialize
                                     remove-matching-keys
-                                    simple-unify
                                     skeletize skels step2 unify unifyc]])
   (:refer-clojure :exclude [get-in merge resolve]))
 

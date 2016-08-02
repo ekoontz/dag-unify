@@ -142,51 +142,6 @@
 (declare merge-with-keys)
 (declare simple-unify)
 
-(defn merge-with-keys-simple [arg1 arg2]
-  (let [keys1 (keys arg1)
-        key1 (first keys1)]
-    (if (not (nil? key1))
-      (cond
-       (contains? (set (keys arg2)) key1)
-       (simple-unify {key1 (simple-unify (key1 arg1)
-                           (key1 arg2))}
-              (merge-with-keys-simple (dissoc arg1 key1)
-                                      (dissoc arg2 key1)))
-
-       true
-       (simple-unify {key1 (key1 arg1)}
-              (merge-with-keys-simple (dissoc arg1 key1)
-                                      (dissoc arg2 key1)))))))
-
-(defn simple-unify [& args]
-  (let [val1 (first args)
-        val2 (second args)
-        result
-        (cond (and (= val1 '())
-                   (= val2 :top))
-              val1
-
-              (and (= val1 '())
-                   (= val2 '()))
-              val1
-
-              (and (= val1 '()))
-              :fail
-
-              (and (= val1 nil)
-                   (= val2 :top))
-              val1
-
-              (= val1 nil)
-              :fail
-
-              (and (map? val1)
-                   (map? val2))
-              (merge-with-keys-simple val1 val2)
-
-              true :fail)]
-    result))
-
 (declare copy)
 (declare unify)
 
