@@ -243,20 +243,11 @@
            ;;
            (and (map? val1)
                 (map? val2))
-           (let [result (merge-with-keys val1 val2)
-                 use-merge-with-fail false
-                 ]
-             (if (fail? result)
-               (if use-merge-with-fail
-                 ;; this doesn't work yet: use-merge-with-fail will be enabled when it works.
-                 (merge {:fail true}
-                        result)
-                 :fail)
-
-               (if (empty? (rest (rest args)))
-                 result
-                 (unify result
-                        (apply unify (rest (rest args)))))))
+           (let [result (merge-with-keys val1 val2)]
+             (if (empty? (rest (rest args)))
+               result
+               (unify result
+                      (apply unify (rest (rest args))))))
 
            ;; val1 is a ref, val2 is a map that contains val1: return fail.
            (and (ref? val1)
