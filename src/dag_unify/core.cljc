@@ -256,9 +256,7 @@
                    (fn [x] (unify @val1 @val2)))
             (swap! val2
                    (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-            ;; TODO: remove, since it's disabled, or add a global setting to en/dis-able.
-            (if (and false (fail? @val1)) :fail
-                val1))))
+            val1)))
 
       ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
       (not (= :notfound (:not val1 :notfound)))
