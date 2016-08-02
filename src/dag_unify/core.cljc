@@ -130,11 +130,6 @@
    :else
    nil))
 
-;; TODO: remove this variable (strict) in favor of string-unifier-keys.
-(def strict true) ;; strict means: don't try to get smart with:
-;; (unify "foo" {:italiano "foo"}) => {:italiano "foo"};
-;; instead just (unify "foo" {:italiano "foo"}) => :fail.
-
 ;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
 ;; either consider all args, or change signature of (unify) to take only val1 val2.
 ;; see also lexiconfn/unify (probably will change signature, but make lexiconfn/unify handle
@@ -143,8 +138,6 @@
 ;; TODO: support lazy sequences and vectors
 ;;
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
-
-(def string-unifier-keys #{:english :italiano})
 
 (declare merge)
 (declare merge-with-keys)
@@ -155,12 +148,6 @@
         key1 (first keys1)]
     (if (not (nil? key1))
       (cond
-       (and (string? (key1 arg1))
-            (contains? string-unifier-keys key1)
-            (contains? (set (keys arg2)) key1)
-            (map? (key1 arg2)))
-       :TODO
-       
        (contains? (set (keys arg2)) key1)
        (simple-unify {key1 (simple-unify (key1 arg1)
                            (key1 arg2))}
@@ -200,6 +187,16 @@
 
               true :fail)]
     result))
+
+(declare copy)
+(declare unify)
+
+(defn unifyc [& args]
+  "like fs/unify, but fs/copy each argument before unifying."
+  (apply unify
+         (mapfn (fn [arg]
+                 (copy arg))
+               args)))
 
 (defn unify [& args]
   (cond (empty? (rest args))
@@ -418,24 +415,6 @@
 
            (= val1 val2) val1
            
-           ;; The follow two 2 rules allow values of :english and :italian that
-           ;; are strings to over-ride values that are maps (in which
-           ;; case they are specs of how to compute a string: agreement
-           ;; information such as gender and number.
-           (and
-            (not strict)
-            (map? val1)
-            (string? val2))
-           (do
-             val2)
-
-           (and
-            (not strict)
-            (string? val1)
-            (map? val2))
-           (do
-             val1)
-
            :else ;; fail.
            :fail))))
 
@@ -444,29 +423,6 @@
         key1 (first keys1)]
     (if key1
       (cond
-       (and (string? (key1 arg1))
-            (contains? string-unifier-keys key1)
-            (contains? (set (keys arg2)) key1)
-            (map? (key1 arg2)))
-
-       ;; TODO: rewrite this using (reduce).
-       (merge
-        {key1 (unify {key1 (key1 arg1)}
-                     (key1 arg2))}
-        (merge-with-keys (dissoc arg1 key1)
-                         (dissoc arg2 key1)))
-
-       ;; TODO: rewrite this using (reduce).
-       (and (string? (key1 arg2))
-            (contains? string-unifier-keys key1)
-            (contains? (set (keys arg1)) key1)
-            (map? (key1 arg1)))
-       (merge
-        {key1 (unify {key1 (key1 arg2)}
-                     (key1 arg1))}
-        (merge-with-keys (dissoc arg1 key1)
-                         (dissoc arg2 key1)))
-
        ;; TODO: rewrite this using (reduce).
        (contains? (set (keys arg2)) key1)
        (merge {key1 (unify (key1 arg1)
@@ -482,7 +438,7 @@
       arg2)))
 
 
-;; unify vs. merge:
+;; unify vs. match:
 ;;
 ;; case 1:
 ;; (fs/unify {:a 42} {:a 42 :b 43})
@@ -1096,13 +1052,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn copy-trunc [map]
   (deserialize (trunc (serialize map))))
-
-(defn unifyc [& args]
-  "like fs/unify, but fs/copy each argument before unifying."
-  (apply unify
-         (mapfn (fn [arg]
-                 (copy arg))
-               args)))
 
 (defn has-path [path paths]
   (if (first paths)

@@ -9,7 +9,7 @@
                                     refset2map ref-skel-map serialize
                                     remove-matching-keys
                                     simple-unify
-                                    skeletize skels step2 strict unify unifyc]])
+                                    skeletize skels step2 unify unifyc]])
   (:refer-clojure :exclude [get-in merge resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
@@ -593,18 +593,6 @@ a given value in a given map."
         fs1-copy (copy fs1)]
     (is (not (fail? fs1-copy)))))
 
-
-;; TODO: remove this test: use merge-with-keys instead, which does not use the variable 'strict'.
-(deftest unify-string-and-map
-  "This is to allow values of keys that are string-unifier-keys, like :english and :italian,
-   whose values are strings to over-ride values that are maps (in which
-   case they are specs of how to compute a string: agreement
-   information such as gender and number."
-  (is (or (= strict true) ;; the test will fail if unify/strict is true, so short-circuit this test if so.
-          (= "foo"
-             (unify "foo"
-                    {:english "foo"})))))
-
 (deftest overflow
   "merge has a problem: we hit StackOverflowError java.util.regex.Pattern$BmpCharProperty.match (Pattern.java:3366) when this test is run.
    Code works as expected if merge is replaced with unify. However, this test passes - the SOE seems to only happen
@@ -754,15 +742,6 @@ when run from a REPL."
 
 (deftest isomorphic-false3
   (is (= false (isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43}))))
-
-(deftest unify-with-string2
-  (let [arg1 {:italiano "gatto"}
-        arg2 {:italiano {:initial true}}
-        result (unify arg1 arg2)]
-  (is (not (fail? result)))
-  (is (= result
-         {:italiano {:initial true
-                     :italiano "gatto"}}))))
 
 (deftest unify-with-string3
   (let [arg1 {:italiano "gatto"}
