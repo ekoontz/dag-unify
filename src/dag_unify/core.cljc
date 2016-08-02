@@ -70,11 +70,10 @@
         (and (map? fs) (fail? (get-in fs [:fail] :top))) true
         (and (map? fs) (= true (get-in fs [:fail] :top))) true ;; note: :top != true, and (fail? {:fail :top}) => false.
 
-       (fn? fs) false ;; a function is never fail.
+        (fn? fs) false ;; a function is never fail.
 
-        (ref? fs)
-        (do
-          (fail? @fs))
+        (ref? fs) (fail? @fs)
+
         (not (map? fs)) false
 
         :else
