@@ -147,7 +147,11 @@
       ;;
       (and (map? val1)
            (map? val2))
-      (let [result (merge-with-keys val1 val2 (keys val1))]
+      (let [result (merge-with-keys
+                    (dissoc val1 :serialized)
+                    (dissoc val2 :serialized)
+                    (filter #(not (= :serialized %))
+                            (keys val1)))]
         (if (empty? (rest (rest args)))
           result
           (unify result
@@ -639,15 +643,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
          (sort-shortest-path-ascending-r ser (sort-by-max-lengths ser)))))))
 
 (defn copy [input]
-  (cond (seq? input)
-        (map (fn [each]
-               (copy each))
-             input)
-        true
-        (let [serialized (serialize input)]
-        (clojure.core/merge
-         (deserialize (serialize input))
-         {:serialized serialized}))))
+  (let [serialized (serialize input)
+        deserialized (deserialize serialized)]
+    (if (keyword? deserialized)
+      deserialized
+      (merge {:serialized serialized}
+             deserialized))))
 
 (defn trunc [serialized]
   "create a new serialized map with all paths removed that are non-immediate."
