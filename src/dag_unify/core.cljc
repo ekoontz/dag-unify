@@ -644,7 +644,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                (copy each))
              input)
         true
-        (deserialize (serialize input))))
+        (let [serialized (serialize input)]
+        (clojure.core/merge
+         (deserialize (serialize input))
+         {:serialized serialized}))))
 
 (defn trunc [serialized]
   "create a new serialized map with all paths removed that are non-immediate."
