@@ -255,35 +255,6 @@
   (let [val1 (first args)
         val2 (second args)]
     (cond
-
-      (and false (set? val1))
-     (set (filter (fn [each]
-                    (not (fail? each)))
-                  (reduce union
-                          (map (fn [each]
-                                 (let [result (merge (copy each) (copy val2))]
-                                   (cond (set? result)
-                                         result
-                                         (seq? result)
-                                         (set result)
-                                         true
-                                         (set (list result)))))
-                               val1))))
-
-     (and false (set? val2))
-     (set (filter (fn [each]
-                    (not (fail? each)))
-                  (reduce union
-                          (map (fn [each]
-                                 (let [result (merge (copy each) (copy val1))]
-                                   (cond (set? result)
-                                         result
-                                         (seq? result)
-                                         (set result)
-                                         true
-                                         (set (list result)))))
-                               val2))))
-
      (= (count args) 1)
      (first args)
 
@@ -528,10 +499,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         path-length-pairs))
 
 (defn ser-intermed [input-map]
-  (cond (and false (set? input-map))
-        (set (map (fn [each]
-                    (ser-intermed each))
-                  input-map))
+  (cond 
         true
         (let [top-level (skeletize input-map)
               rsk (ref-skel-map input-map)
@@ -574,23 +542,19 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 ;; Note that (deserialize) should be able to cope with
 ;; both lists and arrays (i.e. just assume a sequence).
 (defn deserialize [serialized]
-  (cond (and false (set? serialized))
-        (set (map (fn [each]
-                    (deserialize each))
-                  serialized))
-        true (let [base (second (first serialized))]
-               (apply merge
-                      (let [all
-                            (cons base
-                                  (flatten
-                                   (mapfn (fn [paths-val]
-                                            (let [paths (first paths-val)
-                                                  val (atom (second paths-val))]
-                                              (mapfn (fn [path]
-                                                       (create-path-in path val))
-                                                     paths)))
+  (let [base (second (first serialized))]
+    (apply merge
+           (let [all
+                 (cons base
+                       (flatten
+                        (mapfn (fn [paths-val]
+                                 (let [paths (first paths-val)
+                                       val (atom (second paths-val))]
+                                   (mapfn (fn [path]
+                                            (create-path-in path val))
+                                          paths)))
                                           (rest serialized))))]
-                        all)))))
+             all))))
 
 (defn recursive-dissoc [a-map pred]
   "like dissoc, but works recursively. Only works on reference-free maps (contains no atoms)."
@@ -609,11 +573,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     {}))
 
 (defn deserialize-with-remove [serialized pred]
-  (cond (and false (set? serialized))
-        (set (map (fn [each]
-                    (deserialize each))
-                  serialized))
-        true (let [base (recursive-dissoc (second (first serialized)) pred)]
+  (cond true (let [base (recursive-dissoc (second (first serialized)) pred)]
                (apply merge
                       (let [all
                             (cons base
@@ -640,10 +600,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn serialize [input-map]
   (cond
-    (and false (set? input-map))
-   (set (map (fn [each]
-               (serialize each))
-             input-map))
    true
    (let [memoized (get input-map :serialized :none)]
      (if (not (= memoized :none))
