@@ -8,7 +8,7 @@
                                     recursive-dissoc
                                     refset2map ref-skel-map serialize
                                     remove-matching-keys
-                                    skeletize skels step2 unify unifyc]])
+                                    skeletize skels unify unifyc]])
   (:refer-clojure :exclude [get-in merge resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
@@ -605,64 +605,6 @@ when run from a REPL."
   ;; ...should return :fail.
   (is (fail?
        (unify '() {:foo 42}))))
-
-(deftest refset2map-test
-  (let [myref (atom #{1 2})
-        input {:a myref
-               :b #{{:c myref} {:d 3}}}
-        result (refset2map input)]
-    (is (map? result))
-    (is (set? (get-in result '(:a))))
-    (is (set? (get-in result '(:b))))
-    (is (= myref (:ref (first (get-in result '(:a))))))
-    (is (= myref (:ref (second (get-in result '(:a))))))
-    (is (or (= 1 (:val (first (get-in result '(:a)))))
-            (= 2 (:val (first (get-in result '(:a)))))))
-    (is (= 2 (count (get-in result '(:b)))))
-))
-
-(deftest step2-test
-  (let [myref (atom #{1 2})
-        input {:a myref
-               :b #{{:c myref} {:d 3}}}
-        result (refset2map input)
-        step2-result (step2 result)]
-    (is (set? step2-result))
-    (is (= (count step2-result) 6))))
-
-(deftest test-final
-  (let [input
-        (let [myref (atom #{1 2})]
-          {:a myref
-           :b #{{:c myref} {:d 3}}})
-        final (expand-disj input)]
-    (= (count final) 2)))
-
-(def parent
-  (let [catref (atom :top)]
-    {:head {:cat catref}
-     :cat catref}))
-
-(def disj-cat #{{:cat :noun}
-                {:cat :verb}})
-
-(def parent-with-disj
-  (let [catref (atom #{{:cat :noun}
-                      {:cat :verb}})]
-    {:head {:cat catref}
-     :cat catref}))
-
-(deftest category-disjunction
-  (let [result (expand-disj parent-with-disj)]
-    (is (= (count result) 2))))
-
-(deftest expand-constraints
-  (let [constraints {:constraints #{{:synsem {:infl :futuro
-                                              :sem {:tense :futuro}}}
-                                    {:synsem {:infl :present
-                                              :sem {:tense :present}}}}}
-        constraints-expanded (expand-disj constraints)]
-    (is (= (count constraints-expanded) 2))))
 
 (deftest isomorphic-true1
   (is (= true (isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43 :c 44}))))
