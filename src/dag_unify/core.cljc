@@ -782,19 +782,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn refset2map [fs]
   "Turn every ref to a set into a map with two keys: :ref and :val."
   (cond
-
-    (and false (set? fs))
-   (set (map (fn [each]
-               (refset2map each))
-             fs))
-
-   (and false (ref? fs)
-        (set? @fs))
-   (set (map (fn [each]
-               {:val (refset2map each)
-                :ref fs})
-             @fs))
-
    (ref? fs)
    {:val (refset2map @fs)
     :ref fs}
