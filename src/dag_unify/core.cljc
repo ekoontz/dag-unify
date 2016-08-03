@@ -272,17 +272,17 @@
   (if (not (empty? keys1))
     (let [key1 (first keys1)
           result (unify (key1 arg1 :top)
-                        (key1 arg2 :top))
-          rest-result
-          (merge-with-keys arg1
-                           (dissoc arg2 key1)
-                           (rest keys1))]
-          
-      (if (or (fail? result)
-              (fail? rest-result))
+                        (key1 arg2 :top))]
+      (if (fail? result)
         :fail
-        (clojure.core/merge {key1 result}
-                            rest-result)))
+        (let [rest-result
+              (merge-with-keys arg1
+                               (dissoc arg2 key1)
+                               (rest keys1))]
+          (if (fail? rest-result)
+            :fail
+            (clojure.core/merge {key1 result}
+                                rest-result)))))
     arg2))
 
 (defn merge [& args]
