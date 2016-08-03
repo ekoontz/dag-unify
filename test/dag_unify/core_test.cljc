@@ -493,14 +493,14 @@ a given value in a given map."
            42))
 
     ;; similar tests as a) above, but using fs/get-in
-    (is (number? (get-in my-deser '(:a :c))))
-    (is (number? (get-in my-deser '(:b :c))))
-    (is (number? (get-in my-deser '(:d))))
-    (is (= (get-in my-deser '(:a :c))
-           (get-in my-deser '(:d))))
-    (is (= (get-in my-deser '(:b :c))
-           (get-in my-deser '(:d))))
-    (is (= (get-in my-deser '(:a :c))
+    (is (number? (get-in my-deser [:a :c])))
+    (is (number? (get-in my-deser [:b :c])))
+    (is (number? (get-in my-deser [:d])))
+    (is (= (get-in my-deser [:a :c])
+           (get-in my-deser [:d])))
+    (is (= (get-in my-deser [:b :c])
+           (get-in my-deser [:d])))
+    (is (= (get-in my-deser [:a :c])
            42))))
 
 (deftest deser-2
