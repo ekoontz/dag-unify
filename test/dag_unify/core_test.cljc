@@ -4,7 +4,7 @@
             [dag_unify.core :refer [all-refs create-path-in copy create-shared-values
                                     deserialize deserialize-with-remove
                                     expand-disj fail? get-in get-refs
-                                    isomorphic? merge paths-to-value ref?
+                                    isomorphic? merge find-paths-to-value ref?
                                     recursive-dissoc
                                     refset2map ref-skel-map serialize
                                     remove-matching-keys
@@ -276,15 +276,15 @@
 ;        pathify (pathify mymap)]
 ;    (is (= pathify '((:a :c) 42 (:b :c) 42 (:c) 42)))))
 
-(deftest paths-to-values-1
+(deftest find-paths-to-values-1
   "test path-to-value, which returns a list of all ways of reaching
 a given value in a given map."
   (let [ref1 (atom 42)
         mymap {:a ref1 :b ref1}
-        ptf (paths-to-value mymap ref1 nil)]
+        ptf (find-paths-to-value mymap ref1 nil)]
     (is (= ptf '((:a)(:b))))))
 
-(deftest paths-to-values-2
+(deftest find-paths-to-values-2
   "test path-to-value, which returns a list of all ways of reaching
 a given value in a given map."
   (let [ref2 (atom 42)
@@ -292,10 +292,10 @@ a given value in a given map."
         mymap {:a ref1
                :b ref1
                :d ref2}
-        paths-to-ref1 (paths-to-value mymap ref1 nil)]
+        paths-to-ref1 (find-paths-to-value mymap ref1 nil)]
     (is (= paths-to-ref1 '((:a)(:b))))))
 
-(deftest paths-to-values-3
+(deftest find-paths-to-values-3
   "test path-to-value, which returns a list of all ways of reaching
 a given value in a given map."
   (let [ref2 (atom 42)
@@ -303,7 +303,7 @@ a given value in a given map."
         mymap {:a ref1
                :b ref1
                :d ref2}
-        paths-to-ref2 (paths-to-value mymap ref2 nil)]
+        paths-to-ref2 (find-paths-to-value mymap ref2 nil)]
     (is (= paths-to-ref2 '((:a :c)(:b :c)(:d))))))
 
 (deftest all-refs1

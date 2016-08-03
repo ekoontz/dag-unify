@@ -405,12 +405,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn uniq [sorted-vals]
   (reverse (uniq-using-recur sorted-vals)))
 
-(defn paths-to-value [map value path]
+(defn find-paths-to-value [map value path]
   (cond
     (= map value) (list path)
-    (ref? map) (paths-to-value @map value path)
+    (ref? map) (find-paths-to-value @map value path)
     (map? map) (mapcat (fn [key]
-                         (paths-to-value (get map key) value (concat path (list key))))
+                         (find-paths-to-value (get map key) value (concat path (list key))))
                        (keys map))))
 (defn all-refs [input]
   (cond
@@ -489,7 +489,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
      ;; list of all paths that point to each ref in _input-map_.
      (mapfn (fn [eachref]
-             (paths-to-value input-map eachref nil))
+             (find-paths-to-value input-map eachref nil))
            refs))))
 
 ;; (((:a :c) (:b :c) (:d))
