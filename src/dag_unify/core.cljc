@@ -503,18 +503,16 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         path-length-pairs))
 
 (defn ser-intermed [input-map]
-  (cond 
-        true
-        (let [top-level (skeletize input-map)
-              rsk (ref-skel-map input-map)
-              sk (mapfn (fn [ref-skel]
-                         (:skel ref-skel))
-                       (keys rsk))]
-          (clojure.core/merge
-           {nil top-level}
-           (zipmap
-            (vals rsk)
-            sk)))))
+  (let [top-level (skeletize input-map)
+        rsk (ref-skel-map input-map)
+        sk (mapfn (fn [ref-skel]
+                    (:skel ref-skel))
+                  (keys rsk))]
+    (clojure.core/merge
+     {nil top-level}
+     (zipmap
+      (vals rsk)
+      sk))))
 
 (defn create-shared-values [serialized]
   (mapfn (fn [paths-vals]
@@ -603,44 +601,42 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                         all)))))
 
 (defn serialize [input-map]
-  (cond
-   true
-   (let [memoized (get input-map :serialized :none)]
-     (if (not (= memoized :none))
-       memoized
-       (let [ser (ser-intermed input-map)]
+  (let [memoized (get input-map :serialized :none)]
+    (if (not (= memoized :none))
+      memoized
+      (let [ser (ser-intermed input-map)]
         ;; ser is a intermediate (but fully-serialized) representation
-         ;; of the input map, as a map from pathsets to reference-free maps
-         ;; (maps which have no references within them).
+        ;; of the input map, as a map from pathsets to reference-free maps
+        ;; (maps which have no references within them).
+        
+        ;; In place of the references in the original map, the reference-free
+        ;; maps have simply a dummy value (the value :top) stored where the
+        ;; the reference is in the input-map.
+        ;;
+        ;; ser:
+        ;;
+        ;;   pathset    |  value
+        ;; -------------+---------
+        ;;   pathset1   => value1
+        ;;   pathset2   => value2
+        ;;      ..         ..
+        ;;   nil        => outermost_map
+        ;;
+        ;; Each pathset is a set of paths to a shared value, the value
+        ;; shared by all paths in that pathset.
+        ;;
+        ;; The last row shown is for the outermost_map that represents
+        ;; the entire input, which is why its pathset is nil.
+        ;;
+        ;; However, ser is not sorted by path length: it needs to be
+        ;; sorted so that, when deserialization is done, assignment
+        ;; will occur in the correct order: shortest path first.
+        
+        ;; Thefore, we now sort _ser_ in a shortest-path-first order, so that
+        ;; during de-serialization, all assignments will happen in this
+        ;; same correct order.
 
-         ;; In place of the references in the original map, the reference-free
-         ;; maps have simply a dummy value (the value :top) stored where the
-         ;; the reference is in the input-map.
-         ;;
-         ;; ser:
-         ;;
-         ;;   pathset    |  value
-         ;; -------------+---------
-         ;;   pathset1   => value1
-         ;;   pathset2   => value2
-         ;;      ..         ..
-         ;;   nil        => outermost_map
-         ;;
-         ;; Each pathset is a set of paths to a shared value, the value
-         ;; shared by all paths in that pathset.
-         ;;
-         ;; The last row shown is for the outermost_map that represents
-         ;; the entire input, which is why its pathset is nil.
-         ;;
-         ;; However, ser is not sorted by path length: it needs to be
-         ;; sorted so that, when deserialization is done, assignment
-         ;; will occur in the correct order: shortest path first.
-
-         ;; Thefore, we now sort _ser_ in a shortest-path-first order, so that
-         ;; during de-serialization, all assignments will happen in this
-         ;; same correct order.
-
-         (sort-shortest-path-ascending-r ser (sort-by-max-lengths ser)))))))
+        (sort-shortest-path-ascending-r ser (sort-by-max-lengths ser))))))
 
 (defn copy [input]
   (let [serialized (serialize input)
