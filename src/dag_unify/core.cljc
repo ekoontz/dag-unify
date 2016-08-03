@@ -388,7 +388,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn pathify [fs]
   (pathify-r fs))
 
-
 (def uniq-using-recur
   "remove duplicates by checking first and second: if equal, remove the first and keep the second. otherwise, keep both."
   (fn [sorted-vals]
@@ -539,7 +538,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
               sk (mapfn (fn [ref-skel]
                          (:skel ref-skel))
                        (keys rsk))]
-          (merge
+          (clojure.core/merge
            {nil top-level}
            (zipmap
             (vals rsk)
