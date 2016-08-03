@@ -115,20 +115,6 @@
 (declare copy)
 (declare unifyc)
 
-(defn get-refs-in [input]
-  (cond
-   (ref? input)
-   (union
-    (set (list input))
-    (get-refs-in @input))
-   (map? input)
-   (union
-    (set (filter #(ref? %) (vals input)))
-    (set (mapcat (fn [each] (get-refs-in each))
-                 (vals input))))
-   :else
-   nil))
-
 ;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
 ;; either consider all args, or change signature of (unify) to take only val1 val2.
 ;; see also lexiconfn/unify (probably will change signature, but make lexiconfn/unify handle
@@ -187,18 +173,6 @@
 
       (nil? args) nil
            
-      ;; val1 is a ref, val2 is a map that contains val1: return fail.
-      (and (ref? val1)
-           (map? val2)
-           (some #(= val1 %) (get-refs-in val2)))
-      :fail
-
-      ;; val2 is a ref, val1 is a map that contains val2: return fail.
-      (and (ref? val2)
-           (map? val1)
-           (some #(= val2 %) (get-refs-in val1)))
-      :fail
-           
       ;; val1 is a ref, val2 is not a ref.
       (and
        (ref? val1)
@@ -220,35 +194,25 @@
       (and
        (ref? val1)
        (ref? val2))
-      (let [refs-in-val1 (get-refs-in @val1)
-            refs-in-val2 (get-refs-in @val2)]
-             
-        (cond
-          (or (= val1 val2) ;; same reference.
-              (= val1 @val2)) ;; val1 <- val2
-          val1
+      (cond
+        (or (= val1 val2) ;; same reference.
+            (= val1 @val2)) ;; val1 <- val2
+        val1
 
-          (= @val1 val2) ;; val1 -> val2
-          val2
+        (= @val1 val2) ;; val1 -> val2
+        val2
               
-          (some #(= val2 %) refs-in-val1)
-          :fail
-
-          (some #(= val1 %) refs-in-val2)
-          :fail
-
-          :else
-          (do
-            (swap! val1
-                   (fn [x] (unify @val1 @val2)))
-            (swap! val2
-                   (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-            val1)))
+        :else
+        (do
+          (swap! val1
+                 (fn [x] (unify @val1 @val2)))
+          (swap! val2
+                 (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+          val1))
 
       ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
       (not (= :notfound (:not val1 :notfound)))
       (if (= val2 :top)
-                                        ;       :top ;; special case: (unify :top {:not X}) => :top
         val1
         ;; else
         (let [result (unify (:not val1) val2)]

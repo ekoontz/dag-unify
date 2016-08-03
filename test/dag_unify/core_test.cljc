@@ -668,18 +668,6 @@ when run from a REPL."
         constraints-expanded (expand-disj constraints)]
     (is (= (count constraints-expanded) 2))))
 
-(deftest cycle-is-fail
-  "unification that would lead to a cycle results in fail, and avoids a StackOverflowError."
-  (let [ref1 (atom :top)
-        ref2 (atom :top)
-        foo1 {:a ref1 :b ref1}
-        foo2 {:a ref2 :b {:a ref2}}]
-    ;; Test both copy and non-copy - first two are both copying before unification, so should be equivalent,
-    ;; but might as well test more variants.
-    (is (fail? (unifyc foo1 foo2)))
-    (is (fail? (unify (copy foo1) (copy foo2))))
-    (is (fail? (unify foo1 foo2)))))
-
 (deftest isomorphic-true1
   (is (= true (isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43 :c 44}))))
 
