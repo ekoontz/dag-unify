@@ -606,10 +606,6 @@ when run from a REPL."
   (is (fail?
        (unify '() {:foo 42}))))
 
-(deftest serialized-set
-  (let [result (serialize (set (list 1 2)))]
-    (is (= result #{(list (list nil 1)) (list (list nil 2))}))))
-
 (deftest refset2map-test
   (let [myref (atom #{1 2})
         input {:a myref
