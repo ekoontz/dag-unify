@@ -256,7 +256,7 @@
         val2 (second args)]
     (cond
 
-     (set? val1)
+      (and false (set? val1))
      (set (filter (fn [each]
                     (not (fail? each)))
                   (reduce union
@@ -270,7 +270,7 @@
                                          (set (list result)))))
                                val1))))
 
-     (set? val2)
+     (and false (set? val2))
      (set (filter (fn [each]
                     (not (fail? each)))
                   (reduce union
@@ -528,7 +528,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         path-length-pairs))
 
 (defn ser-intermed [input-map]
-  (cond (set? input-map)
+  (cond (and false (set? input-map))
         (set (map (fn [each]
                     (ser-intermed each))
                   input-map))
@@ -574,7 +574,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 ;; Note that (deserialize) should be able to cope with
 ;; both lists and arrays (i.e. just assume a sequence).
 (defn deserialize [serialized]
-  (cond (set? serialized)
+  (cond (and false (set? serialized))
         (set (map (fn [each]
                     (deserialize each))
                   serialized))
@@ -609,7 +609,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     {}))
 
 (defn deserialize-with-remove [serialized pred]
-  (cond (set? serialized)
+  (cond (and false (set? serialized))
         (set (map (fn [each]
                     (deserialize each))
                   serialized))
@@ -640,7 +640,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn serialize [input-map]
   (cond
-   (set? input-map)
+    (and false (set? input-map))
    (set (map (fn [each]
                (serialize each))
              input-map))
@@ -827,12 +827,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   "Turn every ref to a set into a map with two keys: :ref and :val."
   (cond
 
-   (set? fs)
+    (and false (set? fs))
    (set (map (fn [each]
                (refset2map each))
              fs))
 
-   (and (ref? fs)
+   (and false (ref? fs)
         (set? @fs))
    (set (map (fn [each]
                {:val (refset2map each)
