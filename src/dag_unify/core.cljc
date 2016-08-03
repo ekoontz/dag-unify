@@ -274,7 +274,7 @@
           result (unify (key1 arg1 :top)
                         (key1 arg2 :top))
           rest-result
-          (merge-with-keys (dissoc arg1 key1)
+          (merge-with-keys arg1
                            (dissoc arg2 key1)
                            (rest keys1))]
           
