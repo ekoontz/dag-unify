@@ -237,22 +237,17 @@
       :fail)))
 
 (defn merge-with-keys [arg1 arg2 keys1]
-  (if (not (empty? keys1))
-    (let [key1 (first keys1)
-          result (unify (key1 arg1 :top)
-                        (key1 arg2 :top))]
-      (if (fail? result)
-        :fail
-        (let [rest-result
-              (merge-with-keys arg1
-                               (dissoc arg2 key1)
-                               (rest keys1))]
-          (if (fail? rest-result)
-            :fail
-            (clojure.core/merge {key1 result}
-                                rest-result)))))
-    arg2))
-
+  (let [key1 (first keys1)
+        result (if (not (empty? keys1))
+                 (unify (key1 arg1 :top)
+                        (key1 arg2 :top)))]
+    (cond (empty? keys1) arg2
+          (fail? result) :fail
+          true (merge-with-keys arg1
+                                (clojure.core/merge
+                                 {key1 result}
+                                 (dissoc arg2 key1))
+                                (rest keys1)))))
 (defn merge [& args]
   "warning: {} is the identity value, not nil; that is: (merge X {}) => X, but (merge X nil) => nil, (not X)."
   (if (empty? (rest args)) (first args))
