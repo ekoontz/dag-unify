@@ -6,7 +6,7 @@
                                     expand-disj fail? get-in get-refs
                                     isomorphic? merge find-paths-to-value ref?
                                     recursive-dissoc
-                                    refset2map ref-skel-map serialize
+                                    ref-skel-map serialize
                                     remove-matching-keys
                                     skeletize skels unify unifyc]])
   (:refer-clojure :exclude [get-in merge resolve]))

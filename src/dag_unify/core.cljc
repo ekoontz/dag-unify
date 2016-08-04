@@ -345,18 +345,15 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (mapcat (fn [kv]
             (let [key (first kv)
                   val (second kv)]
-;              (println (str "K:" key))
               (if (not (contains? *exclude-keys* key))
                 (if (map? val)
                   (do
-;                    (println (str "PAM"))
                     (pathify-r val (concat prefix (list key))))
                   (if (and (ref? val)
                            (let [val @val]
                              (map? val)))
                     (pathify-r @val (concat prefix (list key)))
                   (do
-;                    (println (str "not PAM" (type val)))
                     (list {(concat prefix (list key))
                            (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
                                val)})))))))
@@ -431,14 +428,15 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn skeletize [input-val]
   (if (map? input-val)
-    (zipmap (keys (dissoc input-val :serialized))
-            (mapfn (fn [val]
-                    (if (ref? val)
-                      :top
-                      (if (map? val)
-                        (skeletize val)
-                        val)))
-                  (vals (dissoc input-val :serialized))))
+    (let [sans-serialized (dissoc input-val :serialized)]
+      (zipmap (keys sans-serialized)
+              (mapfn (fn [val]
+                       (if (ref? val)
+                         :top
+                         (if (map? val)
+                           (skeletize val)
+                           val)))
+                     (vals sans-serialized))))
     input-val))
 
 ;; TODO s/map/input-map/
@@ -655,63 +653,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
       (clojure.core/merge {:serialized serialized}
                           deserialized))))
 
-(defn trunc [serialized]
-  "create a new serialized map with all paths removed that are non-immediate."
-  (map (fn [paths-skel-pair]
-         (let [paths (first paths-skel-pair)
-               skel (second paths-skel-pair)]
-           (let [filtered-paths
-                 (filter (fn [path]
-                           (let [take-2 (take 2 path)]
-                             (and (not (= take-2
-                                          '(:head :head)))
-                                  (not (= take-2
-                                          '(:comp :comp)))
-                                  (not (= take-2
-                                          '(:head :comp)))
-                                  (not (= take-2
-                                          '(:comp :2)))
-                                  (not (= take-2
-                                          '(:head :1)))
-                                  (not (= take-2
-                                          '(:head :2)))
-                                  (not (= take-2
-                                          '(:1 :1)))
-                                  (not (= take-2
-                                          '(:1 :comp)))
-                                  (not (= take-2
-                                          '(:1 :head)))
-                                  (not (= take-2
-                                          '(:1 :2)))
-                                  (not (= take-2
-                                          '(:2 :2)))
-                                  (not (= take-2
-                                          '(:2 :1)))
-                                  (not (= take-2
-                                          '(:2 :head)))
-                                  (not (= take-2
-                                          '(:2 :comp))))))
-                         paths)]
-           (list filtered-paths skel))))
-       serialized))
-
-(defn copy-trunc [map]
-  (deserialize (trunc (serialize map))))
-
-(defn has-path [path paths]
-  (if (first paths)
-    (if (= (first paths) path)
-      true
-      (has-path path (rest paths)))))
-
-(defn path-to-ref-index [serialized path n]
-  "given serialized form of a map, find the index for _path_. Start with 0."
-  (if (first serialized)
-    (let [paths (butlast (first serialized))
-          has-path (has-path path (first paths))]
-      (if (not (nil? has-path))
-        n
-        (path-to-ref-index (rest serialized) path (+ n 1))))))
+(defn label-of [parent]
+  (if (:rule parent) (:rule parent) (:comment parent)))
 
 (defn ref= [map path1 path2]
   "return true iff path1 and path2 point to the same object."
@@ -723,6 +666,22 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
      (not (= butlast-val2 :none))
      (= (get butlast-val1 (last path1) :none1)
         (get butlast-val2 (last path2) :none2)))))
+
+(defn has-path [path paths]
+  (if (first paths)
+    (if (= (first paths) path)
+      true
+      (has-path path (rest paths)))))
+
+(defn path-to-ref-index [serialized path n]
+  "given serialized form of a map, find the index for _path_. Start with 0."
+  ;; TODO: n should be optional and default to 0
+  (if (first serialized)
+    (let [paths (butlast (first serialized))
+          has-path (has-path path (first paths))]
+      (if (not (nil? has-path))
+        n
+        (path-to-ref-index (rest serialized) path (+ n 1))))))
 
 (defn strip-refs [map-with-refs]
   "return a map like map-with-refs, but without refs - (e.g. {:foo (atom 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
@@ -787,99 +746,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     ;; TODO: should not need to re-call this: workaround for the fact that remove-top-values doesn't work correctly,
     ;; but does seem to work correctly if called again on its own output.
     (remove-top-values result)))
-
-(defn refset2map [fs]
-  "Turn every ref to a set into a map with two keys: :ref and :val."
-  (cond
-   (ref? fs)
-   {:val (refset2map @fs)
-    :ref fs}
-
-   (and (map? fs)
-        (not (empty? fs)))
-   (let [key (first (first fs))
-         val (key fs)]
-     (conj
-      {key (refset2map val)}
-      (refset2map (dissoc fs key))))
-
-   true
-   fs))
-
-(defn get-all-ref-tuples [fs & [path]]
-  "returns list of ref:val:path tuples."
-  (let [path (if path path nil)]
-    (cond
-     (and (map? fs)
-          (not (empty? fs))
-          (:ref fs))
-     (list {:ref (:ref fs)
-            :val (:val fs)
-            :path path})
-     (and (map? fs)
-          (not (empty? fs)))
-     (let [key (first (first fs))
-           val (key fs)]
-       (concat
-        (get-all-ref-tuples val (concat path (list key)))
-        (get-all-ref-tuples (dissoc fs key) path)))
-     true nil)))
-
-(defn get-all-refs-for [fs]
-  "get the set of refs in a normalized fs"
-  (apply union
-         (map (fn [tuple]
-                (set (list (:ref tuple))))
-              (get-all-ref-tuples fs))))
-
-(defn cartesian [set1 set2]
-  "for x in set1, y in set2, conj each x and each y"
-  (cond (empty? set1) set2
-        (empty? set2) set1
-        true
-        (apply union
-               (map (fn [each-map-in-set-1]
-                      (set (map (fn [each-map-in-set-2]
-                                  (conj each-map-in-set-1 each-map-in-set-2))
-                                set2)))
-                    set1))))
-(defn get-unified-value-for [fs ref]
-  "get all values to be unified for the given ref in the given normalized fs."
-  (reduce unify
-          (apply concat
-                 (map (fn [tuple]
-                        (let [tuple-ref (:ref tuple)]
-                          (if (= tuple-ref ref)
-                            (list (:val tuple)))))
-                      (get-all-ref-tuples fs)))))
-
-(defn copy-with-ref-substitute [fs old-ref new-ref]
-  "create new fs, but with new-ref substituted for every occurance of {:ref ref,:val X}"
-  (cond
-   (and (map? fs)
-        (not (empty? fs))
-        (not (nil? (:ref fs)))
-        (= (:ref fs) old-ref))
-   new-ref
-
-   (and (map? fs)
-        (not (empty? fs)))
-   (let [key (first (first fs))
-         val (key fs)]
-     (conj {key (copy-with-ref-substitute val old-ref new-ref)}
-           (copy-with-ref-substitute (dissoc fs key) old-ref new-ref)))
-   true
-   fs))
-
-(defn copy-with-assignments [fs assignments]
-  (if (not (empty? assignments))
-    (let [assignment (first assignments)
-          old-ref (:ref assignment)
-          new-ref (atom (:val assignment))]
-      (copy-with-assignments
-       (copy-with-ref-substitute fs old-ref new-ref)
-       (rest assignments)))
-    fs))
 
 (defn dissoc-paths [fs & [paths]]
   "dissoc a path from a map; e.g.: (dissoc-paths {:a {:b 42 :c 43}} '(:a :b)) => {:a {:c 43}}."
@@ -980,9 +846,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         true
         (= a b)))
 
-(defn label-of [parent]
-  (if (:rule parent) (:rule parent) (:comment parent)))
-
 ;; TODO: use a reduce or recur here rather
 ;; than simply recursion
 (defn find-fail-in [fs1 fs2 paths]
@@ -1007,42 +870,3 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (fail-path-between fs1 fs2))
 
-;; BELOW: DEPRECATED. Terrible performance. Either implement in
-;; a feasible, efficient manner, or remove.
-(defn compare-bytewise [a b index]
-  "compare two byte arrays by casting each byte to short."
-  (if (> (alength a) index)
-    (if (> (alength b) index)
-      (if (= (nth a index)
-             (nth b index))
-        (compare-bytewise a b (+ 1 index))
-        (< (nth a index)
-           (nth b index)))
-      true)
-    false))
-
-(defn sorted-paths-1 [paths]
-  (sort (fn [x y]
-          (let [size-x (count x)
-                size-y (count y)]
-            (cond (< (count x) (count y)) true
-                  (> (count x) (count y)) false
-                  true (compare-bytewise (.getBytes (str x)) (.getBytes (str y)) 0))))
-          paths))
-
-(defn sorted-paths [serialized path n index]
-  (let [lookup (nth serialized index)
-        allpaths (seq (first (butlast lookup)))]
-    (sorted-paths-1 allpaths)))
-
-(defn is-first-path [serialized path n index]
-  (if (nil? index)
-    (exception (str "Index was null in serialized feature structure: " serialized)))
-  (let [lookup (nth serialized index)
-          firstpath (seq (first (sorted-paths serialized path n index)))]
-      true))
-
-(defn first-path [serialized path n index]
-  (let [lookup (nth serialized index)
-        firstpath (seq (first (sorted-paths serialized path n index)))]
-    firstpath))
