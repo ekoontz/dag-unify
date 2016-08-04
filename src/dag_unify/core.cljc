@@ -236,22 +236,24 @@
       :else
       :fail)))
 
-(defn merge-with-keys [arg1 arg2 keys1]
-  (loop [arg1 arg1 arg2 arg2 keys1 keys1]
-    (let [key1 (first keys1)
-          result (if (not (empty? keys1))
+(defn merge-with-keys [arg1 arg2 keys-of-arg1]
+  (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
+    (let [key1 (first keys-of-arg1)
+          result (if (not (empty? keys-of-arg1))
                    (unify (key1 arg1 :top)
                           (key1 arg2 :top)))]
       (cond
-        ;; arg2 now contains only keys that
+
+        ;; if keys-of-arg1 is empty, then arg2 contains only keys that
         ;; were *not* in arg1.
-        (empty? keys1) arg2
+        (empty? keys-of-arg1) arg2
+
         (fail? result) :fail
         true (recur arg1
                     (clojure.core/merge
                      {key1 result}
                      (dissoc arg2 key1))
-                    (rest keys1))))))
+                    (rest keys-of-arg1))))))
 
 (defn merge [& args]
   "warning: {} is the identity value, not nil; that is: (merge X {}) => X, but (merge X nil) => nil, (not X)."
