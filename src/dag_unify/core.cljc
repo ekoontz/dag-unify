@@ -383,12 +383,18 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (reverse (uniq-using-recur sorted-vals)))
 
 (defn find-paths-to-value [map value path]
+  "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   (cond
-    (= map value) (list path)
-    (ref? map) (find-paths-to-value @map value path)
+    (ref? map)
+    (cond (= map value) [path] ;; found the value that we were looking for.
+          true (find-paths-to-value @map value path))
     (map? map) (mapcat (fn [key]
-                         (find-paths-to-value (get map key) value (concat path (list key))))
+                         (find-paths-to-value
+                          (get map key)
+                          value
+                          (concat path [key])))
                        (keys map))))
+
 (defn all-refs [input]
   (cond
     (ref? input)
