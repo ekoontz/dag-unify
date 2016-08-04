@@ -15,7 +15,7 @@
    [clojure.string :as string]))
 
 ;; use map or pmap.
-#?(:clj (def ^:const mapfn pmap))
+#?(:clj (def ^:const mapfn map))
 #?(:cljs (def ^:const mapfn map))
 
 (defn exception [error-string]
