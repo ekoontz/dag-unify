@@ -21,14 +21,6 @@ nil
 user> unify
 #function[dag-unify.core/unify]
 user> (def foo (let [shared-value (atom :top)]
-                 {:a shared-value
-                  :b shared-value}))
-#'user/foo
-user> foo
-{:a #atom[:top 0xd056d4a], :b #atom[:top 0xd056d4a]}
-user> (unify foo {:a 42})
-{:b #atom[42 0xd056d4a], :a #atom[42 0xd056d4a]}
-user> (def foo (let [shared-value (atom :top)]
                  {:a {:b shared-value}
                   :c shared-value}))
 #'user/foo
@@ -45,52 +37,53 @@ user>
 Consider the behavior of Clojure's `merge`:
 
 ```
-(let [foo {:a {:b 42}}
-      bar {:a {:c 43}}]
-  (merge foo bar))
-=> {:a {:c 43}}
+user> (merge {:a {:b 42}}
+             {:a {:c 43}})
+
+{:a {:c 43}}
+
 ```
 
-Note that the `{:b 42}` is lost from the return value - it was
-overwritten by `bar`'s value for `:a`.
+Note that the the first argument's `{:b 42}` is lost from the return
+value - it was overwritten by the second argument's value for `:a` -
+`{:c 43`}.
 
 With `unify`, however, we preserve both arguments' values for `:a` and
 combine them as follows:
 
 ```
-(let [foo {:a {:b 42}}
-      bar {:c 43}}]
-   (unify foo bar))
+user> (unify {:a {:b 42}}
+             {:a {:c 43}})
+
+{:a {:b 42, :c 43}}
 ```
 
-yields:
+We can use (atoms)[http://clojure.org/atoms] with a map to represent a DAG:
 
 ```
-{:c #atom[42 0x7d413a07], :a {:b #atom[42 0x7d413a07]}}
+user> (def foo (let [shared-value (atom :top)]
+                 {:a {:b shared-value}
+                  :c shared-value}))
+                  
+#'user/foo
+user> foo
+{:a {:b #atom[:top 0x57212d5f]}, :c #atom[:top 0x57212d5f]}
 ```
 
-For unification of atomic values (numbers, strings, keywords) are
-compared by equality. If they are not equal, then the special keyword
-`:fail` is returned:
+And then `unify` that DAG with another map to cause the atom's value
+to be modified:
 
 ```
-(unify 1 1)
-=> 1
+user> (unify foo {:c 42})
+{:c #atom[42 0x57212d5f], :a {:b #atom[42 0x57212d5f]}}
+user> foo
+{:a {:b #atom[42 0x57212d5f]}, :c #atom[42 0x57212d5f]}
+user> 
 ```
-
-```
-(unify 1 2)
-=> :fail
-```
-
-## Atoms
-
-In Clojure, a DAG may be represented by Clojure map where the values
-of keys can be atoms (http://clojure.org/atoms).
 
 If one or more arguments to `unify` is a map with a key whose value is
-an atom, then the value of that key will also be that same atom, with its
-value being the unification of the arguments. For example:
+an atom, then the value of that key will still be that same atom, but its
+value will be modified to be the unification of the arguments. For example:
 
 ```
 (let [shared-value (atom {:b 42})
@@ -105,6 +98,22 @@ Above, `foo`'s value for `:a` is a reference to the value `{:b
 (`{:c 43}`), and the result `{:b 42, c 43}` is the new value of the
 reference, and this reference is the value `:a` for the unification of
 `foo` and `bar`.
+
+## Unification of simple values
+
+For unification of simple values (numbers, strings, keywords) are
+compared by equality. If they are not equal, then the special keyword
+`:fail` is returned:
+
+```
+(unify 1 1)
+=> 1
+```
+
+```
+(unify 1 2)
+=> :fail
+```
 
 ## `:top`
 
