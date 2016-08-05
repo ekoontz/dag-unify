@@ -58,7 +58,7 @@ user> (unify {:a {:b 42}}
 {:a {:b 42, :c 43}}
 ```
 
-We can use (atoms)[http://clojure.org/atoms] with a map to represent a DAG:
+We can use [Atoms](http://clojure.org/atoms) with a map to represent a DAG:
 
 ```
 user> (def foo (let [shared-value (atom :top)]
