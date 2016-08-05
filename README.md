@@ -15,6 +15,7 @@ value for the key in the combined map.
 ## Usage
 
 ```
+
 user> (require '[dag_unify.core :refer [unify]])
 nil
 user> unify
@@ -27,6 +28,15 @@ user> foo
 {:a #atom[:top 0xd056d4a], :b #atom[:top 0xd056d4a]}
 user> (unify foo {:a 42})
 {:b #atom[42 0xd056d4a], :a #atom[42 0xd056d4a]}
+user> (def foo (let [shared-value (atom :top)]
+                 {:a {:b shared-value}
+                  :c shared-value}))
+#'user/foo
+user> foo
+{:a {:b #atom[:top 0x7d413a07]}, :c #atom[:top 0x7d413a07]}
+user> (unify foo {:a {:b 42}})
+{:c #atom[42 0x7d413a07], :a {:b #atom[42 0x7d413a07]}}
+user> 
 
 ```
 
@@ -49,9 +59,14 @@ combine them as follows:
 
 ```
 (let [foo {:a {:b 42}}
-      bar {:a {:c 43}}]
+      bar {:c 43}}]
    (unify foo bar))
-=> {:a {:c 43, :b 42}}
+```
+
+yields:
+
+```
+{:c #atom[42 0x7d413a07], :a {:b #atom[42 0x7d413a07]}}
 ```
 
 For unification of atomic values (numbers, strings, keywords) are
