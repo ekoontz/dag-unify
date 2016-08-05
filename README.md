@@ -4,7 +4,8 @@
 
 # dag-unify
 
-A Clojure library for combining directed acyclic graphs (DAGs) via
+A Clojure library for combining directed acyclic graphs
+([DAGs](https://en.wikipedia.org/wiki/Directed_acyclic_graph)) via
 unification. Unification is similar to merge
 (http://clojure.github.io/clojure/clojure.core-api.html#clojure.core/merge),
 except that if arguments have the same keys, the arguments' values for
