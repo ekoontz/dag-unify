@@ -58,8 +58,8 @@ an atom, then the value of that key will also be that same atom, with its
 value being the unification of the arguments. For example:
 
 ```
-(let [myref (atom {:b 42})
-      foo {:a myref}
+(let [shared-value (atom {:b 42})
+      foo {:a shared-value}
       bar {:a {:c 43}}]
   (unify foo bar))
 => {:a #<Atom@344dc027: {:c 43, :b 42}>}
@@ -86,15 +86,15 @@ unification. It is the most unspecific, most general value possible.
 Atoms work with `:top` as in the following example:
 
 ```
-(let [myref (atom :top)
-      foo {:a myref
-           :b myref}
+(let [shared-value (atom :top)
+      foo {:a shared-value
+           :b shared-value}
       bar {:a 42}]
   (unify foo bar))
 => {:b #<Atom@51670b57: 42>, :a #<Atom@51670b57: 42>}
 ```
 
-In the immediately above case, `foo` has an unspecified (`:top`) value
+In the immediately above case, `foo` has an unspecified `:top` value
 that is shared by `foo`'s `:a` and `:b` key. `bar` had a more specific
 value (i.e. 42) for `:a`, but no `:b` key. The result of unification
 of `foo` and `bar` is a map with `:a` and `:b` both sharing the same
@@ -128,9 +128,9 @@ values which are not equal (if atomic values) or have some part that
 is not equal. For example:
 
 ```
-(let [myref (atom :top)
-      foo {:a myref
-           :b myref}
+(let [shared-value (atom :top)
+      foo {:a shared-value
+           :b shared-value}
       bar {:a 42
            :b 43}]
   (unify foo bar))
