@@ -99,22 +99,6 @@ Above, `foo`'s value for `:a` is a reference to the value `{:b
 reference, and this reference is the value `:a` for the unification of
 `foo` and `bar`.
 
-## Unification of simple values
-
-For unification of simple values (numbers, strings, keywords) are
-compared by equality. If they are not equal, then the special keyword
-`:fail` is returned:
-
-```
-(unify 1 1)
-=> 1
-```
-
-```
-(unify 1 2)
-=> :fail
-```
-
 ## `:top`
 
 For the special keyword `:top`, the following is true for all `X`:
@@ -186,6 +170,22 @@ because `:foo` has a shared value which `:a` and `:b` both point to.
 However, these two atomic values (42 and 43) are not equal
 to one another. The result is that the unification of `foo` and `bar`
 is `:fail`.
+
+## Unification of simple values
+
+For unification of simple values (numbers, strings, keywords), they
+are compared by equality. If the values to be unified are not equal,
+then `:fail` is returned:
+
+```
+(unify 1 1)
+=> 1
+```
+
+```
+(unify 1 2)
+=> :fail
+```
 
 ## `unify` versus `unifyc`
 
