@@ -12,7 +12,27 @@ except that if arguments have the same keys, the arguments' values for
 those keys will be recursively combined via unification to yield the
 value for the key in the combined map.
 
-First consider the behavior of Clojure's `merge`:
+## Usage
+
+```
+user> (require '[dag_unify.core :refer [unify]])
+nil
+user> unify
+#function[dag-unify.core/unify]
+user> (def foo (let [shared-value (atom :top)]
+                 {:a shared-value
+                  :b shared-value}))
+#'user/foo
+user> foo
+{:a #atom[:top 0xd056d4a], :b #atom[:top 0xd056d4a]}
+user> (unify foo {:a 42})
+{:b #atom[42 0xd056d4a], :a #atom[42 0xd056d4a]}
+
+```
+
+## Unification
+
+Consider the behavior of Clojure's `merge`:
 
 ```
 (let [foo {:a {:b 42}}
@@ -143,11 +163,7 @@ However, these two atomic values (42 and 43) are not equal
 to one another. The result is that the unification of `foo` and `bar`
 is `:fail`.
 
-## Usage
-
-```
-(require '[dag_unify.core :refer [unify unifyc]])
-```
+## `unify` versus `unifyc`
 
 `unify` is destructive: it will modify its arguments if they contain
 references, whereas `unifyc` copies its arguments before performing
