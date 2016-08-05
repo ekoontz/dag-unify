@@ -47,22 +47,21 @@ compared by equality. If they are not equal, then the special keyword
 => :fail
 ```
 
-## Refs
+## Atoms
 
 In Clojure, a DAG may be represented by Clojure map where the values
-of keys may be refs (http://clojure.org/refs).
+of keys can be atoms (http://clojure.org/atoms).
 
-If one argument or more arguments to `unify` is a map with a key whose
-value is a reference, then the return value for that key will also be
-the same reference, with its value being the unification of the
-arguments. For example:
+If one or more arguments to `unify` is a map with a key whose value is
+an atom, then the value of that key will also be that same atom, with its
+value being the unification of the arguments. For example:
 
 ```
 (let [myref (atom {:b 42})
       foo {:a myref}
       bar {:a {:c 43}}]
   (unify foo bar))
-=> {:a #<Ref@344dc027: {:c 43, :b 42}>}
+=> {:a #<Atom@344dc027: {:c 43, :b 42}>}
 ```
 
 Above, `foo`'s value for `:a` is a reference to the value `{:b
@@ -79,10 +78,11 @@ For the special keyword `:top`, the following is true for all `X`:
 (unify X :top) => X
 ```
 
-In other words, `:top` is the [identity element](https://en.wikipedia.org/wiki/Identity_element) of
-unification.
+In other words, `:top` is the [identity
+element](https://en.wikipedia.org/wiki/Identity_element) of
+unification. It is the most unspecific, most general value possible.
 
-References work with `:top` as in the following example:
+Atoms work with `:top` as in the following example:
 
 ```
 (let [myref (atom :top)
@@ -90,13 +90,14 @@ References work with `:top` as in the following example:
            :b myref}
       bar {:a 42}]
   (unify foo bar))
-=> {:b #<Ref@51670b57: 42>, :a #<Ref@51670b57: 42>}
+=> {:b #<Atom@51670b57: 42>, :a #<Atom@51670b57: 42>}
 ```
 
-In the immediately above case, `foo` had an unspecified value that was
-shared by `foo`'s `:a` and `:b` key. `bar` had a specific value (42) for
-`:a`, but no `:b` key. The result is a map with `:a` and `:b` both
-sharing the same value `42`.
+In the immediately above case, `foo` has an unspecified (`:top`) value
+that is shared by `foo`'s `:a` and `:b` key. `bar` had a more specific
+value (i.e. 42) for `:a`, but no `:b` key. The result of unification
+of `foo` and `bar` is a map with `:a` and `:b` both sharing the same
+value `42`.
 
 ## `:fail`
 
