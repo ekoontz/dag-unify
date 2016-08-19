@@ -3,7 +3,7 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [dag_unify.core :refer [all-refs create-path-in copy create-shared-values
                                     deserialize deserialize-with-remove
-                                    expand-disj fail? get-in get-refs
+                                    fail? get-in get-refs
                                     isomorphic? merge find-paths-to-value ref?
                                     recursive-dissoc
                                     ref-skel-map serialize

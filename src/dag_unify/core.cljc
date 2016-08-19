@@ -111,7 +111,6 @@
     ;; members is empty.
     false))
 
-(declare expand-disj) ;; needed by unify.
 (declare all-refs)  ;; needed by unify for cycle-checking.
 (declare copy)
 (declare unifyc)
@@ -266,6 +265,7 @@
                      (dissoc arg2 key1))
                     (rest keys-of-arg1))))))
 
+;; TODO: get rid of (dag_unify.core/merge).
 (defn merge [& args]
   "warning: {} is the identity value, not nil; that is: (merge X {}) => X, but (merge X nil) => nil, (not X)."
   (if (empty? (rest args)) (first args))
