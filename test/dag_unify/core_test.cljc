@@ -711,3 +711,16 @@ when run from a REPL."
     (is (map? removed))
     (is (= 42 (get-in removed [:a])))
     (is (= :none (get-in removed [:b :c] :none)))))
+
+(deftest prevent-cyclic-graph
+  (let [foo
+        (let [shared (atom :top)]
+          {:a shared
+           :b shared})
+        bar
+        (let [shared (atom :top)]
+          {:a shared
+           :b {:c shared}})]
+    (is (fail? (unify foo bar)))))
+
+

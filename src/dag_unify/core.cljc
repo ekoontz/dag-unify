@@ -112,6 +112,7 @@
     false))
 
 (declare expand-disj) ;; needed by unify.
+(declare all-refs)  ;; needed by unify for cycle-checking.
 (declare copy)
 (declare unifyc)
 
@@ -182,18 +183,28 @@
        (ref? val1)
        (not (ref? val2)))
       (do
-        (swap! val1
-               (fn [x] (unify @val1 val2)))
-        val1)
+        (cond
+          (contains? (set (all-refs val2)) val1)
+          :fail ;; cannot unify these because it would create a cycle.
+          
+          true
+          (do (swap! val1
+                   (fn [x] (unify @val1 val2)))
+              val1)))
            
       ;; val2 is a ref, val1 is not a ref.
       (and
        (ref? val2)
        (not (ref? val1)))
       (do
-        (swap! val2
-               (fn [x] (unify val1 @val2)))
-        val2)
+        (cond
+          (contains? (set (all-refs val1)) val2)
+          :fail
+          true
+          (do
+            (swap! val2
+                   (fn [x] (unify val1 @val2)))
+            val2)))
 
       (and
        (ref? val1)
