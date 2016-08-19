@@ -12,7 +12,8 @@
   (:refer-clojure :exclude [exists? get-in merge resolve])
   (:require
    [clojure.set :refer [intersection subset? union]]
-   [clojure.string :as string]))
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]))
 
 ;; use map or pmap.
 #?(:clj (def ^:const mapfn map))
@@ -213,6 +214,10 @@
             (= val1 @val2)) ;; val1 <- val2
         val1
 
+        (or (contains? (set (all-refs @val1)) val2)
+            (contains? (set (all-refs @val2)) val1))
+        :fail
+        
         (= @val1 val2) ;; val1 -> val2
         val2
               

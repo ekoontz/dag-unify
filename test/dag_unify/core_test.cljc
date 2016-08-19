@@ -712,7 +712,7 @@ when run from a REPL."
     (is (= 42 (get-in removed [:a])))
     (is (= :none (get-in removed [:b :c] :none)))))
 
-(deftest prevent-cyclic-graph
+(deftest prevent-cyclic-graph-1
   (let [foo
         (let [shared (atom :top)]
           {:a shared
@@ -723,17 +723,11 @@ when run from a REPL."
            :b {:c shared}})]
     (is (fail? (unify foo bar)))))
 
-(deftest foo
+(deftest prevent-cyclic-graph-2
   (is (fail? (unifyc
-              (let [shared1 (atom :top)
-                    shared2 (atom :top)
-                    shared3 (atom :top)]
-                {:synsem {:subcat {:1 {:sem shared1}
-                                   :2 {:sem {:obj shared2
-                                             :pred shared3}}}
-                          :sem {:obj shared2
-                                :pred shared3
-                                :subj shared1}}})
+              (let [shared (atom :top)]
+                {:synsem {:subcat {:2 {:sem {:obj shared}}}
+                          :sem {:obj shared}}})
               (let [shared (atom :top)]
                 {:synsem {:subcat {:2 {:sem shared}}
                           :sem {:obj shared}}})))))
