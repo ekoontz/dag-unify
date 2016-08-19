@@ -723,4 +723,21 @@ when run from a REPL."
            :b {:c shared}})]
     (is (fail? (unify foo bar)))))
 
+(deftest foo
+  (is (fail? (unifyc
+              (let [shared1 (atom :top)
+                    shared2 (atom :top)
+                    shared3 (atom :top)]
+                {:synsem {:subcat {:1 {:sem shared1}
+                                   :2 {:sem {:obj shared2
+                                             :pred shared3}}}
+                          :sem {:obj shared2
+                                :pred shared3
+                                :subj shared1}}})
+              (let [shared (atom :top)]
+                {:synsem {:subcat {:2 {:sem shared}}
+                          :sem {:obj shared}}})))))
 
+
+                   
+                      
