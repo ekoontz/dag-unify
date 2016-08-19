@@ -13,7 +13,7 @@
   (:require
    [clojure.set :refer [intersection subset? union]]
    [clojure.string :as string]
-   [clojure.tools.logging :as log]))
+   #?(:clj [clojure.tools.logging :as log])))
 
 ;; use map or pmap.
 #?(:clj (def ^:const mapfn map))
