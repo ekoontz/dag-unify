@@ -4,12 +4,12 @@
             [dag_unify.core :refer [all-refs create-path-in copy create-shared-values
                                     deserialize deserialize-with-remove
                                     fail? get-in get-refs
-                                    isomorphic? merge find-paths-to-value ref?
+                                    isomorphic? find-paths-to-value ref?
                                     recursive-dissoc
                                     ref-skel-map serialize
                                     remove-matching-keys
                                     skeletize skels unify unifyc]])
-  (:refer-clojure :exclude [get-in merge resolve]))
+  (:refer-clojure :exclude [get-in resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
 
@@ -18,56 +18,15 @@
         skels (skels input-map refs)]
     (ref-skel-map input-map)))
 
-(deftest simple-merge-test
-  (let [result (merge {:foo 99} {:bar 42})]
-    (is (= (:foo result) 99))
-    (is (= (:bar result) 42))))
-
 (deftest simple-unify-test
   (let [result (unify {:foo 99} {:bar 42})]
     (is (= (:foo result) 99))
     (is (= (:bar result) 42))))
 
-(deftest recursive-merge-of-3-maps
-  (let [result
-        (let [map1 {:foo {:bar 99}}
-              map2 {:foo {:baz 42}}
-              map3 {:biff 12}]
-          (merge map1 map2 map3))]
-    ;; test that result looks like:
-    ;; {:foo {:bar 99
-    ;;        :baz 42}
-    ;;  :biff 12}}
-    (is (= (:bar (:foo result)) 99))
-    (is (= (:baz (:foo result)) 42))
-    (is (= (:biff result) 12))
-    (is (= (get-in result '(:foo :bar)) 99))
-    (is (= (get-in result '(:foo :baz)) 42))
-    (is (= (get-in result '(:biff)) 12))))
-
 (deftest unify-unequal-atomic-values
   "Testing that unify(v1,v2)=fail if v1 != v2."
   (let [result (unify {:foo 42} {:foo 43})]
     (is (fail? result))))
-
-(deftest merge-unequal-atomic-values
-  "Testing that merge(v1,v2)=v2 (overriding)."
-  (let [result (merge {:foo 42} {:foo 43})]
-    (is (= (:foo result) 43))))
-
-(deftest ignore-nils-in-values
-  "Ignore nils in values (true,nil)."
-  (let [result (merge {:foo true} {:foo nil})]
-    (is (= (:foo result) true))))
-
-(deftest merge-emptymap
-  "emptymap (unlike with nil) overrides true in merge."
-  (let [result (merge {:foo true} {:foo {}})]
-    (is (= (:foo result) {}))))
-
-(deftest merge-nil
-  (let [result (merge {:foo nil} {:foo nil})]
-    (is (= result {:foo nil}))))
 
 (deftest unify-atomic-values-with-references
   (let [myref (atom :top)
@@ -76,85 +35,12 @@
     (is (ref? result))
     (is (= @result 42))))
       
-;; {:a [1] :top
-;;  :b [1]     } ,
-;; {:a 42}
-;;        =>
-;; {:a [1] 42
-;;  :b [1] }
-(deftest merging-references-with-top-and-references
-  (let [myref (atom :top)
-        fs1 {:a myref :b myref}
-        fs2 {:a 42}
-        result (merge fs1 fs2)]
-    (is (ref? (:a result)))
-    (is (= @(:a result) 42))
-    (is (= @(:b result) 42))
-    (is (= (:a result) (:b result)))))
-
-(deftest merging-with-references-with-top-and-references-2
-  (let [myref (atom :top)
-        fs1 {:a myref}
-        fs2 {:a :foo}
-        result (merge fs1 fs2)]
-    (is (ref? (:a result)))
-    (is (= @(:a result) :foo))))
-
 (deftest merging-with-inner-reference-keyset
   (let [fs1 {:b (atom :top)}
         fs2 {:b 42}
         maps (list fs1 fs2)
         result (seq (set (mapcat #'keys maps)))] ;; mapcat->set->seq removes duplicates.
     (is (= result '(:b)))))
-
-      ;; [b [1] :top], [b 42] => [b [1] 42]
-(deftest merging-with-reference
-  "merging with reference"
-  (let [fs1 {:b (atom :top)}
-        fs2 {:b 42}
-        result (merge fs1 fs2)]
-    (is (ref? (:b result)))
-    (is (= @(:b result)) 42)))
-
-;; [a [b [1] :top]], [a [b 42]] => [a [b [1] 42]]
-(deftest merging-with-inner-reference
-  "merging with inner reference"
-  (let [fs1 {:a {:b (atom :top)}}
-        fs2 {:a {:b 42}}
-        result (merge fs1 fs2)]
-    (is (ref? (:b (:a result))))
-    (is (= @(:b (:a result))) 42)))
-
-;; [a [b [1] top]], [a [b 42]] => [a [b [1] 42]]
-(deftest merging-with-inner-reference-second-position
-  (let [fs1 {:a {:b 42}}
-        fs2 {:a {:b (atom :top)}}
-        result (merge fs1 fs2)]
-    (is (ref? (:b (:a result))))
-    (is (= @(:b (:a result))) 42)))
-
-(deftest merging-with-reference-second-position
-  "merging with reference, second position"
-  (let [fs1 {:a 42}
-        fs2 {:a (atom :top)}
-        result (merge fs1 fs2)]
-    (is (ref? (:a result)))
-    (is (= @(:a result) 42))))
-
-(deftest merging-fail-with-not-1
-  "test atom merging with ':not' (special feature) (first in list; fail)"
-  (let [result (merge {:not 42} 42)]
-    (is (= result :fail))))
-
-(deftest merging-succeed-with-not
-  "test atom merging with ':not' (special feature) (first in list; fail)"
-  (let [result (merge 42 {:not 43})]
-    (is (= result 42))))
-
-(deftest merging-fail-with-not-2
-  "test atom merging with ':not' (special feature) (second in list; fail)"
-  (let [result (merge 42 {:not 42})]
-    (is (= result :fail))))
 
 (deftest unify-with-not
   (let [result (unify {:foo 42} {:foo {:not 43}})]
@@ -189,15 +75,6 @@
   "(reversed argument order as preceding): unifying :top with {:not X} should return {:not X} if X != top."
   (let [result (unify :top {:not 42})]
     (is (= result {:not 42}))))
-      
-(deftest complicated-merge
-  (let [mycon (list {:comp {:number :singular, :cat :det}} {:gender :masc} {:comp {:def {:not :indef}}, :mass true} {:comp {}, :sport true})
-        result (apply merge mycon)]
-    (is (= (get-in result '(:comp :number)) :singular))))
-
-(deftest merge-atomic-vals
-  (let [result (merge 5 5)]
-    (is (= result 5))))
 
 (deftest unify-atomic-vals
   (let [result (unify 5 5)]
@@ -207,19 +84,10 @@
   (let [result (unify 5 4)]
     (is (= result :fail))))
 
-(deftest maps-merge
-  (let [result (merge '{:a 42} '{:b 43})]
-    (is (= (:a result) 42)
-        (= (:b result) 43))))
-
 (deftest maps-unify
   (let [result (unify '{:a 42} '{:b 43})]
     (is (= (:a result) 42)
         (= (:b result) 43))))
-
-(deftest merge-override
-  (let [result (merge '{:a 42} '{:a 43})]
-    (is (= (:a result) 43))))
 
 (deftest unify-override
   (let [result (unify '{:a 42} '{:a 43})]
@@ -549,42 +417,6 @@ a given value in a given map."
   (let [fs1 {:a (atom {:not 42})}
         fs1-copy (copy fs1)]
     (is (not (fail? fs1-copy)))))
-
-(deftest overflow
-  "merge has a problem: we hit StackOverflowError java.util.regex.Pattern$BmpCharProperty.match (Pattern.java:3366) when this test is run.
-   Code works as expected if merge is replaced with unify. However, this test passes - the SOE seems to only happen
-when run from a REPL."
-  (unify
-   (get-in (merge (let [head-cat (atom :top)
-                                    head-is-pronoun (atom :top)
-                                    head-sem (atom :top)
-                                    head-infl (atom :top)]
-                                {:synsem {:cat head-cat
-                                          :pronoun head-is-pronoun
-                                          :sem head-sem
-                                          :infl head-infl}
-                                 :head {:synsem {:cat head-cat
-                                                 :pronoun head-is-pronoun
-                                                 :infl head-infl
-                                                 :sem head-sem}}})
-
-                              (let [essere (atom :top)
-                                    infl (atom :top)]
-                                {:italian {:a {:infl infl}}
-                                 :english {:a {:infl infl}}
-                                 :synsem {:infl infl
-                                          :essere essere}
-                                 :head {:italian {:infl infl}
-                                        :english {:infl infl}
-                                        :synsem {:essere essere
-                                                 :infl infl}}}))
-                 '(:head))
-   (unify
-    {:italian {:foo 42}}
-    (let [infl (atom :top)]
-      {:italian {:infl infl}
-       :english {:infl infl}
-       :synsem {:infl infl}}))))
 
 (deftest nil-and-top
   ;; ...should return emptylist.
