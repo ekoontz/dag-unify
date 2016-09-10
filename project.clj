@@ -1,10 +1,9 @@
-(defproject dag_unify "1.3.6-SNAPSHOT"
+(defproject dag_unify "1.3.6"
   :description "Unification of Directed Acyclic Graphs"
   :url "https://github.com/ekoontz/dag-unify"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/clojurescript "1.7.170"]]
   :plugins [[cider/cider-nrepl "0.11.0"]
             [lein-doo "0.1.6"]

@@ -9,11 +9,9 @@
 ;; use special values that *are* maps.
 ;; e.g. {:fail :fail} rather than simply :fail,
 ;; and {:top :top} rather than simply :top.
-  (:refer-clojure :exclude [exists? get-in merge resolve])
+  (:refer-clojure :exclude [exists? get-in merge resolve]) ;; TODO: don't override (merge)
   (:require
-   [clojure.set :refer [intersection subset? union]]
-   [clojure.string :as string]
-   [clojure.tools.logging :as log]))
+   [clojure.string :refer [join]]))
 
 ;; use map or pmap.
 #?(:clj (def ^:const mapfn map))
@@ -870,7 +868,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           val1 (get-in fs1 path :top)
           val2 (get-in fs2 path :top)]
       (if (fail? (unify val1 val2))
-        {:fail-path (str "/" (string/join "/" path))
+        {:fail-path (str "/" (join "/" path))
          :val1 (strip-refs val1)
          :val2 (strip-refs val2)}
         (find-fail-in fs1 fs2 (rest paths))))))
