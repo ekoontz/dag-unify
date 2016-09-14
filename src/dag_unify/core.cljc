@@ -123,19 +123,25 @@
 ;;
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
 
+(declare copy)
 (declare merge)
 (declare merge-with-keys)
+(declare serialize)
 (declare simple-unify)
-
-(declare copy)
 (declare unify)
 
 (defn unifyc [& args]
   "like fs/unify, but fs/copy each argument before unifying."
-  (apply unify
-         (mapfn (fn [arg]
-                 (copy arg))
-               args)))
+  (let [result
+        (apply unify
+               (mapfn (fn [arg]
+                        (copy arg))
+                      args))]
+    (cond (map? result)
+          ;; save the serialization so that future copies of this map
+          ;; will be faster:
+          (assoc result :serialized (serialize result))
+          true result)))
 
 (defn unify [& args]
   (let [val1 (first args)
@@ -664,8 +670,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (if (or (not (map? deserialized))
             (not (= :none (:serialized deserialized :none))))
       deserialized
-      (clojure.core/merge {:serialized serialized}
-                          deserialized))))
+      ;; save the serialization so that future copies of this map
+      ;; will be faster:
+      (assoc deserialized :serialized serialized))))
 
 (defn label-of [parent]
   (if (:rule parent) (:rule parent) (:comment parent)))
@@ -791,7 +798,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                    (and (map? fs)
                         (not (empty? fs))
                         (not (empty? path)))
-                   (let [feature (first path)]
+                   (let [fs (dissoc fs :serialized) ;; remove the existing serialized version of the serialized structure, since
+                         ;; it will not be valid after we've altered the structure itself.
+                         feature (first path)]
                      (cond (ref? fs)
                            (dissoc-paths @fs (list path))
                            (map? fs)
@@ -850,10 +859,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         false ;; two maps whose key cardinality (different number of keys) is different are not equal.
         (and (map? a)
              (map? b))
-        (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
-                          (get b (first (keys a))))
-             (isomorphic? (dissoc a (first (keys a)))
-                          (dissoc b (first (keys a)))))
+        (let [a (dissoc a :serialized)
+              b (dissoc b :serialized)]
+          (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
+                            (get b (first (keys a))))
+               (isomorphic? (dissoc a (first (keys a)))
+                            (dissoc b (first (keys a))))))
         (and (ref? a)
              (ref? b))
         (isomorphic? @a @b)
