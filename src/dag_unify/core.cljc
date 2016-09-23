@@ -140,7 +140,7 @@
     (cond (map? result)
           ;; save the serialization so that future copies of this map
           ;; will be faster:
-          (assoc result :serialized (serialize result))
+          (assoc result ::serialized (serialize result))
           true result)))
 
 (defn unify [& args]
@@ -153,9 +153,9 @@
       (and (map? val1)
            (map? val2))
       (let [result (merge-with-keys
-                    (dissoc val1 :serialized)
-                    (dissoc val2 :serialized)
-                    (filter #(not (= :serialized %))
+                    (dissoc val1 ::serialized)
+                    (dissoc val2 ::serialized)
+                    (filter #(not (= ::serialized %))
                             (keys val1)))]
         (if (empty? (rest (rest args)))
           result
@@ -448,7 +448,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn skeletize [input-val]
   (if (map? input-val)
-    (let [sans-serialized (dissoc input-val :serialized)]
+    (let [sans-serialized (dissoc input-val ::serialized)]
       (zipmap (keys sans-serialized)
               (mapfn (fn [val]
                        (if (ref? val)
@@ -627,7 +627,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                         all)))))
 
 (defn serialize [input-map]
-  (let [memoized (get input-map :serialized :none)]
+  (let [memoized (get input-map ::serialized :none)]
     (if (not (= memoized :none))
       memoized
       (let [ser (ser-intermed input-map)]
@@ -668,11 +668,11 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (let [serialized (serialize input)
         deserialized (deserialize serialized)]
     (if (or (not (map? deserialized))
-            (not (= :none (:serialized deserialized :none))))
+            (not (= :none (::serialized deserialized :none))))
       deserialized
       ;; save the serialization so that future copies of this map
       ;; will be faster:
-      (assoc deserialized :serialized serialized))))
+      (assoc deserialized ::serialized serialized))))
 
 (defn label-of [parent]
   (if (:rule parent) (:rule parent) (:comment parent)))
@@ -798,7 +798,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                    (and (map? fs)
                         (not (empty? fs))
                         (not (empty? path)))
-                   (let [fs (dissoc fs :serialized) ;; remove the existing serialized version of the serialized structure, since
+                   (let [fs (dissoc fs ::serialized) ;; remove the existing serialized version of the serialized structure, since
                          ;; it will not be valid after we've altered the structure itself.
                          feature (first path)]
                      (cond (ref? fs)
@@ -859,8 +859,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         false ;; two maps whose key cardinality (different number of keys) is different are not equal.
         (and (map? a)
              (map? b))
-        (let [a (dissoc a :serialized)
-              b (dissoc b :serialized)]
+        (let [a (dissoc a ::serialized)
+              b (dissoc b ::serialized)]
           (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
                             (get b (first (keys a))))
                (isomorphic? (dissoc a (first (keys a)))
