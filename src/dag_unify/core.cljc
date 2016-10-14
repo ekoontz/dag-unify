@@ -162,8 +162,8 @@
           (unify result
                  (apply unify (rest (rest args))))))
                        
-      (= (count args) 1)
-      (first args)
+      (empty? (rest args))
+      val1
            
       (or (= val1 :fail)
           (= val2 :fail))
