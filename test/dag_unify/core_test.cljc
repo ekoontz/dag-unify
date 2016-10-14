@@ -23,6 +23,11 @@
     (is (= (:foo result) 99))
     (is (= (:bar result) 42))))
 
+(deftest unify-with-top
+  (let [result (unify :top {:foo 99} :top {:bar 42})]
+    (is (= (:foo result) 99))
+    (is (= (:bar result) 42))))
+
 (deftest unify-unequal-atomic-values
   "Testing that unify(v1,v2)=fail if v1 != v2."
   (let [result (unify {:foo 42} {:foo 43})]

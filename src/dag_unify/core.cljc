@@ -169,9 +169,22 @@
           (= val2 :fail))
       :fail
 
-      (= val1 :top) val2
+      (and (= val1 :top)
+           (empty? (rest args)))
+      :top
+
+      (= val1 :top)
+      (apply unify (rest args))
+
+      (and (= val2 :top)
+           (not (empty? (rest (rest args)))))
+      (apply unify (cons val1 (rest (rest args))))
+
       (= val2 :top) val1
 
+      ;; TODO: expensive if val1 and val2 are highly nested and similar,
+      ;; because equality is by-value per https://clojuredocs.org/clojure.core/=
+      ;; move as close to the bottom of the (cond) as possible.
       (= val1 val2) val1
 
       (= val1 '())
