@@ -13,3 +13,5 @@ pom.xml.asc
 *.rej
 *~
 resources/public/js/testable.js
+.\#*
+\#*
