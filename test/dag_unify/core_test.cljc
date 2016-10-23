@@ -569,6 +569,19 @@ a given value in a given map."
                 {:synsem {:subcat {:2 {:sem shared}}
                           :sem {:obj shared}}})))))
 
+(deftest not-found-with-non-existent-path-with-nil
+  (is (= ::notfound
+         (get-in
+          {:a {:b nil}}
+          [:a :b :c :d] ::notfound))))
 
-                   
+(deftest not-found-with-non-existent-path-with-empty
+  (is (= ::notfound
+         (get-in
+          {:a {:b '()}}
+          [:a :b :c :d] ::notfound))))
+
+
+
+
                       

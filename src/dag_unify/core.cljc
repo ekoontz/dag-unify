@@ -43,20 +43,15 @@
 (defn get-in
   "same as clojure.core (get-in), but references are resolved and followed."
   [in-map path & [not-found]]
-  (cond (seq? in-map)
-        (map (fn [each]
-               (get-in each path not-found))
-             in-map)
-        true
-        (let [result
-              (if (first path)
-                (let [result (get in-map (first path) not-found)]
-                  (if (= result not-found) not-found
-                      (get-in (resolve result) (rest path) not-found)))
-                in-map)]
-          (if (ref? val)
-            @result
-            result))))
+  (let [result
+        (if (first path)
+          (let [result (get in-map (first path) not-found)]
+            (if (= result not-found) not-found
+                (get-in (resolve result) (rest path) not-found)))
+          in-map)]
+    (if (ref? val)
+      @result
+      result)))
 
 (defn exists? [the-map path]
   (not (= :does-not-exist
