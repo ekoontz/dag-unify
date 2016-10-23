@@ -1,14 +1,17 @@
 (ns dag_unify.core
+  
+  ;; TODO: define a dissoc that works with special values 
+  ;; which are not maps but keywords, like :fail; 
+  ;; e.g.:
+  ;; (dissoc :fail :anykey) => :fail
+  ;; (dissoc :top :anykey) => :top
+  ;; Another approach would be to not modify dissoc to handle non-maps, and instead
+  ;; use special values that *are* maps.
+  ;; e.g. {:fail :fail} rather than simply :fail,
+  ;; and {:top :top} rather than simply :top.
 
-;; TODO: define a dissoc that works with special values 
-;; which are not maps but keywords, like :fail; 
-;; e.g.:
-;; (dissoc :fail :anykey) => :fail
-;; (dissoc :top :anykey) => :top
-;; Another approach would be to not modify dissoc to handle non-maps, and instead
-;; use special values that *are* maps.
-;; e.g. {:fail :fail} rather than simply :fail,
-;; and {:top :top} rather than simply :top.
+  ;; TODO: rename unifyc to unify; rename unify to unify!.
+
   (:refer-clojure :exclude [exists? get-in merge resolve]) ;; TODO: don't override (merge)
   (:require
    [clojure.string :refer [join]]))
@@ -29,15 +32,17 @@
   #?(:cljs
      (= (type val) cljs.core.Atom)))
 
-(defn resolve [arg]
+(defn resolve
   "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
+  [arg]
   (if (ref? arg)
     (resolve @arg)
     arg))
 
 ;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
-(defn get-in [in-map path & [not-found]]
-  "same as clojure.core (get-in), but it resolves references if need be."
+(defn get-in
+  "same as clojure.core (get-in), but references are resolved and followed."
+  [in-map path & [not-found]]
   (cond (seq? in-map)
         (map (fn [each]
                (get-in each path not-found))
@@ -60,8 +65,9 @@
 ;; TODO: use multi-methods.
 ;; TODO: keep list of already-seen references to avoid
 ;; cost of traversing substructures more than once.
-(defn fail? [fs]
+(defn fail?
   "(fail? fs) <=> true if at least one of fs's path's value is :fail."
+  [fs]
   (cond (= :fail fs) true
         (seq? fs) false ;; a sequence is never fail.
         (= fs :fail) true ;; :fail is always fail.
@@ -77,6 +83,7 @@
 
         :else
         ;; otherwise, check recursively.
+        ;; TODO: rewrite using (recur)
         (do
           (defn failr? [fs keys]
             (and (not (empty? keys))
@@ -93,8 +100,9 @@
             (not (fail? each-map)))
           maps))
 
-(defn fail-path-r [fs & [ fs-keys ] ]
+(defn fail-path-r
   "find the first failing path in a fs."
+  [fs & [ fs-keys ] ]
   (if (map? fs)
     (let [fs-keys (if fs-keys fs-keys (keys fs))]
       (if (not (empty? fs-keys))
@@ -130,8 +138,9 @@
 (declare simple-unify)
 (declare unify)
 
-(defn unifyc [& args]
+(defn unifyc
   "like fs/unify, but fs/copy each argument before unifying."
+  [& args]
   (let [result
         (apply unify
                (mapfn (fn [arg]
@@ -143,7 +152,10 @@
           (assoc result ::serialized (serialize result))
           true result)))
 
-(defn unify [& args]
+(defn unify
+  "merge arguments, where arguments are maps possibly containing references, so that 
+   sharing relationship in the arguments is preserved in the result"
+  [& args]
   (let [val1 (first args)
         val2 (second args)]
     (cond
@@ -288,8 +300,9 @@
                     (rest keys-of-arg1))))))
 
 ;; TODO: get rid of (dag_unify.core/merge).
-(defn merge [& args]
+(defn- merge
   "warning: {} is the identity value, not nil; that is: (merge X {}) => X, but (merge X nil) => nil, (not X)."
+  [& args]
   (if (empty? (rest args)) (first args))
   (let [val1 (first args)
         val2 (second args)]
@@ -369,12 +382,13 @@
 ;; TODO: remove *exclude-keys*,(pathify-r) and (pathify) in favor of fs's versions.
 (def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap}))
 
-(defn pathify-r [fs & [prefix]]
+(defn pathify-r
 "Transform a map into a map of paths/value pairs,
  where paths are lists of keywords, and values are atomic values.
  e.g.:
  {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
 The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
+ [fs & [prefix]]
   (mapcat (fn [kv]
             (let [key (first kv)
                   val (second kv)]
@@ -412,8 +426,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn uniq [sorted-vals]
   (reverse (uniq-using-recur sorted-vals)))
 
-(defn find-paths-to-value [map value path]
+(defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
+  [map value path]
   (cond
     (ref? map)
     (cond (= map value) [path] ;; found the value that we were looking for.
@@ -478,8 +493,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (all-refs input-map))
 
 ;; TODO s/map/input-map/
-(defn skels [input-map refs]
+(defn skels
   "create map from reference to their skeletons."
+  [input-map refs]
   (let [refs (get-refs input-map)]
     (zipmap
      refs
@@ -487,10 +503,11 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             (skeletize @ref))
           refs))))
 
-(defn ref-skel-map [input-map]
+(defn ref-skel-map
   "associate each reference in _input-map_ with:
    1. its skeleton
    2. all paths to point to it."
+  [input-map]
   (let [refs (get-refs input-map)
         ;; skels returns a map from a reference to its skeleton.
         skels (skels input-map refs)]
@@ -560,9 +577,11 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             (atom val)))
         serialized))
 
-(defn create-path-in [path value]
+;; TODO: remove: simply use clojure.core/assoc-in
+(defn create-path-in
   "create a path starting at map through all keys in map:
-   (create-path-in '(a b c d e) value) => {:a {:b {:c {:d {:e value}}}}})"
+   (create-path-in '(a b c d e) value) => {:a {:b {:c {:d {:e value}}}}})"  
+  [path value]
   (if (first path)
     (if (rest path)
       (let [assigned (create-path-in (rest path) value)]
@@ -597,8 +616,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                           (rest serialized))))]
              all))))
 
-(defn recursive-dissoc [a-map pred]
+(defn recursive-dissoc
   "like dissoc, but works recursively. Only works on reference-free maps (contains no atoms)."
+  [a-map pred]
   (if (not (empty? a-map))
     (let [k (first (first a-map))
           v (second (first a-map))]
@@ -783,54 +803,53 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn dissoc-paths [fs & [paths]]
   "dissoc a path from a map; e.g.: (dissoc-paths {:a {:b 42 :c 43}} '(:a :b)) => {:a {:c 43}}."
-  (do
-    (cond (empty? paths)
-          fs
+  (cond (empty? paths)
+        fs
+        
+        (seq? fs)
+        (map #(dissoc-paths % paths) fs)
+        
+        (ref? fs)
+        (dissoc-paths @fs paths)
+        
+        (keyword? fs)
+        fs
+        
+        (empty? fs)
+        :top
 
-          (seq? fs)
-          (map #(dissoc-paths % paths) fs)
-
-          (ref? fs)
-          (dissoc-paths @fs paths)
-
-          (keyword? fs)
-          fs
-
-          (empty? fs)
-          :top
-
-          (seq? fs)
-          (cons (dissoc-paths (first fs))
-                (dissoc-paths (rest fs)))
-
-          true
-          (let [path (first paths)]
-            (dissoc-paths
-             (cond (keyword fs)
-                   fs
-                   (and (map? fs)
-                        (not (empty? fs))
-                        (not (empty? path)))
-                   (let [fs (dissoc fs ::serialized) ;; remove the existing serialized version of the serialized structure, since
-                         ;; it will not be valid after we've altered the structure itself.
-                         feature (first path)]
-                     (cond (ref? fs)
-                           (dissoc-paths @fs (list path))
-                           (map? fs)
-                           (cond
-                            (and
-                             (empty? (rest path))
-                             (empty? (dissoc fs feature)))
-                            :top
-
+        (seq? fs)
+        (cons (dissoc-paths (first fs))
+              (dissoc-paths (rest fs)))
+        
+        true
+        (let [path (first paths)]
+          (dissoc-paths
+           (cond (keyword fs)
+                 fs
+                 (and (map? fs)
+                      (not (empty? fs))
+                      (not (empty? path)))
+                 (let [fs (dissoc fs ::serialized) ;; remove the existing serialized version of the serialized structure, since
+                       ;; it will not be valid after we've altered the structure itself.
+                       feature (first path)]
+                   (cond (ref? fs)
+                         (dissoc-paths @fs (list path))
+                         (map? fs)
+                         (cond
+                           (and
                             (empty? (rest path))
-                            (dissoc fs feature)
-
+                            (empty? (dissoc fs feature)))
+                           :top
+                           
+                           (empty? (rest path))
+                           (dissoc fs feature)
+                           
                             (not (= :notfound (get-in fs (list feature) :notfound)))
                             (conj
                              {feature (dissoc-paths (get-in fs (list feature)) (list (rest path)))}
                              (dissoc fs feature))
-
+                            
                             true
                             (dissoc-paths fs (rest paths)))))
 
@@ -838,7 +857,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                    (exception
                     (str "dissoc-paths: don't know what to do with this input argument (fs): "
                          fs)))
-             (rest paths))))))
+           (rest paths)))))
 
 (defn remove-false [spec]
   (cond (map? spec)
@@ -897,8 +916,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
          :val2 (strip-refs val2)}
         (find-fail-in fs1 fs2 (rest paths))))))
 
-(defn fail-path-between [fs1 fs2]
+(defn fail-path-between
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
+  [fs1 fs2]
   (let [paths-in-fs1 (map #(first (first %)) (pathify-r fs1))
         paths-in-fs2 (map #(first (first %)) (pathify-r fs2))]
     (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
