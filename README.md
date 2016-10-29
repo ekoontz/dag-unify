@@ -187,10 +187,10 @@ then `:fail` is returned:
 => :fail
 ```
 
-## `unify` versus `unifyc`
+## `unify!` versus `unify`
 
-`unify` is destructive: it will modify its arguments if they contain
-references, whereas `unifyc` copies its arguments before performing
+`unify!` is destructive: it will modify its arguments if they contain
+references, whereas `unify` copies its arguments before performing
 unification, so that the input arguments are never modified.
 
 ## License
