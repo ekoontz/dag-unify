@@ -27,7 +27,7 @@ user> (def foo (let [shared-value (atom :top)]
 user> foo
 {:a {:b #atom[:top 0x7d413a07]}, :c #atom[:top 0x7d413a07]}
 user> (unify foo {:a {:b 42}})
-{:c #atom[42 0x7d413a07], :a {:b #atom[42 0x7d413a07]}}
+{:c #atom[42 0x7d413a07], :a {:b #atom[42 0x7d413a07]}, :dag_unify.core/serialized ((nil {:c :top, :a {:b :top}}) (((:c) (:a :b)) 42))}
 user> 
 
 ```
