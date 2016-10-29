@@ -10,8 +10,6 @@
   ;; e.g. {:fail :fail} rather than simply :fail,
   ;; and {:top :top} rather than simply :top.
 
-  ;; TODO: rename unifyc to unify; rename unify to unify!.
-
   (:refer-clojure :exclude [exists? get-in merge resolve]) ;; TODO: don't override (merge)
   (:require
    [clojure.string :refer [join]]))
@@ -115,7 +113,6 @@
 
 (declare all-refs)  ;; needed by unify for cycle-checking.
 (declare copy)
-(declare unifyc)
 
 ;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
 ;; either consider all args, or change signature of (unify) to take only val1 val2.
@@ -131,24 +128,29 @@
 (declare merge-with-keys)
 (declare serialize)
 (declare simple-unify)
-(declare unify)
+(declare unify!)
 
-(defn unifyc
-  "like fs/unify, but fs/copy each argument before unifying."
+(defn unify
+  "like unify, but non-destructive copy each argument before unifying."
   [& args]
   (let [result
-        (apply unify
+        (apply unify!
                (mapfn (fn [arg]
                         (copy arg))
                       args))]
     (cond (map? result)
           ;; save the serialization so that future copies of this map
-          ;; will be faster:
+          ;; will be faster
           (assoc result ::serialized (serialize result))
           true result)))
 
-(defn unify
-  "merge arguments, where arguments are maps possibly containing references, so that 
+(defn unifyc
+  "alias for (defn unify)"
+  [& args]
+  (apply unify args))
+  
+(defn unify!
+  "destructively merge arguments, where arguments are maps possibly containing references, so that 
    sharing relationship in the arguments is preserved in the result"
   [& args]
   (let [val1 (first args)
@@ -166,8 +168,8 @@
                             (keys val1)))]
         (if (empty? (rest (rest args)))
           result
-          (unify result
-                 (apply unify (rest (rest args))))))
+          (unify! result
+                  (apply unify! (rest (rest args))))))
                        
       (empty? (rest args))
       val1
@@ -181,11 +183,11 @@
       :top
 
       (= val1 :top)
-      (apply unify (rest args))
+      (apply unify! (rest args))
 
       (and (= val2 :top)
            (not (empty? (rest (rest args)))))
-      (apply unify (cons val1 (rest (rest args))))
+      (apply unify! (cons val1 (rest (rest args))))
 
       (= val2 :top) val1
 
@@ -213,7 +215,7 @@
           
           true
           (do (swap! val1
-                   (fn [x] (unify @val1 val2)))
+                   (fn [x] (unify! @val1 val2)))
               val1)))
            
       ;; val2 is a ref, val1 is not a ref.
@@ -227,7 +229,7 @@
           true
           (do
             (swap! val2
-                   (fn [x] (unify val1 @val2)))
+                   (fn [x] (unify! val1 @val2)))
             val2)))
 
       (and
@@ -248,7 +250,7 @@
         :else
         (do
           (swap! val1
-                 (fn [x] (unify @val1 @val2)))
+                 (fn [x] (unify! @val1 @val2)))
           (swap! val2
                  (fn [x] val1)) ;; note that now val2 is a ref to a ref.
           val1))
@@ -258,7 +260,7 @@
       (if (= val2 :top)
         val1
         ;; else
-        (let [result (unify (:not val1) val2)]
+        (let [result (unify! (:not val1) val2)]
           (if (= result :fail)
             val2
             :fail)))
@@ -267,7 +269,7 @@
       (not (= :notfound (:not val2 :notfound)))
       (if (= val1 :top)
         val2
-        (let [result (unify val1 (:not val2))]
+        (let [result (unify! val1 (:not val2))]
           (if (= result :fail)
             val1
             :fail)))
@@ -279,8 +281,8 @@
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
     (let [key1 (first keys-of-arg1)
           result (if (not (empty? keys-of-arg1))
-                   (unify (key1 arg1 :top)
-                          (key1 arg2 :top)))]
+                   (unify! (key1 arg1 :top)
+                           (key1 arg2 :top)))]
       (cond
 
         ;; if keys-of-arg1 is empty, then arg2 contains only keys that
@@ -335,7 +337,7 @@
      val1
 
      (not (= :notfound (:not val1 :notfound)))
-     (let [result (unify (:not val1) val2)]
+     (let [result (unify! (:not val1) val2)]
        (if (= result :fail)
          val2
          :fail))
@@ -345,7 +347,7 @@
      val2
 
      (not (= :notfound (:not val2 :notfound)))
-     (let [result (unify val1 (:not val2))]
+     (let [result (unify! val1 (:not val2))]
         (if (= result :fail)
           val1
           :fail))
@@ -905,7 +907,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (let [path (first paths)
           val1 (get-in fs1 path :top)
           val2 (get-in fs2 path :top)]
-      (if (fail? (unify val1 val2))
+      (if (fail? (unify! val1 val2))
         {:fail-path (str "/" (join "/" path))
          :val1 (strip-refs val1)
          :val2 (strip-refs val2)}
