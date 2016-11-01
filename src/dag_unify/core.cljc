@@ -131,7 +131,7 @@
 (declare unify!)
 
 (defn unify
-  "like unify, but non-destructive copy each argument before unifying."
+  "like unify!, but non-destructively copy each argument before unifying."
   [& args]
   (let [result
         (apply unify!
