@@ -133,10 +133,17 @@
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
   [& args]
-  (apply unify!
-         (mapfn (fn [arg]
-                  (copy arg))
-                args)))
+  (let [result
+        (apply unify!
+               (mapfn (fn [arg]
+                        (copy arg))
+                      args))]
+    (cond (map? result)
+          ;; save the serialization so that future copies of this map
+          ;; will be faster
+          (assoc result ::serialized (serialize result))
+          true result)))
+
 (defn unifyc
   "alias for (defn unify)"
   [& args]
