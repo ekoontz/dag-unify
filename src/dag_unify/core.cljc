@@ -444,19 +444,16 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
      (all-refs @input))
     (map? input)
     ;; TODO: fix bug here: vals resolves @'s
-    (all-refs
-     (mapfn (fn [val]
-              ;; dereference double-references (references to another reference) :
-              (if (and (ref? val)
-                       (ref? @val))
-                @val
-                ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
-                val))
-            (vals input)))
-    (seq? input)
-    (mapcat (fn [each-input]
-              (all-refs each-input))
-            input)))
+    (mapcat all-refs
+            (mapfn (fn [val]
+                     ;; dereference double-references (references to another reference) :
+                     ;; note the implicit assumption that the level of indirection is not greater than this.
+                     (if (and (ref? val)
+                              (ref? @val))
+                       @val
+                       ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
+                       val))
+                   (vals input)))))
 
 (defn skeletize [input-val]
   (if (map? input-val)
