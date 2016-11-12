@@ -189,9 +189,8 @@
      
      (= val2 :top) val1
      
-     ;; TODO: expensive if val1 and val2 are highly nested and similar,
-     ;; because equality is by-value per https://clojuredocs.org/clojure.core/=
-     ;; move as close to the bottom of the (cond) as possible.
+     ;; expensive if val1 and val2 are not atomic values: the above
+     ;; checks should ensure that by now val1 and val2 are atomic.
      (= val1 val2) val1
      
      (= val1 '())
