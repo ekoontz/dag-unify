@@ -444,23 +444,15 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
      (all-refs @input))
     (map? input)
     ;; TODO: fix bug here: vals resolves @'s
-    (concat
-     (mapcat (fn [key]
-               (let [val (get input key)]
-                 (if (ref? input)
-                   (if (ref? @val)
-                     (list @val)
-                     (list val)))))
-             input)
-     (all-refs
-      (mapfn (fn [val]
+    (all-refs
+     (mapfn (fn [val]
               ;; dereference double-references (references to another reference) :
               (if (and (ref? val)
                        (ref? @val))
                 @val
                 ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
-               val))
-           (vals input))))
+                val))
+            (vals input)))
     (seq? input)
     (mapcat (fn [each-input]
               (all-refs each-input))
