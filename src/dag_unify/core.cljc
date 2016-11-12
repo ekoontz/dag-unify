@@ -152,130 +152,126 @@
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, so that 
    sharing relationship in the arguments is preserved in the result"
-  [& args]
-  (let [val1 (first args)
-        val2 (second args)]
-    (cond
-      ;; This is the canonical unification case: unifying two DAGs
-      ;; (maps with possible references within them).
-      ;;
-      (and (map? val1)
-           (map? val2))
-      (let [result (merge-with-keys
-                    (dissoc val1 ::serialized)
-                    (dissoc val2 ::serialized)
-                    (filter #(not (= ::serialized %))
-                            (keys val1)))]
-        (if (empty? (rest (rest args)))
-          result
-          (unify! result
-                  (apply unify! (rest (rest args))))))
-                       
-      (empty? (rest args))
-      val1
-           
-      (or (= val1 :fail)
-          (= val2 :fail))
-      :fail
-
-      (and (= val1 :top)
-           (empty? (rest args)))
-      :top
-
-      (= val1 :top)
-      (apply unify! (rest args))
-
-      (and (= val2 :top)
-           (not (empty? (rest (rest args)))))
-      (apply unify! (cons val1 (rest (rest args))))
-
-      (= val2 :top) val1
-
-      ;; TODO: expensive if val1 and val2 are highly nested and similar,
-      ;; because equality is by-value per https://clojuredocs.org/clojure.core/=
-      ;; move as close to the bottom of the (cond) as possible.
-      (= val1 val2) val1
-
-      (= val1 '())
-      :fail
-
-      (= val1 nil)
-      :fail
-
-      (nil? args) nil
-           
-      ;; val1 is a ref, val2 is not a ref.
-      (and
-       (ref? val1)
-       (not (ref? val2)))
-      (do
-        (cond
-          (contains? (set (all-refs val2)) val1)
-          :fail ;; cannot unify these because it would create a cycle.
-          
-          true
-          (do (swap! val1
-                   (fn [x] (unify! @val1 val2)))
-              val1)))
-           
-      ;; val2 is a ref, val1 is not a ref.
-      (and
-       (ref? val2)
-       (not (ref? val1)))
-      (do
-        (cond
-          (contains? (set (all-refs val1)) val2)
-          :fail
-          true
-          (do
-            (swap! val2
-                   (fn [x] (unify! val1 @val2)))
-            val2)))
-
-      (and
-       (ref? val1)
-       (ref? val2))
-      (cond
-        (or (= val1 val2) ;; same reference.
-            (= val1 @val2)) ;; val1 <- val2
-        val1
-
-        (or (contains? (set (all-refs @val1)) val2)
-            (contains? (set (all-refs @val2)) val1))
-        :fail
-        
-        (= @val1 val2) ;; val1 -> val2
-        val2
-              
-        :else
-        (do
-          (swap! val1
-                 (fn [x] (unify! @val1 @val2)))
-          (swap! val2
-                 (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-          val1))
-
-      ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
-      (not (= :notfound (:not val1 :notfound)))
-      (if (= val2 :top)
-        val1
-        ;; else
-        (let [result (unify! (:not val1) val2)]
-          (if (= result :fail)
-            val2
-            :fail)))
-           
-      ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
-      (not (= :notfound (:not val2 :notfound)))
-      (if (= val1 :top)
-        val2
-        (let [result (unify! val1 (:not val2))]
-          (if (= result :fail)
-            val1
-            :fail)))
+  ([val1]
+   val1)
+  
+  ([val1 val2 & rest-args]
+   (cond
+     ;; This is the canonical unification case: unifying two DAGs
+     ;; (maps with possible references within them).
+     ;;
+     (and (map? val1)
+          (map? val2))
+     (let [result (merge-with-keys
+                   (dissoc val1 ::serialized)
+                   (dissoc val2 ::serialized)
+                   (filter #(not (= ::serialized %))
+                           (keys val1)))]
+       (if (empty? rest-args)
+         result
+         (unify! result
+                 (apply unify! rest-args))))
       
-      :else
-      :fail)))
+     (or (= val1 :fail)
+         (= val2 :fail))
+     :fail
+     
+     (and (= val1 :top)
+          (empty? rest-args))
+     val2
+     
+     (= val1 :top)
+     (apply unify! (cons val2 rest-args))
+     
+     (and (= val2 :top)
+          (not (empty? rest-args)))
+     (apply unify! (cons val1 rest-args))
+     
+     (= val2 :top) val1
+     
+     ;; TODO: expensive if val1 and val2 are highly nested and similar,
+     ;; because equality is by-value per https://clojuredocs.org/clojure.core/=
+     ;; move as close to the bottom of the (cond) as possible.
+     (= val1 val2) val1
+     
+     (= val1 '())
+     :fail
+     
+     (= val1 nil)
+     :fail
+     
+     ;; val1 is a ref, val2 is not a ref.
+     (and
+      (ref? val1)
+      (not (ref? val2)))
+     (do
+       (cond
+         (contains? (set (all-refs val2)) val1)
+         :fail ;; cannot unify these because it would create a cycle.
+         
+         true
+         (do (swap! val1
+                    (fn [x] (unify! @val1 val2)))
+             val1)))
+     
+     ;; val2 is a ref, val1 is not a ref.
+     (and
+      (ref? val2)
+      (not (ref? val1)))
+     (do
+       (cond
+         (contains? (set (all-refs val1)) val2)
+         :fail
+         true
+         (do
+           (swap! val2
+                  (fn [x] (unify! val1 @val2)))
+           val2)))
+     
+     (and
+      (ref? val1)
+      (ref? val2))
+     (cond
+       (or (= val1 val2) ;; same reference.
+           (= val1 @val2)) ;; val1 <- val2
+       val1
+       
+       (or (contains? (set (all-refs @val1)) val2)
+           (contains? (set (all-refs @val2)) val1))
+       :fail
+       
+       (= @val1 val2) ;; val1 -> val2
+       val2
+       
+       :else
+       (do
+         (swap! val1
+                (fn [x] (unify! @val1 @val2)))
+         (swap! val2
+                (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+         val1))
+     
+     ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
+     (not (= :notfound (:not val1 :notfound)))
+     (if (= val2 :top)
+       val1
+       ;; else
+       (let [result (unify! (:not val1) val2)]
+         (if (= result :fail)
+           val2
+           :fail)))
+     
+     ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
+     (not (= :notfound (:not val2 :notfound)))
+     (if (= val1 :top)
+       val2
+       (let [result (unify! val1 (:not val2))]
+         (if (= result :fail)
+           val1
+           :fail)))
+     
+     :else
+     :fail)))
 
 (defn merge-with-keys [arg1 arg2 keys-of-arg1]
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
