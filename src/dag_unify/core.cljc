@@ -10,7 +10,7 @@
   ;; e.g. {:fail :fail} rather than simply :fail,
   ;; and {:top :top} rather than simply :top.
 
-  (:refer-clojure :exclude [exists? get-in merge resolve]) ;; TODO: don't override (merge)
+  (:refer-clojure :exclude [assoc-in exists? get-in merge resolve]) ;; TODO: don't override (merge)
   (:require
    [clojure.string :refer [join]]))
 
@@ -557,8 +557,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             ;; TODO: why/why not do copy val rather than just val(?)
             (atom val)))
         serialized))
-
-;; TODO: remove: simply use clojure.core/assoc-in
+  
 (defn create-path-in
   "create a path starting at map through all keys in map:
    (create-path-in '(a b c d e) value) => {:a {:b {:c {:d {:e value}}}}})"  
@@ -569,6 +568,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         {(keyword (first path)) assigned})
       {(first path) value})
     value))
+
+(defn assoc-in
+  "Similar to clojure.core/assoc-in, but uses unification so that existing values are unified rather than overwritten."
+  [m path v]
+  (unify m
+         (create-path-in path v)))
 
 ;; Serialization format is a sequence:
 ;; (

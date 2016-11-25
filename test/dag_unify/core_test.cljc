@@ -1,7 +1,7 @@
 (ns dag_unify.core-test
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
-            [dag_unify.core :refer [all-refs create-path-in copy create-shared-values
+            [dag_unify.core :refer [all-refs assoc-in create-path-in copy create-shared-values
                                     deserialize deserialize-with-remove
                                     fail? get-in get-refs
                                     isomorphic? find-paths-to-value ref?
@@ -9,7 +9,7 @@
                                     ref-skel-map serialize
                                     remove-matching-keys
                                     skeletize skels unify unify!]])
-  (:refer-clojure :exclude [get-in resolve]))
+  (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
 
@@ -581,7 +581,20 @@ a given value in a given map."
           {:a {:b '()}}
           [:a :b :c :d] ::notfound))))
 
+;; assoc-in-1 and assoc-in-2 test that both:
+;;
+;; (assoc-in {:a {:b 42}} [:a :c] 43)
+;; and
+;; (assoc-in {:a {:b 42}} [:a] {:c 43})
+;; end up with the same result:
+;; {:a {:b 42, :c 43}}
 
+(deftest assoc-in-1
+  (let [result (assoc-in {:a {:b 42}} [:a :c] 43)]
+    (is (= (get-in result [:a :b]) 42))
+    (is (= (get-in result [:a :c]) 43))))
 
-
-                      
+(deftest assoc-in-2
+  (let [result (assoc-in {:a {:b 42}} [:a] {:c 43})]
+    (is (= (get-in result [:a :b]) 42))
+    (is (= (get-in result [:a :c]) 43))))
