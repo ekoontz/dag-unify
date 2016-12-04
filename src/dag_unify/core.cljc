@@ -401,23 +401,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn pathify [fs]
   (pathify-r fs))
 
-(def uniq-using-recur
-  "remove duplicates by checking first and second: if equal, remove the first and keep the second. otherwise, keep both."
-  (fn [sorted-vals]
-    (loop [sv sorted-vals result nil]
-      (let [first-val (first sv)]
-        (if (nil? (first sv))
-          result
-          (let [second-val (second sv)]
-            (if (= first-val second-val)
-              (recur (rest sv)
-                     result)
-              (recur (rest sv)
-                     (cons first-val result)))))))))
-
-(defn uniq [sorted-vals]
-  (reverse (uniq-using-recur sorted-vals)))
-
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   [map value path]
