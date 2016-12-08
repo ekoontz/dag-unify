@@ -2,13 +2,9 @@
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [dag_unify.core :refer [all-refs assoc-in create-path-in copy create-shared-values
-                                    deserialize deserialize-with-remove
-                                    fail? get-in get-refs
-                                    isomorphic? find-paths-to-value ref?
-                                    recursive-dissoc
-                                    ref-skel-map serialize
-                                    remove-matching-keys
-                                    skeletize skels unify unify!]])
+                                    deserialize fail? find-paths-to-value get-in get-refs
+                                    isomorphic? recursive-dissoc ref? ref-skel-map
+                                    remove-matching-keys serialize skeletize skels unify unify!]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 ;; TODO: add more tests for (isomorphic?)
