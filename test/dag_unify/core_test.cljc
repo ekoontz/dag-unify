@@ -7,7 +7,8 @@
                                     remove-matching-keys serialize skeletize skels unify unify!]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
-;; TODO: add more tests for (isomorphic?)
+;; TODO: add tests for (dag_unify.core/dissoc-paths)
+;; TODO: add more tests for (dag_unify.core/isomorphic?)
 
 (defn ser-db [input-map]
   (let [refs (get-refs input-map)
