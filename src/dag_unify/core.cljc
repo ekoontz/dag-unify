@@ -558,6 +558,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (unify m
          (create-path-in path v)))
 
+(defn assoc-in!
+  "Similar to assoc-in, but m's references (if any) are modified."
+  [m path v]
+  (unify! m
+          (create-path-in path v)))
+
 ;; Serialization format is a sequence:
 ;; (
 ;;  paths1 => map1 <= 'base'
