@@ -597,13 +597,18 @@ a given value in a given map."
     (is (= (get-in result [:a :c]) 43))))
 
 (deftest whyfail
-  (let [a (deserialize '((nil {:head {:synsem {:subcat {:3 ()}}}})
-                         (((:comp :synsem :subcat :2 :agr)) :top)
-                         (((:head :synsem :agr)
-                           (:comp :synsem :subcat :1 :agr))
+  (let [a (deserialize '((nil
+                          {:head {:synsem {:subcat {:3 ()}}}})
+
+                         (((:comp :synsem :subcat :2 :agr))
+                          :top)
+
+                         (((:head :synsem :agr) (:comp :synsem :subcat :1 :agr))
                           :top)))
         
-        b (deserialize '((nil {:head {:synsem {:subcat {:3 ()}}}})
+        b (deserialize '((nil
+                          {:head {:synsem {:subcat {:3 ()}}}})
+
                          (((:head :synsem :subcat :2 :subcat :1 :agr)
                            (:head :synsem :agr)
                            (:comp :synsem :subcat :1 :agr)
