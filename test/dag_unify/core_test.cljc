@@ -603,9 +603,6 @@ a given value in a given map."
                                   :applied {:aux-is-true-1 true},
                                   :notes "essere-aux-passato"},
                            :comp :top})
-                         (((:head :synsem :subcat :2 :subcat :2)
-                           (:comp :synsem :subcat :2))
-                          {:pronoun true, :cat :noun,:subcat ()})
                          (((:head :synsem :subcat :2 :subcat :2 :agr)
                            (:comp :italiano :obj-agr)
                            (:comp :synsem :subcat :2 :agr)) :top)
@@ -621,12 +618,6 @@ a given value in a given map."
                                       :applied {:aux-is-true-1 true},
                                       :notes "essere-aux-passato"},
                                :comp :top})
-                         (((:head :synsem :subcat :2 :cat)
-                           (:comp :synsem :cat)
-                           (:comp :italiano :cat)) :verb)
-                         (((:head :synsem :subcat :2 :essere)
-                           (:comp :synsem :essere)
-                           (:comp :italiano :essere)) true)
                          (((:head :synsem :subcat :2 :subcat :1)
                            (:head :synsem :subcat :1)
                            (:comp :synsem :subcat :1))
