@@ -883,7 +883,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (let [path (first paths)
           val1 (get-in fs1 path :top)
           val2 (get-in fs2 path :top)]
-      (if (fail? (unify! val1 val2))
+      (if (fail? (unify val1 val2))
         {:fail-path (str "/" (join "/" path))
          :val1 (strip-refs val1)
          :val2 (strip-refs val2)}
