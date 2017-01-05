@@ -595,3 +595,13 @@ a given value in a given map."
   (let [result (assoc-in {:a {:b 42}} [:a] {:c 43})]
     (is (= (get-in result [:a :b]) 42))
     (is (= (get-in result [:a :c]) 43))))
+
+(deftest whyfail
+  (let [a (let [r1 (atom :top)
+                r2 (atom :top)]
+            {:a r1 :b r2 :c r1})
+        b (let [r1 (atom :top)]
+            {:a r1 :b r1 :c r1})]
+    (is (not (fail? (unify a b))))))
+
+  
