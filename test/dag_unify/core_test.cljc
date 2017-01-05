@@ -599,10 +599,7 @@ a given value in a given map."
 (deftest whyfail
   (let [a (deserialize '((nil
                           {:head {:phrasal false,
-                                  :synsem {:subcat {:3 (), :2 :top, :1 :top}},
-                                  :applied {:aux-is-true-1 true},
-                                  :notes "essere-aux-passato"},
-                           :comp :top})
+                                  :synsem {:subcat {:3 (), :2 :top, :1 :top}}}})
                          (((:head :synsem :subcat :2 :subcat :2 :agr)
                            (:comp :italiano :obj-agr)
                            (:comp :synsem :subcat :2 :agr)) :top)
@@ -614,14 +611,11 @@ a given value in a given map."
                           {:number :sing, :person :1st})))
         
         b (deserialize '((nil {:head {:phrasal false,
-                                      :synsem {:subcat {:3 (), :2 :top, :1 :top}},
-                                      :applied {:aux-is-true-1 true},
-                                      :notes "essere-aux-passato"},
-                               :comp :top})
+                                      :synsem {:subcat {:3 (), :2 :top, :1 :top}}}})
                          (((:head :synsem :subcat :2 :subcat :1)
                            (:head :synsem :subcat :1)
                            (:comp :synsem :subcat :1))
-                          {:top :top, :case :nom, :agr :top, :sem :top, :cat :noun, :subcat ()})
+                          {:case :nom, :cat :noun, :subcat ()})
                          (((:head :synsem :subcat :2 :subcat :1 :agr)
                            (:head :synsem :subcat :2 :subcat :2 :agr)
                            (:head :synsem :subcat :2 :agr)
