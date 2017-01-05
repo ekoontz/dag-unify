@@ -399,9 +399,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                val)})))))))
           fs))
 
-(defn pathify [fs]
-  (pathify-r fs))
-
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   [map value path]
