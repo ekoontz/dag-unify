@@ -18,6 +18,8 @@
 #?(:clj (def ^:const mapfn map))
 #?(:cljs (def ^:const mapfn map))
 
+;; TODO: consider making :fail and :top to be package-local keywords.
+
 (defn exception [error-string]
   #?(:clj
      (throw (Exception. error-string)))
