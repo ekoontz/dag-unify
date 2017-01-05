@@ -165,7 +165,7 @@
      (let [result (merge-with-keys
                    (dissoc val1 ::serialized)
                    (dissoc val2 ::serialized)
-                   (filter #(not (= ::serialized %))
+                   (filter #(not (= ::serialized %)) ;; TODO: rather than filter, simply get keys from dissoc'ed val1 (above)
                            (keys val1)))]
        (if (empty? rest-args)
          result
@@ -284,6 +284,7 @@
         ;; were *not* in arg1.
         (empty? keys-of-arg1) arg2
 
+        ;; TODO: consider using: (= :fail result) rather than (expensive) (fail?).
         (fail? result) :fail
         true (recur arg1
                     (clojure.core/merge
@@ -892,7 +893,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         (find-fail-in fs1 fs2 (rest paths))))))
 
 (defn fail-path-between
-  "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
+  "If unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil. Not efficient: use only for diagnostics."
   [fs1 fs2]
   (let [paths-in-fs1 (map #(first (first %)) (pathify-r fs1))
         paths-in-fs2 (map #(first (first %)) (pathify-r fs2))]
