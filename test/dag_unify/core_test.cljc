@@ -597,9 +597,7 @@ a given value in a given map."
     (is (= (get-in result [:a :c]) 43))))
 
 (deftest whyfail
-  (let [a (deserialize '((nil
-                          {:head {:phrasal false,
-                                  :synsem {:subcat {:3 (), :2 :top, :1 :top}}}})
+  (let [a (deserialize '((nil {:head {:synsem {:subcat {:3 (), :2 :top, :1 :top}}}})
                          (((:head :synsem :subcat :2 :subcat :2 :agr)
                            (:comp :italiano :obj-agr)
                            (:comp :synsem :subcat :2 :agr)) :top)
@@ -610,12 +608,7 @@ a given value in a given map."
                            (:comp :synsem :subcat :1 :agr))
                           {:number :sing, :person :1st})))
         
-        b (deserialize '((nil {:head {:phrasal false,
-                                      :synsem {:subcat {:3 (), :2 :top, :1 :top}}}})
-                         (((:head :synsem :subcat :2 :subcat :1)
-                           (:head :synsem :subcat :1)
-                           (:comp :synsem :subcat :1))
-                          {:case :nom, :cat :noun, :subcat ()})
+        b (deserialize '((nil {:head {:synsem {:subcat {:3 (), :2 :top, :1 :top}}}})
                          (((:head :synsem :subcat :2 :subcat :1 :agr)
                            (:head :synsem :subcat :2 :subcat :2 :agr)
                            (:head :synsem :subcat :2 :agr)
