@@ -598,7 +598,7 @@ a given value in a given map."
 
 (deftest whyfail
   (let [a (deserialize '((nil
-                          {:a {:b {:c ()}}})
+                          {:a {:b {:c :top}}})
 
                          (((:d :b :e :f))
                           :top)
@@ -608,10 +608,9 @@ a given value in a given map."
                           :top)))
         
         b (deserialize '((nil
-                          {:a {:b {:c ()}}})
+                          {:a {:b {:c :top}}})
 
-                         (((:a :b :e :b :1 :f)
-                           (:a :f)
+                         (((:a :f)
                            (:d :b :e :f)
                            (:d :f))
                           :top)
