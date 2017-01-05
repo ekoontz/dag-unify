@@ -600,11 +600,11 @@ a given value in a given map."
   (let [a (deserialize '((nil
                           {:a {:b {:c {:3 ()}}}})
 
-                         (((:d :b :c :2 :e))
+                         (((:d :c :2 :e))
                           :top)
 
                          (((:a :b :e)
-                           (:d :b :c :1 :e))
+                           (:d :e))
                           :top)))
         
         b (deserialize '((nil
@@ -612,9 +612,8 @@ a given value in a given map."
 
                          (((:a :b :c :2 :c :1 :e)
                            (:a :b :e)
-                           (:d :b :c :1 :e)
-                           (:d :b :c :2 :e)
-                           (:d :b :e))
+                           (:d :c :2 :e)
+                           (:d :e))
                           :top)
                          )
                        )
