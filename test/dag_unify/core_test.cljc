@@ -598,22 +598,23 @@ a given value in a given map."
 
 (deftest whyfail
   (let [a (deserialize '((nil
-                          {:head {:synsem {:subcat {:3 ()}}}})
+                          {:a {:b {:c {:3 ()}}}})
 
-                         (((:comp :synsem :subcat :2 :agr))
+                         (((:d :b :c :2 :e))
                           :top)
 
-                         (((:head :synsem :agr) (:comp :synsem :subcat :1 :agr))
+                         (((:a :b :e)
+                           (:d :b :c :1 :e))
                           :top)))
         
         b (deserialize '((nil
-                          {:head {:synsem {:subcat {:3 ()}}}})
+                          {:a {:b {:c {:3 ()}}}})
 
-                         (((:head :synsem :subcat :2 :subcat :1 :agr)
-                           (:head :synsem :agr)
-                           (:comp :synsem :subcat :1 :agr)
-                           (:comp :synsem :subcat :2 :agr)
-                           (:comp :synsem :agr))
+                         (((:a :b :c :2 :c :1 :e)
+                           (:a :b :e)
+                           (:d :b :c :1 :e)
+                           (:d :b :c :2 :e)
+                           (:d :b :e))
                           :top)
                          )
                        )
