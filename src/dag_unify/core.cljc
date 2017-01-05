@@ -37,6 +37,15 @@
     (resolve @arg)
     arg))
 
+(defn simplify-ref
+  "if arg is a ref and @arg is not a ref, return arg. if @arg is also a ref, return (simplify-ref @arg). else, return arg."
+  [arg]
+  (if (ref? arg)
+    (if (not (ref? @arg))
+      arg
+      (simplify-ref @arg))
+    (exception (str "simplify-ref was passed a non-ref: " ref " of type: " (type arg)))))
+
 ;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
 (defn get-in
   "same as clojure.core (get-in), but references are resolved and followed."
@@ -231,8 +240,8 @@
       (ref? val1)
       (ref? val2))
      (cond
-       (or (= val1 val2) ;; same reference.
-           (= val1 @val2)) ;; val1 <- val2
+       (= (simplify-ref val1)
+          (simplify-ref val2))
        val1
        
        (or (contains? (set (all-refs @val1)) val2)
