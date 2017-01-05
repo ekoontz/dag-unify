@@ -609,13 +609,6 @@ a given value in a given map."
                                   :applied {:aux-is-true-1 true},
                                   :notes "essere-aux-passato"},
                            :comp :top})
-                         (((:comp)) {:italiano :top, :synsem :top})
-                         (((:comp :italiano)) {:initial false, :obj-agr :top})
-                         (((:head :synsem :infl) (:head :italiano :infl)) :present)
-                         (((:head :synsem :cat) (:head :italiano :cat)) :verb)
-                         (((:head :synsem :essere) (:head :italiano :essere)) true)
-                         (((:head :synsem :modal)) :top) (((:head :synsem :pronoun)) :top)
-                         (((:head :synsem :aux)) true)
                          (((:head :synsem :subcat :2) (:comp :synsem))
                           {:pronoun false, :subcat {:3 (), :2 :top, :1 :top},
                            :top :top, :essere true, :cat :verb,
@@ -645,13 +638,6 @@ a given value in a given map."
                                       :applied {:aux-is-true-1 true},
                                       :notes "essere-aux-passato"},
                                :comp :top})
-                         (((:comp)) {:synsem :top, :italiano :top, :phrasal false})
-                         (((:comp :italiano)) {:obj-agr :top, :initial false, :italiano "alzarsi",
-                                               :agr :top, :cat :top, :essere :top, :infl :top})
-                         (((:head :synsem :infl) (:head :italiano :infl)) :present) (((:head :synsem :cat) (:head :italiano :cat)) :verb)
-                         (((:head :synsem :essere) (:head :italiano :essere)) true) (((:head :synsem :modal)) :top)
-                         (((:head :synsem :pronoun)) :top)
-                         (((:head :synsem :aux)) true)
                          (((:head :synsem :subcat :2) (:comp :synsem))
                           {:aux false, :cat :top, :essere :top, :top :top, :infl :top,
                            :subcat {:1 :top, :2 :top, :3 ()}, :agr :top, :sem :top, :pronoun false})
