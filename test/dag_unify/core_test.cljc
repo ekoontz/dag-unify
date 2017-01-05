@@ -611,18 +611,6 @@ a given value in a given map."
                            :comp :top})
                          (((:comp)) {:italiano :top, :synsem :top})
                          (((:comp :italiano)) {:initial false, :obj-agr :top})
-                         (((:head :italiano)) {:cat :top,
-                                               :essere :top,
-                                               :future {:1sing "sarò", :2sing "sarai", :3sing "sarà",
-                                                        :1plur "saremo", :2plur "sarete", :3plur "saranno"},
-                                               :present {:1sing "sono", :2sing "sei", :3sing "è",
-                                                         :1plur "siamo", :2plur "siete", :3plur "sono"},
-                                               :imperfect {:1sing "ero", :2sing "eri", :3sing "era",
-                                                           :1plur "eravamo", :2plur "eravate", :3plur "erano"},
-                                               :infl :top, :future-stem "sar", :infinitive "essere", :passato "stato",
-                                               :agr :top, :italiano "sono", :initial true, :exception true,
-                                               :conditional {:1sing "sarei", :2sing "saresti", :3sing "sarebbe",
-                                                             :1plur "saremmo", :2plur "sareste", :3plur "sarebbero"}})
                          (((:head :synsem :infl) (:head :italiano :infl)) :present)
                          (((:head :synsem :cat) (:head :italiano :cat)) :verb)
                          (((:head :synsem :essere) (:head :italiano :essere)) true)
@@ -660,17 +648,6 @@ a given value in a given map."
                          (((:comp)) {:synsem :top, :italiano :top, :phrasal false})
                          (((:comp :italiano)) {:obj-agr :top, :initial false, :italiano "alzarsi",
                                                :agr :top, :cat :top, :essere :top, :infl :top})
-                         (((:head :italiano)) {:cat :top, :essere :top,
-                                               :future {:1sing "sarò", :2sing "sarai", :3sing "sarà",
-                                                        :1plur "saremo", :2plur "sarete", :3plur "saranno"},
-                                               :present {:1sing "sono", :2sing "sei", :3sing "è",
-                                                         :1plur "siamo", :2plur "siete", :3plur "sono"},
-                                               :imperfect {:1sing "ero", :2sing "eri", :3sing "era",
-                                                           :1plur "eravamo", :2plur "eravate", :3plur "erano"},
-                                               :infl :top, :future-stem "sar", :infinitive "essere", :passato "stato",
-                                               :agr :top, :italiano "sono", :initial true, :exception true,
-                                               :conditional {:1sing "sarei", :2sing "saresti", :3sing "sarebbe",
-                                                             :1plur "saremmo", :2plur "sareste", :3plur "sarebbero"}})
                          (((:head :synsem :infl) (:head :italiano :infl)) :present) (((:head :synsem :cat) (:head :italiano :cat)) :verb)
                          (((:head :synsem :essere) (:head :italiano :essere)) true) (((:head :synsem :modal)) :top)
                          (((:head :synsem :pronoun)) :top)
