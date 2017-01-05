@@ -599,20 +599,14 @@ a given value in a given map."
 (deftest whyfail
   (let [a (deserialize '((nil
                           {:head {:phrasal false,
-                                  :synsem {:aux :top,
-                                           :cat :top,
-                                           :essere :top,
-                                           :infl :top,
-                                           :subcat {:3 (), :2 :top, :1 :top},
-                                           :agr :top, :modal :top, :sem :top, :pronoun :top},
-                                  :italiano :top,
+                                  :synsem {:subcat {:3 (), :2 :top, :1 :top}},
                                   :applied {:aux-is-true-1 true},
                                   :notes "essere-aux-passato"},
                            :comp :top})
                          (((:head :synsem :subcat :2)
                            (:comp :synsem))
                           {:pronoun false, :subcat {:3 (), :2 :top, :1 :top},
-                           :top :top, :essere true, :cat :verb,
+                           :essere true, :cat :verb,
                            :infl :past, :aux false, :sem :top})
                          (((:head :synsem :subcat :2 :sem)
                            (:head :synsem :sem)
@@ -621,11 +615,9 @@ a given value in a given map."
                            :subj :top, :pred :get-up, :reflexive true})
                          (((:head :synsem :subcat :2 :subcat :1)
                            (:head :synsem :subcat :1) (:comp :synsem :subcat :1))
-                          {:subcat (), :cat :noun, :sem :top,
-                           :agr :top, :case :nom, :top :top})
+                          {:subcat (), :cat :noun, :case :nom})
                          (((:head :synsem :subcat :2 :subcat :2) (:comp :synsem :subcat :2))
-                          {:pronoun true, :cat :noun,
-                           :subcat (), :agr :top})
+                          {:pronoun true, :cat :noun,:subcat ()})
                          (((:head :synsem :subcat :2 :subcat :1 :sem)
                            (:head :synsem :subcat :2 :sem :subj)
                            (:head :synsem :subcat :1 :sem)
@@ -643,12 +635,7 @@ a given value in a given map."
                           {:number :sing, :person :1st})))
         
         b (deserialize '((nil {:head {:phrasal false,
-                                      :synsem {:aux :top,
-                                               :cat :top,
-                                               :essere :top,
-                                               :infl :top, :subcat {:3 (), :2 :top, :1 :top},
-                                               :agr :top, :modal :top, :sem :top, :pronoun :top},
-                                      :italiano :top,
+                                      :synsem {:subcat {:3 (), :2 :top, :1 :top}},
                                       :applied {:aux-is-true-1 true},
                                       :notes "essere-aux-passato"},
                                :comp :top})
