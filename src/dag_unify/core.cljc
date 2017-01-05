@@ -18,6 +18,8 @@
 #?(:clj (def ^:const mapfn map))
 #?(:cljs (def ^:const mapfn map))
 
+;; TODO: consider making :fail and :top to be package-local keywords.
+
 (defn exception [error-string]
   #?(:clj
      (throw (Exception. error-string)))
@@ -36,6 +38,15 @@
   (if (ref? arg)
     (resolve @arg)
     arg))
+
+(defn simplify-ref
+  "if arg is a ref and @arg is not a ref, return arg. if @arg is also a ref, return (simplify-ref @arg). else, return arg."
+  [arg]
+  (if (ref? arg)
+    (if (not (ref? @arg))
+      arg
+      (simplify-ref @arg))
+    (exception (str "simplify-ref was passed a non-ref: " ref " of type: " (type arg)))))
 
 ;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
 (defn get-in
@@ -231,8 +242,8 @@
       (ref? val1)
       (ref? val2))
      (cond
-       (or (= val1 val2) ;; same reference.
-           (= val1 @val2)) ;; val1 <- val2
+       (= (simplify-ref val1)
+          (simplify-ref val2))
        val1
        
        (or (contains? (set (all-refs @val1)) val2)
@@ -373,7 +384,7 @@
   input)
 
 ;; TODO: remove *exclude-keys*,(pathify-r) and (pathify) in favor of fs's versions.
-(def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap}))
+(def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap ::serialized}))
 
 (defn pathify-r
 "Transform a map into a map of paths/value pairs,
