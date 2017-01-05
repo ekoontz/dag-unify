@@ -597,26 +597,11 @@ a given value in a given map."
     (is (= (get-in result [:a :c]) 43))))
 
 (deftest whyfail
-  (let [a (deserialize '((nil
-                          {:a :top})
-
-                         (((:b :c))
-                          :top)
-
-                         (((:a :c)
-                           (:c))
-                          :top)))
-        
-        b (deserialize '((nil
-                          {:a :top})
-
-                         (((:a :c)
-                           (:b :c)
-                           (:c))
-                          :top)
-                         )
-                       )
-        ]
+  (let [a (deserialize '((nil {:a :top})
+                         (((:b :c)) :top)
+                         (((:a :c) (:c)) :top)))
+        b (deserialize '((nil {:a :top})
+                         (((:a :c) (:b :c) (:c)) :top)))]
     (is (not (fail? (unify a b))))))
 
   
