@@ -598,21 +598,21 @@ a given value in a given map."
 
 (deftest whyfail
   (let [a (deserialize '((nil
-                          {:a {:b :top}})
+                          {:a :top})
 
-                         (((:b :c :d))
+                         (((:b :c))
                           :top)
 
-                         (((:a :d)
-                           (:d))
+                         (((:a :c)
+                           (:c))
                           :top)))
         
         b (deserialize '((nil
-                          {:a {:b :top}})
+                          {:a :top})
 
-                         (((:a :d)
-                           (:b :c :d)
-                           (:d))
+                         (((:a :c)
+                           (:b :c)
+                           (:c))
                           :top)
                          )
                        )
