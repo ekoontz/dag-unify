@@ -608,11 +608,6 @@ a given value in a given map."
                           {:pronoun false, :subcat {:3 (), :2 :top, :1 :top},
                            :essere true, :cat :verb,
                            :infl :past, :aux false, :sem :top})
-                         (((:head :synsem :subcat :2 :sem)
-                           (:head :synsem :sem)
-                           (:comp :synsem :sem))
-                          {:aspect :perfect, :tense :present,
-                           :subj :top, :pred :get-up, :reflexive true})
                          (((:head :synsem :subcat :2 :subcat :2)
                            (:comp :synsem :subcat :2))
                           {:pronoun true, :cat :noun,:subcat ()})
@@ -644,11 +639,6 @@ a given value in a given map."
                          (((:head :synsem :subcat :2 :essere)
                            (:comp :synsem :essere)
                            (:comp :italiano :essere)) true)
-                         (((:head :synsem :subcat :2 :sem)
-                           (:head :synsem :sem)
-                           (:comp :synsem :sem))
-                          {:reflexive true, :pred :get-up, :subj :top, :tense :present, :aspect :perfect,
-                           :shared-with-obj false, :obj :top})
                          (((:head :synsem :subcat :2 :subcat :1)
                            (:head :synsem :subcat :1)
                            (:comp :synsem :subcat :1))
