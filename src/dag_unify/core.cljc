@@ -291,10 +291,7 @@
               result (unify! (key1 arg1 :top)
                              (key1 arg2 :top))]
           (cond
-            (= :fail result) {:fail :fail
-                              :at key1
-                              :v1 (key1 arg1 :top)
-                              :v2 (key1 arg2 :top)}
+            (= :fail result) :fail
 
             true (recur (dissoc arg1 key1)
                         (assoc (dissoc arg2 key1)
