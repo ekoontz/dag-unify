@@ -373,7 +373,7 @@
   input)
 
 ;; TODO: remove *exclude-keys*,(pathify-r) and (pathify) in favor of fs's versions.
-(def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap}))
+(def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap ::serialized}))
 
 (defn pathify-r
 "Transform a map into a map of paths/value pairs,
