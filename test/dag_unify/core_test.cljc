@@ -596,7 +596,7 @@ a given value in a given map."
     (is (= (get-in result [:a :b]) 42))
     (is (= (get-in result [:a :c]) 43))))
 
-(deftest whyfail
+(deftest complicated-sharing
   (let [a (let [r1 (atom :top)
                 r2 (atom :top)]
             {:a r1 :b r2 :c r1})
