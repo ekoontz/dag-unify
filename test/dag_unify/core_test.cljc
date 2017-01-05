@@ -595,3 +595,114 @@ a given value in a given map."
   (let [result (assoc-in {:a {:b 42}} [:a] {:c 43})]
     (is (= (get-in result [:a :b]) 42))
     (is (= (get-in result [:a :c]) 43))))
+
+(deftest whyfail
+  (let [a (deserialize '((nil
+                          {:head {:phrasal false,
+                                  :synsem {:aux :top,
+                                           :cat :top,
+                                           :essere :top,
+                                           :infl :top,
+                                           :subcat {:3 (), :2 :top, :1 :top},
+                                           :agr :top, :modal :top, :sem :top, :pronoun :top},
+                                  :italiano :top,
+                                  :applied {:aux-is-true-1 true},
+                                  :notes "essere-aux-passato"},
+                           :comp :top})
+                         (((:comp)) {:italiano :top, :synsem :top})
+                         (((:comp :italiano)) {:initial false, :obj-agr :top})
+                         (((:head :italiano)) {:cat :top,
+                                               :essere :top,
+                                               :future {:1sing "sarò", :2sing "sarai", :3sing "sarà",
+                                                        :1plur "saremo", :2plur "sarete", :3plur "saranno"},
+                                               :present {:1sing "sono", :2sing "sei", :3sing "è",
+                                                         :1plur "siamo", :2plur "siete", :3plur "sono"},
+                                               :imperfect {:1sing "ero", :2sing "eri", :3sing "era",
+                                                           :1plur "eravamo", :2plur "eravate", :3plur "erano"},
+                                               :infl :top, :future-stem "sar", :infinitive "essere", :passato "stato",
+                                               :agr :top, :italiano "sono", :initial true, :exception true,
+                                               :conditional {:1sing "sarei", :2sing "saresti", :3sing "sarebbe",
+                                                             :1plur "saremmo", :2plur "sareste", :3plur "sarebbero"}})
+                         (((:head :synsem :infl) (:head :italiano :infl)) :present)
+                         (((:head :synsem :cat) (:head :italiano :cat)) :verb)
+                         (((:head :synsem :essere) (:head :italiano :essere)) true)
+                         (((:head :synsem :modal)) :top) (((:head :synsem :pronoun)) :top)
+                         (((:head :synsem :aux)) true)
+                         (((:head :synsem :subcat :2) (:comp :synsem))
+                          {:pronoun false, :subcat {:3 (), :2 :top, :1 :top},
+                           :top :top, :essere true, :cat :verb,
+                           :infl :past, :aux false, :sem :top})
+                         (((:head :synsem :subcat :2 :sem) (:head :synsem :sem) (:comp :synsem :sem))
+                          {:aspect :perfect, :tense :present,
+                           :subj :top, :pred :get-up, :reflexive true})
+                         (((:head :synsem :subcat :2 :subcat :1) (:head :synsem :subcat :1) (:comp :synsem :subcat :1))
+                          {:subcat (), :cat :noun, :sem :top,
+                           :agr :top, :case :nom, :top :top})
+                         (((:head :synsem :subcat :2 :subcat :2) (:comp :synsem :subcat :2))
+                          {:pronoun true, :cat :noun,
+                           :subcat (), :agr :top})
+                         (((:head :synsem :subcat :2 :subcat :1 :sem) (:head :synsem :subcat :2 :sem :subj) (:head :synsem :subcat :1 :sem) (:head :synsem :sem :subj) (:comp :synsem :subcat :1 :sem) (:comp :synsem :sem :subj))
+                          {:pred :I})
+                         (((:head :synsem :subcat :2 :subcat :2 :agr) (:comp :italiano :obj-agr) (:comp :synsem :subcat :2 :agr)) :top)
+                         (((:head :synsem :subcat :2 :subcat :1 :agr) (:head :synsem :subcat :1 :agr) (:head :synsem :agr) (:head :italiano :agr) (:comp :synsem :subcat :1 :agr))
+                          {:number :sing, :person :1st})))
+        
+        b (deserialize '((nil {:head {:phrasal false,
+                                      :synsem {:aux :top,
+                                               :cat :top,
+                                               :essere :top,
+                                               :infl :top, :subcat {:3 (), :2 :top, :1 :top},
+                                               :agr :top, :modal :top, :sem :top, :pronoun :top},
+                                      :italiano :top,
+                                      :applied {:aux-is-true-1 true},
+                                      :notes "essere-aux-passato"},
+                               :comp :top})
+                         (((:comp)) {:synsem :top, :italiano :top, :phrasal false})
+                         (((:comp :italiano)) {:obj-agr :top, :initial false, :italiano "alzarsi",
+                                               :agr :top, :cat :top, :essere :top, :infl :top})
+                         (((:head :italiano)) {:cat :top, :essere :top,
+                                               :future {:1sing "sarò", :2sing "sarai", :3sing "sarà",
+                                                        :1plur "saremo", :2plur "sarete", :3plur "saranno"},
+                                               :present {:1sing "sono", :2sing "sei", :3sing "è",
+                                                         :1plur "siamo", :2plur "siete", :3plur "sono"},
+                                               :imperfect {:1sing "ero", :2sing "eri", :3sing "era",
+                                                           :1plur "eravamo", :2plur "eravate", :3plur "erano"},
+                                               :infl :top, :future-stem "sar", :infinitive "essere", :passato "stato",
+                                               :agr :top, :italiano "sono", :initial true, :exception true,
+                                               :conditional {:1sing "sarei", :2sing "saresti", :3sing "sarebbe",
+                                                             :1plur "saremmo", :2plur "sareste", :3plur "sarebbero"}})
+                         (((:head :synsem :infl) (:head :italiano :infl)) :present) (((:head :synsem :cat) (:head :italiano :cat)) :verb)
+                         (((:head :synsem :essere) (:head :italiano :essere)) true) (((:head :synsem :modal)) :top)
+                         (((:head :synsem :pronoun)) :top)
+                         (((:head :synsem :aux)) true)
+                         (((:head :synsem :subcat :2) (:comp :synsem))
+                          {:aux false, :cat :top, :essere :top, :top :top, :infl :top,
+                           :subcat {:1 :top, :2 :top, :3 ()}, :agr :top, :sem :top, :pronoun false})
+                         (((:head :synsem :subcat :2 :infl) (:comp :synsem :infl) (:comp :italiano :infl)) :past)
+                         (((:head :synsem :subcat :2 :cat) (:comp :synsem :cat) (:comp :italiano :cat)) :verb)
+                         (((:head :synsem :subcat :2 :essere) (:comp :synsem :essere) (:comp :italiano :essere)) true)
+                         (((:head :synsem :subcat :2 :sem) (:head :synsem :sem) (:comp :synsem :sem))
+                          {:reflexive true, :pred :get-up, :subj :top, :tense :present, :aspect :perfect,
+                           :shared-with-obj false, :obj :top})
+                         (((:head :synsem :subcat :2 :subcat :1) (:head :synsem :subcat :1) (:comp :synsem :subcat :1))
+                          {:top :top, :case :nom, :agr :top, :sem :top, :cat :noun, :subcat ()})
+                         (((:head :synsem :subcat :2 :subcat :2) (:comp :synsem :subcat :2))
+                          {:agr :top, :subcat (), :cat :noun, :pronoun true, :top :top, :sem :top, :reflexive true, :case :acc})
+                         (((:head :synsem :subcat :2 :subcat :1 :sem)
+                           (:head :synsem :subcat :2 :subcat :2 :sem)
+                           (:head :synsem :subcat :2 :sem :subj)
+                           (:head :synsem :subcat :2 :sem :obj)
+                           (:head :synsem :subcat :1 :sem)
+                           (:head :synsem :sem :subj)
+                           (:head :synsem :sem :obj)
+                           (:comp :synsem :subcat :1 :sem)
+                           (:comp :synsem :subcat :2 :sem)
+                           (:comp :synsem :sem :subj) (:comp :synsem :sem :obj)) {:pred :I, :null false, :animate true})
+                         (((:head :synsem :subcat :2 :subcat :1 :agr) (:head :synsem :subcat :2 :subcat :2 :agr)
+                           (:head :synsem :subcat :2 :agr) (:head :synsem :subcat :1 :agr) (:head :synsem :agr)
+                           (:head :italiano :agr) (:comp :synsem :subcat :1 :agr) (:comp :synsem :subcat :2 :agr)
+                           (:comp :synsem :agr) (:comp :italiano :obj-agr) (:comp :italiano :agr))
+                          {:person :1st, :number :sing})))]
+    (is (not (fail? (unify a b))))))
+
+  
