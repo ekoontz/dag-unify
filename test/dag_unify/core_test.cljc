@@ -598,10 +598,10 @@ a given value in a given map."
 
 (deftest whyfail
   (let [a (deserialize '((nil {:a :top})
-                         (((:b :c)) :top)
-                         (((:a :c) (:c)) :top)))
+                         (((:b)) :top)
+                         (((:a) (:c)) :top)))
         b (deserialize '((nil {:a :top})
-                         (((:a :c) (:b :c) (:c)) :top)))]
+                         (((:a) (:b) (:c)) :top)))]
     (is (not (fail? (unify a b))))))
 
   
