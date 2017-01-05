@@ -274,23 +274,23 @@
 
 (defn merge-with-keys [arg1 arg2 keys-of-arg1]
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
-    (let [key1 (first keys-of-arg1)
-          result (if (not (empty? keys-of-arg1))
-                   (unify! (key1 arg1 :top)
-                           (key1 arg2 :top)))]
-      (cond
 
-        ;; if keys-of-arg1 is empty, then arg2 contains only keys that
-        ;; were *not* in arg1.
-        (empty? keys-of-arg1) arg2
+    ;; if keys-of-arg1 is empty, then arg2 contains only keys that
+    ;; were *not* in arg1.
+    (if (empty? keys-of-arg1) arg2
+        (let [key1 (first keys-of-arg1)
+              result (unify! (key1 arg1 :top)
+                             (key1 arg2 :top))]
+          (cond
+            (= :fail result) {:fail :fail
+                              :at key1
+                              :v1 (key1 arg1 :top)
+                              :v2 (key1 arg2 :top)}
 
-        ;; TODO: consider using: (= :fail result) rather than (expensive) (fail?).
-        (fail? result) :fail
-        true (recur arg1
-                    (clojure.core/merge
-                     {key1 result}
-                     (dissoc arg2 key1))
-                    (rest keys-of-arg1))))))
+            true (recur (dissoc arg1 key1)
+                        (assoc (dissoc arg2 key1)
+                               key1 result)
+                        (rest keys-of-arg1)))))))
 
 ;; TODO: get rid of (dag_unify.core/merge).
 (defn- merge
