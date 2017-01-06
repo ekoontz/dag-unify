@@ -383,7 +383,6 @@
 (defn deref-map [input]
   input)
 
-;; TODO: remove *exclude-keys*,(pathify-r) and (pathify) in favor of fs's versions.
 (def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap ::serialized}))
 
 (defn pathify-r
