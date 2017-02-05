@@ -204,12 +204,6 @@
      ;; checks should ensure that by now val1 and val2 are atomic.
      (= val1 val2) val1
      
-     (= val1 '())
-     :fail
-     
-     (= val1 nil)
-     :fail
-     
      ;; val1 is a ref, val2 is not a ref.
      (and
       (ref? val1)
@@ -237,6 +231,12 @@
            (swap! val2
                   (fn [x] (unify! val1 @val2)))
            val2)))
+     
+     (= val1 '())
+     :fail
+     
+     (= val1 nil)
+     :fail
      
      (and
       (ref? val1)

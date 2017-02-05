@@ -604,4 +604,15 @@ a given value in a given map."
             {:a r1 :b r1 :c r1})]
     (is (not (fail? (unify a b))))))
 
-  
+(deftest unify-empty-list
+  (let [a '()
+        b (atom :top)
+        result1 (unify a b)
+        result2 (unify b a)]
+    (is (not (fail? result1)))
+    (is (not (fail? result2)))
+    (is (= true (ref? result1)))
+    (is (= true (ref? result2)))
+    (is (empty? @result1))
+    (is (empty? @result2))))
+
