@@ -732,9 +732,11 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    (let [map-keys (sort (keys map-with-refs))]
      (let [first-key (first (keys map-with-refs))
            val (get map-with-refs first-key)]
-       (conj
-        {first-key (strip-refs val)}
-        (strip-refs (dissoc map-with-refs first-key)))))
+       (dissoc
+        (conj
+         {first-key (strip-refs val)}
+         (strip-refs (dissoc map-with-refs first-key)))
+        ::serialized)))
    (ref? map-with-refs)
    (strip-refs (deref map-with-refs))
    :else
