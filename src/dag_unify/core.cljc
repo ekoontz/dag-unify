@@ -12,6 +12,7 @@
 
   (:refer-clojure :exclude [assoc-in exists? get-in merge resolve]) ;; TODO: don't override (merge)
   (:require
+   [clojure.repl :refer [doc]]
    [clojure.string :refer [join]]))
 
 ;; use map or pmap.
