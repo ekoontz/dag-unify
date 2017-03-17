@@ -409,6 +409,24 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                val)})))))))
           fs))
 
+;; 1   2   3   4
+;; a  [1]  42
+;; b  [1]  42
+;; c   d   [1] 42
+;;     e   43
+;;
+(defn width [fs & [ser]]
+  (let [is-first-ref? true] ;; TODO: use serialization
+    (cond (map? fs)
+          (+ 1 (apply max
+                      (map (fn [val]
+                             (width val ser))
+                      (map (fn [k]
+                             (get fs k))
+                              (keys fs)))))
+          (and (ref? fs) (= is-first-ref? true)) (+ 1 (width @fs))
+          (ref? fs) 1
+          true 1)))
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   [map value path]
