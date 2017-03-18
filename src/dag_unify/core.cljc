@@ -447,6 +447,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
            (is-first-ref? path (rest sets)))))
 
 (defn width [fs & [firsts path]]
+  "find the width (length of horizontal dimension) of a fs for 
+   printing out to a fixed-width-font representation."
   (let [firsts (or firsts (map first (map first (rest (serialize fs)))))
         is-first-ref? (is-first-ref? path firsts)]
     (cond (map? fs)
@@ -460,6 +462,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           true 1)))
 
 (defn height [fs & [firsts path]]
+  "find the height (length of vertical dimension) of a fs for 
+   printing out to a fixed-width-font representation."
   (let [firsts (or firsts (map first (map first (rest (serialize fs)))))
         is-first-ref? (is-first-ref? path firsts)]
     (cond (map? fs)
