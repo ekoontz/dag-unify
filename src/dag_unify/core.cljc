@@ -487,16 +487,18 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         y (or y 0)]
     (cond (map? fs)
           (unify fs
-                 {:x x
-                  :y y
-                  :height (height fs)
-                  :width (width fs)}
+                 {:annotate ;; TODO: annotate all keys in fs, not just the first.
+                  {(first (keys fs))
+                   {:x x
+                    :y y
+                    :height (height fs)
+                    :width (width fs)}}}
                  (apply unify
-                         (map (fn [k]
-                                (let [val (get fs k)]
-                                  {k (annotate val firsts (concat path [k])
-                                               (+ x 1)
-                                               (+ y (height-so-far fs k)))}))
+                        (map (fn [k]
+                               (let [val (get fs k)]
+                                 {k (annotate val firsts (concat path [k])
+                                              (+ x 1)
+                                              (+ y (height-so-far fs k)))}))
                              (keys fs))))
           (and (ref? fs) (= is-first-ref? true)) (annotate @fs)
           (ref? fs) fs
