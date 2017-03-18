@@ -4,7 +4,9 @@
             [dag_unify.core :refer [all-refs assoc-in create-path-in copy create-shared-values
                                     deserialize fail? find-paths-to-value get-in get-refs
                                     isomorphic? recursive-dissoc ref? ref-skel-map
-                                    remove-matching-keys serialize skeletize skels unify unify!]])
+                                    remove-matching-keys serialize skeletize skels
+                                    width height
+                                    unify unify!]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 ;; TODO: add tests for (dag_unify.core/dissoc-paths)
@@ -615,4 +617,20 @@ a given value in a given map."
     (is (= true (ref? result2)))
     (is (empty? @result1))
     (is (empty? @result2))))
+
+(deftest print-out-test
+  (let [fs1 (let [a (atom 42)]
+             {:a a
+              :b a
+              :c {:d a
+                  :e 43}})]
+    ;;     1   2   3 
+    ;;  1  a  [1]  42
+    ;;  2  b  [1]  42
+    ;;  3  c   d   [1]
+    ;;  4      e   43
+    (is (= (width fs1) 3))
+    (is (= (height fs1) 4))))
+
+
 

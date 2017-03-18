@@ -410,24 +410,109 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                val)})))))))
           fs))
 
-;; 1   2   3   4
-;; a  [1]  42
-;; b  [1]  42
-;; c   d   [1] 42
-;;     e   43
-;;
-(defn width [fs & [ser]]
-  (let [is-first-ref? true] ;; TODO: use serialization
+(defn paths [fs]
+  "return all paths within input map."
+  (if (map? fs)
+    (concat (map list (keys fs))
+            (mapcat (fn [k]
+                      (map (fn [path]
+                             (cons k path))
+                           (paths (get-in fs [k]))))
+                    (keys fs)))))
+
+(defn key-rank [k keys]
+  "used for drawing: determine y axis of k within keys."
+  (if (= k (first keys))
+    0
+    (+ 1 (key-rank k (rest keys)))))
+
+(defn rank-within [path fs]
+  "used for drawing: determine y axis of path within fs."
+  (let [ks (keys fs)]
+    (+ (key-rank (first path) ks)
+       (if (not (empty? (rest path)))
+         (rank-within (rest path) (get-in fs [(first path)]))
+         0))))
+
+(defn count-refs-in-path [path fs]
+  (if (empty? path) 0
+      (let [val (get fs (first path))]
+        (+ (count-refs-in-path (rest path) (get-in fs [(first path)]))
+           (if (ref? val) 1 0)))))
+
+(defn is-first-ref? [path sets]
+  "return true if _path_ is the first member of a set of paths that all point to a single reference."
+  (and (not (empty? sets))
+       (or (= path (first sets))
+           (is-first-ref? path (rest sets)))))
+
+(defn width [fs & [firsts path]]
+  (let [firsts (or firsts (map first (map first (rest (serialize fs)))))
+        is-first-ref? (is-first-ref? path firsts)]
     (cond (map? fs)
           (+ 1 (apply max
-                      (map (fn [val]
-                             (width val ser))
                       (map (fn [k]
-                             (get fs k))
-                              (keys fs)))))
+                             (let [val (get fs k)]
+                               (width val firsts (concat path [k]))))
+                           (keys fs))))
           (and (ref? fs) (= is-first-ref? true)) (+ 1 (width @fs))
           (ref? fs) 1
           true 1)))
+
+(defn height [fs & [firsts path]]
+  (let [firsts (or firsts (map first (map first (rest (serialize fs)))))
+        is-first-ref? (is-first-ref? path firsts)]
+    (cond (map? fs)
+          (apply +
+                 (map (fn [k]
+                        (let [val (get fs k)]
+                          (height val firsts (concat path [k]))))
+                      (keys fs)))
+          (and (ref? fs) (= is-first-ref? true)) (height @fs)
+          (ref? fs) 1
+          true 1)))
+
+(defn printout [fs]
+  (let [E (zipmap (paths fs)
+                  (map (fn [path] {:x (+ (max 0 (- (count-refs-in-path path fs) 1) (count path)))
+                                   :type :feature
+                                   :val (last path)
+                                   :y (rank-within path fs)})
+                       (paths fs)))
+        R (zipmap (filter (fn [path]
+                            (ref? (get (get-in fs (butlast path)) (last path))))
+                          (paths fs))
+                  (filter #(not (nil? %))
+                          (map (fn [path]
+                                 (if (ref? (get (get-in fs (butlast path)) (last path)))
+                                   {:x (+ (count-refs-in-path path fs) (count path))
+                                    :type :ref
+                                    :path path
+                                    :val (get (get-in fs (butlast path)) (last path))
+                                    :y (rank-within path fs)}))
+                               (paths fs))))
+        refmap (zipmap 
+                (vec 
+                 (set 
+                  (map :val
+                       (filter (fn [v]
+                                 (= :ref (:type v)))
+                               (vals R)))))
+                (range 1
+                       (+ 1 (count
+                             (vec 
+                              (set 
+                               (map :val
+                                    (filter (fn [v]
+                                              (= :ref (:type v)))
+                                            (vals R)))))))))
+        first-path-in-share-paths (map first (map first (rest (serialize fs))))
+        ;; rewrite all {:type :ref}s so that, if the :path is a member of f-p-i-s-p,
+        ;; add {:show-ref} and add additional calls to draw the shared reference at that point.
+        vs [:f]]
+    (concat (map #(merge (dissoc % :val) {:val (get refmap (:val %))}) (vals R))
+            (vals E))))
+
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   [map value path]
@@ -931,4 +1016,26 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn fail-path [fs1 fs2]
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (fail-path-between fs1 fs2))
+
+(defn linearize [fs1]
+  "transform input into an array of strings suitable as a printable representation of the input"
+  (let [ser (serialize fs1)
+        paths (->> fs1
+                    pathify-r
+                    (map keys)
+                    (map first)
+                    (map vec)
+                    sort)
+        rows
+        ["|a [1] 42"
+         "|b [1]   "
+         "|c |d [1]"
+         "|  |e  43"]]
+    
+    (remove nil? (doall (map println rows)))))
+
+
+
+
+
 
