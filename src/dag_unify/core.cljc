@@ -476,6 +476,32 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (ref? fs) 1
           true 1)))
 
+(defn height-so-far [fs k]
+  5)
+
+(defn annotate [fs & [firsts path x y]]
+  "mark up a _fs_ recursively with an :x,:y:,:width, and :height."
+  (let [firsts (or firsts (map first (map first (rest (serialize fs)))))
+        is-first-ref? (is-first-ref? path firsts)
+        x (or x 0)
+        y (or y 0)]
+    (cond (map? fs)
+          (unify fs
+                 {:x x
+                  :y y
+                  :height (height fs)
+                  :width (width fs)}
+                 (apply unify
+                         (map (fn [k]
+                                (let [val (get fs k)]
+                                  {k (annotate val firsts (concat path [k])
+                                               (+ x 1)
+                                               (+ y (height-so-far fs k)))}))
+                             (keys fs))))
+          (and (ref? fs) (= is-first-ref? true)) (annotate @fs)
+          (ref? fs) fs
+          true fs)))
+
 (defn printout [fs]
   (let [E (zipmap (paths fs)
                   (map (fn [path] {:x (+ (max 0 (- (count-refs-in-path path fs) 1) (count path)))
