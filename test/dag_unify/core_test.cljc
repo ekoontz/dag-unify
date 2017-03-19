@@ -627,29 +627,30 @@ a given value in a given map."
               :b a
               :c {:d a
                   :e 43}})]
+
     ;;     1   2   3 
     ;;  1  a  [1]  42
     ;;  2  b  [1]  42
     ;;  3  c   d   [1]
     ;;  4      e   43
+
     (is (= (width fs1) 3))
     (is (= (height fs1) 4))
     (let [path-to-coordinates
           (gather-annotations (annotate fs1))]
       (is (= (get path-to-coordinates [:a])
-             {:x 1 :y 1}))
+             {:x 1 :y 1
+              :type :first-ref :index 1}))
       (is (= (get path-to-coordinates [:b])
-             {:x 1 :y 2}))
+             {:x 1 :y 2
+              :type :ref :index 1}))
       (is (= (get path-to-coordinates [:c])
-             {:x 1 :y 3}))
+             {:x 1 :y 3
+              :type :map :index nil}))
       (is (= (get path-to-coordinates [:c :d])
-             {:x 2 :y 3}))
+             {:x 2 :y 3
+              :type :ref :index 1}))
       (is (= (get path-to-coordinates [:c :e])
-             {:x 2 :y 4})))))
-
-
-
-
-      
-
+             {:x 2 :y 4
+              :type :other :index nil})))))
 
