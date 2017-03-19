@@ -152,6 +152,8 @@
   "alias for (defn unify)"
   [& args]
   (apply unify args))
+
+(def ^:dynamic *exclude-keys* (set #{::serialized ::annotate}))
   
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, so that 
@@ -167,8 +169,8 @@
      (and (map? val1)
           (map? val2))
      (let [result (merge-with-keys
-                   (dissoc val1 ::serialized)
-                   (dissoc val2 ::serialized)
+                   (reduce dissoc val1 *exclude-keys*)
+                   (reduce dissoc val2 *exclude-keys*)
                    (filter #(not (= ::serialized %)) ;; TODO: rather than filter, simply get keys from dissoc'ed val1 (above)
                            (keys val1)))]
        (if (empty? rest-args)
@@ -375,8 +377,6 @@
 
 (defn deref-map [input]
   input)
-
-(def ^:dynamic *exclude-keys* (set #{::serialized ::annotate}))
 
 (defn pathify-r
 "Transform a map into a map of paths/value pairs,
@@ -1069,9 +1069,3 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
          "|  |e  43"]]
     
     (remove nil? (doall (map println rows)))))
-
-
-
-
-
-
