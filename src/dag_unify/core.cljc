@@ -47,7 +47,7 @@
     (if (not (ref? @arg))
       arg
       (simplify-ref @arg))
-    (exception (str "simplify-ref was passed a non-ref: " ref " of type: " (type arg)))))
+    (exception (str "simplify-ref was passed a non-ref: " arg " of type: " (type arg)))))
 
 ;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
 (defn get-in
