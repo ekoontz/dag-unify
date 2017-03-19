@@ -484,8 +484,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                    {::annotate
                     {k
                      {:x x
-                      :y y
-                      :height height}}}
+                      :y y}}}
                    {k (annotate val firsts (concat path [k])
                                 (+ x 1)
                                 y)}

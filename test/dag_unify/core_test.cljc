@@ -637,15 +637,16 @@ a given value in a given map."
     (let [path-to-coordinates
           (gather-annotations (annotate fs1))]
       (is (= (get path-to-coordinates [:a])
-             {:x 1 :y 1 :height 1}))
+             {:x 1 :y 1}))
       (is (= (get path-to-coordinates [:b])
-             {:x 1 :y 2 :height 1}))
+             {:x 1 :y 2}))
       (is (= (get path-to-coordinates [:c])
-             {:x 1 :y 3 :height 2}))
+             {:x 1 :y 3}))
       (is (= (get path-to-coordinates [:c :d])
-             {:x 2 :y 3 :height 1}))
+             {:x 2 :y 3}))
       (is (= (get path-to-coordinates [:c :e])
-             {:x 2 :y 4 :height 1})))))
+             {:x 2 :y 4})))))
+
 
 
 
