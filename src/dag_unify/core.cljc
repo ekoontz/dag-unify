@@ -153,7 +153,8 @@
   [& args]
   (apply unify args))
 
-(def ^:dynamic *exclude-keys* (set #{::serialized ::annotate}))
+(def ^:dynamic *exclude-keys* (set #{::serialized}))
+(def ^:dynamic *local-keys* (set #{::serialized ::annotate}))
   
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, so that 
@@ -171,7 +172,7 @@
      (let [result (merge-with-keys
                    (reduce dissoc val1 *exclude-keys*)
                    (reduce dissoc val2 *exclude-keys*)
-                   (filter #(not (= ::serialized %)) ;; TODO: rather than filter, simply get keys from dissoc'ed val1 (above)
+                   (filter #(not (contains? *exclude-keys* %)) ;; TODO: rather than filter, simply get keys from dissoc'ed val1 (above)
                            (keys val1)))]
        (if (empty? rest-args)
          result
@@ -468,10 +469,19 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (ref? fs) 1
           true 1)))
 
-(defn annotate [fs & [firsts path x y]]
+(defn index-of-ref [path path-sets & [i]]
+  (let [i (or i 1)]
+    (if (not (empty? path-sets))
+      (if (contains? (set (first path-sets)) path)
+        i
+        (index-of-ref path (rest path-sets) (+ 1 i)))
+      (throw (Exception. (str "no path-set found that contains:" path))))))
+
+(defn annotate [fs & [firsts path x y path-sets]]
   "mark up a _fs_ recursively with an :x,:y:,:width, and :height."
   (let [firsts (or firsts (map first (map first (rest (serialize fs)))))
-        is-first-ref? (is-first-ref? path firsts)
+        is-path-first-ref? (is-first-ref? path firsts)
+        path-sets (or path-sets (map first (rest (serialize fs))))
         x (or x 1)
         y (or y 1)]
     (cond (and (map? fs)
@@ -483,13 +493,27 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                    {::annotate
                     {k
                      {:x x
+                      :type (cond (map? val)
+                                  :map
+                                  (and (ref? val)
+                                       (is-first-ref? (concat path [k]) firsts))
+                                  :first-ref
+                                  (ref? val)
+                                  :ref
+                                  true :other)
+                      :index (cond (ref? val)
+                                   (index-of-ref (concat path [k])
+                                                 path-sets)
+                                   true nil)
                       :y y}}}
                    {k (annotate val firsts (concat path [k])
                                 (+ x 1)
-                                y)}
+                                y path-sets)}
                    (annotate (dissoc fs k) firsts path
-                             x (+ 0 y height))))
-          (and (ref? fs) (= is-first-ref? true)) (annotate @fs)
+                             x (+ 0 y height) path-sets)))
+          (and (ref? fs) (= is-path-first-ref? true)) (annotate @fs
+                                                                firsts path
+                                                                x y path-sets)
           (ref? fs) fs
           true fs)))
 
@@ -499,7 +523,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (cond (and (map? fs)
                (not (empty? (keys fs))))
           (let [k (first (keys fs))]
-            (if (contains? *exclude-keys* k)
+            (if (contains? *local-keys* k)
               (gather-annotations (dissoc fs k) path annotate)
               (clojure.core/merge
                {(concat path [k])
@@ -588,7 +612,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn skeletize [input-val]
   (if (map? input-val)
-    (let [sans-serialized (dissoc input-val ::serialized)]
+    (let [sans-serialized (apply dissoc input-val *exclude-keys*)]
       (zipmap (keys sans-serialized)
               (mapfn (fn [val]
                        (if (ref? val)
