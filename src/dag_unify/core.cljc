@@ -528,8 +528,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
               (clojure.core/merge
                {(concat path [k])
                 (get annotate k)}
-               (gather-annotations (get fs k)
-                                   (concat path [k]))
+               (gather-annotations (get-in fs [k])
+                                   (concat path [k])
+                                   (get (get-in fs [k]) ::annotate))
                (gather-annotations (dissoc fs k) path annotate)))))))
 
 (defn printout [fs]

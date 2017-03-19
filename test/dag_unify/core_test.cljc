@@ -628,6 +628,7 @@ a given value in a given map."
               :c {:d a
                   :e 43}})]
 
+    ;; fs1: 
     ;;     1   2   3 
     ;;  1  a  [1]  42
     ;;  2  b  [1]  42
@@ -652,5 +653,35 @@ a given value in a given map."
               :type :ref :index 1}))
       (is (= (get path-to-coordinates [:c :e])
              {:x 2 :y 4
-              :type :other :index nil})))))
+              :type :other :index nil})))
+
+    ;; fs2:
+    ;;     1   2   3   4   5
+    ;;  1  a  [1]  b   42
+    ;;  2          c   [2] 43
+    ;;  3  d   e  [2]
+    ;;  4      f   g  [1]
+    (let [fs2 (let [two (atom 43)
+                    one (atom {:b 42
+                               :c two})]
+                {:a one
+                 :d {:e two
+                     :f {:g one}}})]
+      (is (= (width fs2) 5))
+      (is (= (height fs2) 4))
+    (let [path-to-coordinates
+          (gather-annotations (annotate fs2))]
+      (is (= (dissoc (get path-to-coordinates [:a]) :index)
+             {:x 1 :y 1
+              :type :first-ref}))
+      (is (= (dissoc (get path-to-coordinates [:a :c]) :index)
+             {:x 3 :y 2
+              :type :first-ref}))))))
+
+      
+
+      
+    
+
+    
 
