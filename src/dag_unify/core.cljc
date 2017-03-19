@@ -384,6 +384,7 @@
 (defn deref-map [input]
   input)
 
+;; TODO: remove all except ::serialized.
 (def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap ::serialized}))
 
 (defn pathify-r
