@@ -115,14 +115,6 @@
           (cons (first fs-keys) (fail-path-r (get-in fs (list (first fs-keys)))))
           (fail-path-r fs (rest fs-keys)))))))
 
-(defn any? [fn members]
-  (if (not (empty? members))
-    (or (fn (first members))
-        (any? fn (rest members)))
-
-    ;; members is empty.
-    false))
-
 (declare all-refs)  ;; needed by unify for cycle-checking.
 (declare copy)
 
