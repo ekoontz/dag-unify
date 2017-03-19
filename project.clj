@@ -23,6 +23,7 @@
                        :username :env/aws_access_key ;; gets environment variable AWS_ACCESS_KEY
                        :passphrase :env/aws_secret_key}} ;; gets environment variable AWS_SECRET_KEY
 
+  ;; lein doo phantom test once
   :doo {:paths {:phantom "phantomjs --web-security=false"
                 :slimer "slimerjs --ignore-ssl-errors=true"
                 :karma "karma --port=9881 --no-colors"
