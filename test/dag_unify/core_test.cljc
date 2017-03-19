@@ -1,12 +1,15 @@
 (ns dag_unify.core-test
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
-            [dag_unify.core :refer [all-refs assoc-in create-path-in copy create-shared-values
-                                    deserialize fail? find-paths-to-value get-in get-refs
-                                    isomorphic? recursive-dissoc ref? ref-skel-map
-                                    remove-matching-keys serialize skeletize skels
-                                    width height
-                                    unify unify!]])
+            [dag_unify.core :refer [all-refs annotate assoc-in
+                                    create-path-in copy
+                                    create-shared-values deserialize
+                                    fail? find-paths-to-value get-in
+                                    gather-annotations get-refs isomorphic?
+                                    recursive-dissoc ref? ref-skel-map
+                                    remove-matching-keys serialize
+                                    skeletize skels width height unify
+                                    unify!]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 ;; TODO: add tests for (dag_unify.core/dissoc-paths)
@@ -630,7 +633,22 @@ a given value in a given map."
     ;;  3  c   d   [1]
     ;;  4      e   43
     (is (= (width fs1) 3))
-    (is (= (height fs1) 4))))
+    (is (= (height fs1) 4))
+    (let [path-to-coordinates
+          (gather-annotations (annotate fs1))]
+      (is (= (get path-to-coordinates [:a])
+             {:x 1 :y 1 :height 1}))
+      (is (= (get path-to-coordinates [:b])
+             {:x 1 :y 2 :height 1}))
+      (is (= (get path-to-coordinates [:c])
+             {:x 1 :y 3 :height 2}))
+      (is (= (get path-to-coordinates [:c :d])
+             {:x 2 :y 3 :height 1}))
+      (is (= (get path-to-coordinates [:c :e])
+             {:x 2 :y 4 :height 1})))))
 
+
+
+      
 
 

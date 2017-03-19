@@ -384,8 +384,8 @@
 (defn deref-map [input]
   input)
 
-;; TODO: remove all except ::serialized.
-(def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap ::serialized}))
+;; TODO: remove all except ::serialized and ::annotate.
+(def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap ::serialized ::annotate}))
 
 (defn pathify-r
 "Transform a map into a map of paths/value pairs,
@@ -502,6 +502,21 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (and (ref? fs) (= is-first-ref? true)) (annotate @fs)
           (ref? fs) fs
           true fs)))
+
+(defn gather-annotations [fs & [path annotate]]
+  (let [path (or path [])
+        annotate (or annotate (get fs ::annotate))]
+    (cond (and (map? fs)
+               (not (empty? (keys fs))))
+          (let [k (first (keys fs))]
+            (if (contains? *exclude-keys* k)
+              (gather-annotations (dissoc fs k) path annotate)
+              (clojure.core/merge
+               {(concat path [k])
+                (get annotate k)}
+               (gather-annotations (get fs k)
+                                   (concat path [k]))
+               (gather-annotations (dissoc fs k) path annotate)))))))
 
 (defn printout [fs]
   (let [E (zipmap (paths fs)
