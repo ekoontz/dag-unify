@@ -7,7 +7,7 @@
                  [org.clojure/clojurescript "1.9.494"]]
   :plugins [[cider/cider-nrepl "0.11.0"]
             [lein-doo "0.1.6"]
-            [lein-cljsbuild "1.1.2"]
+            [lein-cljsbuild "1.1.5"]
             [s3-wagon-private "1.2.0"]]
 
   ;; run clojure tests with "lein test"
@@ -29,5 +29,4 @@
                 :karma "karma --port=9881 --no-colors"
                 :rhino "rhino -strict"
                 :node "node --trace-gc --trace-gc-verbose"}}
-  :hooks [leiningen.cljsbuild]
-  )
+  :hooks [leiningen.cljsbuild])
