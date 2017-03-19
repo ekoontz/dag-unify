@@ -376,8 +376,7 @@
 (defn deref-map [input]
   input)
 
-;; TODO: remove all except ::serialized and ::annotate.
-(def ^:dynamic *exclude-keys* (set #{:_id :ref :refmap ::serialized ::annotate}))
+(def ^:dynamic *exclude-keys* (set #{::serialized ::annotate}))
 
 (defn pathify-r
 "Transform a map into a map of paths/value pairs,
