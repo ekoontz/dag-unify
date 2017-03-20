@@ -488,7 +488,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                (not (empty? fs)))
           (let [k (first (keys fs))
                 val (get fs k)
-                height (height val firsts (concat path [k]))]
+                height (height val firsts (concat path [k]))
+                path-plus-k (concat path [k])]
             (unify fs
                    {::annotate
                     {k
@@ -496,17 +497,17 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                       :type (cond (map? val)
                                   :map
                                   (and (ref? val)
-                                       (is-first-ref? (concat path [k]) firsts))
+                                       (is-first-ref? path-plus-k firsts))
                                   :first-ref
                                   (ref? val)
                                   :ref
                                   true :other)
                       :index (cond (ref? val)
-                                   (index-of-ref (concat path [k])
+                                   (index-of-ref path-plus-k
                                                  path-sets)
                                    true nil)
                       :y y}}}
-                   {k (annotate val firsts (concat path [k])
+                   {k (annotate val firsts path-plus-k
                                 (+ x 1)
                                 y path-sets)}
                    (annotate (dissoc fs k) firsts path
@@ -525,14 +526,16 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         annotate (or annotate (get fs ::annotate))]
     (cond (and (map? fs)
                (not (empty? (keys fs))))
-          (let [k (first (keys fs))]
+          (let [k (first (keys fs))
+                path-plus-k (concat path [k])]
             (if (contains? *local-keys* k)
+              ;; ignore this _k_ and continue.
               (gather-annotations (dissoc fs k) path annotate)
               (clojure.core/merge
-               {(concat path [k])
+               {path-plus-k
                 (get annotate k)}
                (gather-annotations (get-in fs [k])
-                                   (concat path [k])
+                                   path-plus-k
                                    (get (get-in fs [k]) ::annotate))
                (gather-annotations (dissoc fs k) path annotate)))))))
 
