@@ -521,23 +521,27 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (ref? fs) fs
           true fs)))
 
-(defn gather-annotations [fs & [path annotate]]
+(defn gather-annotations [fs & [firsts path annotate]]
   (let [path (or path [])
-        annotate (or annotate (get fs ::annotate))]
+        firsts (or firsts (map first (map first (rest (serialize fs)))))
+        annotate (or annotate (get fs ::annotate))
+        is-path-first-ref? (is-first-ref? path firsts)]
     (cond (and (map? fs)
                (not (empty? (keys fs))))
           (let [k (first (keys fs))
                 path-plus-k (concat path [k])]
             (if (contains? *local-keys* k)
               ;; ignore this _k_ and continue.
-              (gather-annotations (dissoc fs k) path annotate)
+              (gather-annotations (dissoc fs k) firsts path annotate)
               (clojure.core/merge
-               {path-plus-k
-                (get annotate k)}
-               (gather-annotations (get-in fs [k])
-                                   path-plus-k
-                                   (get (get-in fs [k]) ::annotate))
-               (gather-annotations (dissoc fs k) path annotate)))))))
+               {path-plus-k (get annotate k)}
+               (if (or (not (ref? (get fs k)))
+                       (is-first-ref? path-plus-k firsts))
+                 (gather-annotations (get-in fs [k])
+                                     firsts
+                                     path-plus-k
+                                     (get (get-in fs [k]) ::annotate)))
+               (gather-annotations (dissoc fs k) firsts path annotate)))))))
 
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
