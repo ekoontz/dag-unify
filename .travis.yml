@@ -1,6 +1,6 @@
 language: clojure
 lein: lein
-script: lein test; lein doo phantom test once
+script: lein test
 sudo: false
 jdk:
   - oraclejdk8
