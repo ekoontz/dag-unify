@@ -543,6 +543,37 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                      (get (get-in fs [k]) ::annotate)))
                (gather-annotations (dissoc fs k) firsts path annotate)))))))
 
+(defn print-out [fs]
+  "print out a line-oriented, fixed-width character representation of a feature structure."
+  (let [g (gather-annotations (annotate fs))
+        coords-are-keys
+        (zipmap (map (fn [v]
+                       (cond (nil? (:index v))
+                             (reduce dissoc v
+                                     [:type :index])
+                             true v))
+                     (vals g))
+            (map (fn [path]
+                   (merge 
+                    {:k (last path)}
+                    (if (not (map? (get-in fs path)))
+                      {:v (get-in fs path)})))
+                 (keys g)))
+        elements
+        (map (fn [each]
+               (cond (= (:type each) :ref)
+                     (dissoc each :v)
+                     true
+                     each))
+             (map (fn [k]
+                    (merge k (get coords-are-keys k)))
+                  (keys coords-are-keys)))
+        remove-type ;; don't need type anymore.
+        (map #(dissoc % :type) elements)]
+    (sort-by (fn [elem]
+               [(:y elem)(:x elem)])
+             elements)))
+    
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   [map value path]
