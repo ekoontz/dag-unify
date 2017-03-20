@@ -569,10 +569,21 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                     (merge k (get coords-are-keys k)))
                   (keys coords-are-keys)))
         remove-type ;; don't need type anymore.
-        (map #(dissoc % :type) elements)]
-    (sort-by (fn [elem]
-               [(:y elem)(:x elem)])
-             elements)))
+        (map #(dissoc % :type) elements)
+        sorted-vertically
+        (sort-by (fn [elem]
+                   [(:y elem)(:x elem)])
+                 elements)
+        height (apply max (map :y sorted-vertically))
+        width (apply max (map :x sorted-vertically))]
+    (doall
+     (map (fn [y]
+            (println (join " "
+                           (sort-by (fn [elem]
+                                      (:x elem))
+                                    (filter #(= (:y %) y)
+                                            sorted-vertically)))))
+          (range 0 (+ 1 height))))))
     
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
