@@ -511,9 +511,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                 y path-sets)}
                    (annotate (dissoc fs k) firsts path
                              x (+ 0 y height) path-sets)))
-          (and (ref? fs) (= is-path-first-ref? true)) (annotate @fs
-                                                                firsts path
-                                                                x y path-sets)
+
+          (and (ref? fs) (= is-path-first-ref? true))
+          (annotate @fs
+                    firsts path
+                    (+ 1 x) y path-sets)
+
           (ref? fs) fs
           true fs)))
 
