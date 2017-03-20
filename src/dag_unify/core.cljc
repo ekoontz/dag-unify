@@ -577,13 +577,34 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         height (apply max (map :y sorted-vertically))
         width (apply max (map :x sorted-vertically))]
     (doall
-     (map (fn [y]
-            (println (join " "
-                           (sort-by (fn [elem]
-                                      (:x elem))
-                                    (filter #(= (:y %) y)
-                                            sorted-vertically)))))
-          (range 0 (+ 1 height))))))
+     (map (fn [row]
+            (let [line-elements
+                  (sort-by (fn [elem]
+                             (:x elem))
+                           (filter #(= (:y %) row)
+                                   sorted-vertically))
+                  map-by-column
+                  (zipmap
+                   (range 0 (+ 1 width))
+                   (map (fn [column-index]
+                          (filter #(= (:x %) column-index)
+                                  line-elements))
+                        (range 1 (+ 1 width))))]
+              (println (str (join " "
+                                  (map (fn [v]
+                                         (cond (nil? v) " -- "
+                                               (= (:type v) :first-ref)
+                                               (str (:k v) " " "[" (:index v) "] "
+                                                    (or (:v v) ""))
+                                               (= (:type v) :ref)
+                                               (str (:k v) " " "[" (:index v) "]")
+                                               (:v v)
+                                               (str (:k v) " " (:v v))
+                                               true
+                                               (:k v)))
+                                       (map first (vals map-by-column))))))))
+          (range 1 (+ 1 height))))
+    sorted-vertically))
     
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
