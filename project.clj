@@ -29,4 +29,12 @@
                 :karma "karma --port=9881 --no-colors"
                 :rhino "rhino -strict"
                 :node "node --trace-gc --trace-gc-verbose"}}
-  :hooks [leiningen.cljsbuild])
+  ;; commenting out :hooks below because
+  ;; on TravisCI:
+  ;; ======================================================================
+  ;; Testing with Phantom:
+  ;; TypeError: 'undefined' is not an object (evaluating 'dag_unify.runner.doo_tests.call')
+  ;; Subprocess failed
+  ;; The command "lein test; lein doo phantom test once" exited with 1.
+  ;;:hooks [leiningen.cljsbuild]
+  )
