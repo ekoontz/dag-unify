@@ -533,47 +533,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                    (get (get-in fs [k]) ::annotate))
                (gather-annotations (dissoc fs k) path annotate)))))))
 
-(defn printout [fs]
-  (let [E (zipmap (paths fs)
-                  (map (fn [path] {:x (+ (max 0 (- (count-refs-in-path path fs) 1) (count path)))
-                                   :type :feature
-                                   :val (last path)
-                                   :y (rank-within path fs)})
-                       (paths fs)))
-        R (zipmap (filter (fn [path]
-                            (ref? (get (get-in fs (butlast path)) (last path))))
-                          (paths fs))
-                  (filter #(not (nil? %))
-                          (map (fn [path]
-                                 (if (ref? (get (get-in fs (butlast path)) (last path)))
-                                   {:x (+ (count-refs-in-path path fs) (count path))
-                                    :type :ref
-                                    :path path
-                                    :val (get (get-in fs (butlast path)) (last path))
-                                    :y (rank-within path fs)}))
-                               (paths fs))))
-        refmap (zipmap 
-                (vec 
-                 (set 
-                  (map :val
-                       (filter (fn [v]
-                                 (= :ref (:type v)))
-                               (vals R)))))
-                (range 1
-                       (+ 1 (count
-                             (vec 
-                              (set 
-                               (map :val
-                                    (filter (fn [v]
-                                              (= :ref (:type v)))
-                                            (vals R)))))))))
-        first-path-in-share-paths (map first (map first (rest (serialize fs))))
-        ;; rewrite all {:type :ref}s so that, if the :path is a member of f-p-i-s-p,
-        ;; add {:show-ref} and add additional calls to draw the shared reference at that point.
-        vs [:f]]
-    (concat (map #(merge (dissoc % :val) {:val (get refmap (:val %))}) (vals R))
-            (vals E))))
-
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   [map value path]
@@ -1078,19 +1037,3 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (fail-path-between fs1 fs2))
 
-(defn linearize [fs1]
-  "transform input into an array of strings suitable as a printable representation of the input"
-  (let [ser (serialize fs1)
-        paths (->> fs1
-                    pathify-r
-                    (map keys)
-                    (map first)
-                    (map vec)
-                    sort)
-        rows
-        ["|a [1] 42"
-         "|b [1]   "
-         "|c |d [1]"
-         "|  |e  43"]]
-    
-    (remove nil? (doall (map println rows)))))
