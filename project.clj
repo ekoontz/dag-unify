@@ -6,7 +6,6 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.494"]]
   :plugins [[cider/cider-nrepl "0.11.0"]
-            [lein-cljsbuild "1.1.5"]
             [s3-wagon-private "1.2.0"]]
 
   ;; run clojure tests with "lein test"
