@@ -677,11 +677,3 @@ a given value in a given map."
       (is (= (dissoc (get path-to-coordinates [:a :c]) :index)
              {:x 3 :y 2
               :type :first-ref}))))))
-
-      
-
-      
-    
-
-    
-
