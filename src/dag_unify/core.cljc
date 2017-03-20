@@ -543,6 +543,20 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                      (get (get-in fs [k]) ::annotate)))
                (gather-annotations (dissoc fs k) firsts path annotate)))))))
 
+(defn add-indices [elements]
+  (if (not (empty? elements))
+    (let [element (first elements)
+          {x :x
+           y :y
+           type :type
+           index :index} element]
+      (cond (or (= type :first-ref) (= type :ref))
+            (merge {{:x (+ 1 x) :y y :type :index}
+                    {:v index}}
+                   (add-indices (rest elements)))
+            true
+            (add-indices (rest elements))))))
+
 (defn print-out [fs]
   "print out a line-oriented, fixed-width character representation of a feature structure."
   (let [g (gather-annotations (annotate fs))
@@ -559,6 +573,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                     (if (not (map? (get-in fs path)))
                       {:v (get-in fs path)})))
                  (keys g)))
+        with-indices (merge coords-are-keys
+                            (add-indices (keys coords-are-keys)))
         elements
         (map (fn [each]
                (cond (= (:type each) :ref)
@@ -566,8 +582,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                      true
                      each))
              (map (fn [k]
-                    (merge k (get coords-are-keys k)))
-                  (keys coords-are-keys)))
+                    (merge k (get with-indices k)))
+                  (keys with-indices)))
         remove-type ;; don't need type anymore.
         (map #(dissoc % :type) elements)
         sorted-vertically
@@ -592,16 +608,17 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                         (range 1 (+ 1 width))))]
               (println (str (join " "
                                   (map (fn [v]
-                                         (cond (nil? v) " -- "
+                                         (cond (nil? v) "   "
                                                (= (:type v) :first-ref)
-                                               (str (:k v) " " "[" (:index v) "] "
-                                                    (or (:v v) ""))
+                                               (str (:k v) "")
                                                (= (:type v) :ref)
-                                               (str (:k v) " " "[" (:index v) "]")
+                                               (str (:k v) " ")
+                                               (= (:type v) :index)
+                                               (str " [" (:v v) "]")
                                                (:v v)
                                                (str (:k v) " " (:v v))
                                                true
-                                               (:k v)))
+                                               (str " " (:k v) " ")))
                                        (map first (vals map-by-column))))))))
           (range 1 (+ 1 height))))
     sorted-vertically))
