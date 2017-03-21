@@ -543,19 +543,31 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                      (get (get-in fs [k]) ::annotate)))
                (gather-annotations (dissoc fs k) firsts path annotate)))))))
 
-(defn add-indices [elements]
+(defn add-indices [elements values]
   (if (not (empty? elements))
     (let [element (first elements)
           {x :x
            y :y
            type :type
-           index :index} element]
-      (cond (or (= type :first-ref) (= type :ref))
+           index :index} element
+          {v :v} (first values)]
+      (println (str "element: " element))
+      (println (str "value: " (first values)))
+      (println (str "type: " type))
+      (cond (= type :first-ref)
+            (merge {{:x (+ 1 x) :y y :type :index}
+                    {:v index}
+                    {:x (+ 2 x) :y y :type :other} {:v v}}
+                   (add-indices (rest elements) (rest values)))
+            (= type :ref)
             (merge {{:x (+ 1 x) :y y :type :index}
                     {:v index}}
-                   (add-indices (rest elements)))
+                   (add-indices (rest elements) (rest values)))
+            (and (not (nil? v)) (not (= type :index)))
+            (merge {{:x (+ 1 x) :y y :type :other} {:v v}}
+                   (add-indices (rest elements) (rest values)))
             true
-            (add-indices (rest elements))))))
+            (add-indices (rest elements) (rest values))))))
 
 (defn print-out [fs]
   "print out a line-oriented, fixed-width character representation of a feature structure."
@@ -574,7 +586,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                       {:v (get-in fs path)})))
                  (keys g)))
         with-indices (merge coords-are-keys
-                            (add-indices (keys coords-are-keys)))
+                            (add-indices (keys coords-are-keys)
+                                         (vals coords-are-keys)))
         elements
         (map (fn [each]
                (cond (= (:type each) :ref)
@@ -590,8 +603,16 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         (sort-by (fn [elem]
                    [(:y elem)(:x elem)])
                  elements)
+
         height (apply max (map :y sorted-vertically))
-        width (apply max (map :x sorted-vertically))]
+        width (apply max (map :x sorted-vertically))
+        grouped-by-rows
+        (map (fn [row]
+               (sort-by (fn [elem]
+                          (:x elem))
+                        (filter #(= (:y %) row)
+                                sorted-vertically)))
+             (range 1 height))]
     (doall
      (map (fn [row]
             (let [line-elements
@@ -601,27 +622,35 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                    sorted-vertically))
                   map-by-column
                   (zipmap
-                   (range 0 (+ 1 width))
+                   (range 1 (+ 1 width))
                    (map (fn [column-index]
                           (filter #(= (:x %) column-index)
                                   line-elements))
                         (range 1 (+ 1 width))))]
               (println (str (join " "
                                   (map (fn [v]
-                                         (cond (nil? v) "   "
+                                         (cond (nil? v) "___"
+
                                                (= (:type v) :first-ref)
-                                               (str (:k v) "")
-                                               (= (:type v) :ref)
                                                (str (:k v) " ")
+
+                                               (= (:type v) :ref)
+                                               (str (:k v) "")
+
                                                (= (:type v) :index)
-                                               (str " [" (:v v) "]")
+                                               (str "[" (:v v) "]")
+
+                                               (:k v)
+                                               (str (:k v) " ")
+                                               
                                                (:v v)
-                                               (str (:k v) " " (:v v))
+                                               (str (:v v) " ")
+
                                                true
-                                               (str " " (:k v) " ")))
+                                               (str "?")))
                                        (map first (vals map-by-column))))))))
           (range 1 (+ 1 height))))
-    sorted-vertically))
+    grouped-by-rows))
     
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
