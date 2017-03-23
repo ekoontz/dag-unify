@@ -551,9 +551,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
            type :type
            index :index} element
           {v :v} (first values)]
-      (println (str "element: " element))
-      (println (str "value: " (first values)))
-      (println (str "type: " type))
       (cond (= type :first-ref)
             (merge {{:x (+ 1 x) :y y :type :index}
                     {:v index}
@@ -570,7 +567,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             (add-indices (rest elements) (rest values))))))
 
 (defn print-out [fs]
-  "print out a line-oriented, fixed-width character representation of a feature structure."
+  "print out a line-oriented, fixed-width character representation of
+  a feature structure."
   (let [g (gather-annotations (annotate fs))
         coords-are-keys
         (zipmap (map (fn [v]
@@ -588,38 +586,70 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         with-indices (merge coords-are-keys
                             (add-indices (keys coords-are-keys)
                                          (vals coords-are-keys)))
+        elements (map (fn [each]
+                        (cond (= (:type each) :ref)
+                              (dissoc each :v)
+                              true
+                              each))
+                      (map (fn [k]
+                             (merge k (get with-indices k)))
+                           (keys with-indices)))
+        ;; cleanup (1)
         elements
-        (map (fn [each]
-               (cond (= (:type each) :ref)
-                     (dissoc each :v)
-                     true
-                     each))
-             (map (fn [k]
-                    (merge k (get with-indices k)))
-                  (keys with-indices)))
-        remove-type ;; don't need type anymore.
-        (map #(dissoc % :type) elements)
-        sorted-vertically
+        (map #(if (or (= (:type %) :first-ref)
+                      (= (:type %) :other)
+                      (= (:type %) :ref))
+                (dissoc % :type)
+                %) elements)
+
+        ;; cleanup (2)
+        elements ;; if :k, remove :index and :v
+        (map #(if (:k %)
+                (dissoc (dissoc % :index) :v)
+                %) elements)
+
+        ;; cleanup (3)
+        elements (remove #(= nil (:v % :none)) elements)
+
+        ;; cleanup (4)
+        elements (map #(if (= (:type %) :index)
+                         (merge {:i (:v %)}
+                                (dissoc (dissoc % :v) :type))
+                         %)
+                      elements)
+        
+        elements-sorted-vertically
         (sort-by (fn [elem]
                    [(:y elem)(:x elem)])
                  elements)
+        sorted-horizontally
+        (sort-by (fn [elem]
+                   [(:x elem)(:y elem)])
+                 elements)
 
-        height (apply max (map :y sorted-vertically))
-        width (apply max (map :x sorted-vertically))
+        height (apply max (map :y elements-sorted-vertically))
+        width (apply max (map :x elements-sorted-vertically))
         grouped-by-rows
         (map (fn [row]
                (sort-by (fn [elem]
                           (:x elem))
                         (filter #(= (:y %) row)
-                                sorted-vertically)))
-             (range 1 height))]
+                                elements-sorted-vertically)))
+             (range 1 height))
+        grouped-by-cols
+        (map (fn [col]
+               (sort-by (fn [elem]
+                          (:y elem))
+                        (filter #(= (:x %) col)
+                                sorted-horizontally)))
+             (range 1 width))]
     (doall
      (map (fn [row]
             (let [line-elements
                   (sort-by (fn [elem]
                              (:x elem))
                            (filter #(= (:y %) row)
-                                   sorted-vertically))
+                                   elements-sorted-vertically))
                   map-by-column
                   (zipmap
                    (range 1 (+ 1 width))
@@ -627,30 +657,32 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                           (filter #(= (:x %) column-index)
                                   line-elements))
                         (range 1 (+ 1 width))))]
-              (println (str (join " "
+              (println (str (join "|"
                                   (map (fn [v]
-                                         (cond (nil? v) "___"
+                                         (cond (nil? v) "    "
 
                                                (= (:type v) :first-ref)
-                                               (str (:k v) " ")
+                                               (str (:k v) "")
 
                                                (= (:type v) :ref)
                                                (str (:k v) "")
 
-                                               (= (:type v) :index)
-                                               (str "[" (:v v) "]")
+                                               (:i v)
+                                               (str "[" (:i v) "]")
 
                                                (:k v)
-                                               (str (:k v) " ")
+                                               (str (:k v) "")
                                                
                                                (:v v)
-                                               (str (:v v) " ")
+                                               (str (:v v) "")
 
                                                true
                                                (str "?")))
                                        (map first (vals map-by-column))))))))
           (range 1 (+ 1 height))))
-    grouped-by-rows))
+    {:grouped-by-rows grouped-by-rows
+     :grouped-by-cols grouped-by-cols
+     :elements elements-sorted-vertically}))
     
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
