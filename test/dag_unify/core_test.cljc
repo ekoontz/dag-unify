@@ -4,12 +4,14 @@
             [dag_unify.core :refer [all-refs annotate assoc-in
                                     create-path-in copy
                                     create-shared-values deserialize
+                                    elements
                                     fail? find-paths-to-value get-in
                                     gather-annotations get-refs isomorphic?
+                                    print-out
                                     recursive-dissoc ref? ref-skel-map
                                     remove-matching-keys serialize
                                     skeletize skels width height unify
-                                    unify!]])
+                                    unify! width-of-column]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 ;; TODO: add tests for (dag_unify.core/dissoc-paths)
@@ -656,17 +658,17 @@ a given value in a given map."
               :type :other :index nil})))
 
     ;; fs2:
-    ;;     1   2   3   4   5
-    ;;  1  a  [1]  b   42
-    ;;  2          c   [2] 43
-    ;;  3  d   e  [2]
-    ;;  4      f   g  [1]
+    ;;     1       2      3       4 
+    ;;  1  apricot [1]    banana  42
+    ;;  2          cherry [2]     43
+    ;;  3  date    fig    [2]
+    ;;  4          grape  mango   [1]
     (let [fs2 (let [two (atom 43)
-                    one (atom {:b 42
-                               :c two})]
-                {:a one
-                 :d {:e two
-                     :f {:g one}}})]
+                    one (atom {:banana 42
+                               :cherry two})]
+                {:apricot one
+                 :date {:fig two
+                        :grape {:mango one}}})]
       (is (= (width fs2) 5))
       (is (= (height fs2) 4))
     (let [path-to-coordinates

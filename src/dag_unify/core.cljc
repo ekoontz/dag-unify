@@ -566,6 +566,73 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             true
             (add-indices (rest elements) (rest values))))))
 
+(defn elements [fs]
+  (let [g (gather-annotations (annotate fs))
+        coords-are-keys
+        (zipmap (map (fn [v]
+                       (cond (nil? (:index v))
+                             (reduce dissoc v
+                                     [:type :index])
+                             true v))
+                     (vals g))
+                (map (fn [path]
+                       (merge 
+                        {:k (last path)}
+                        (if (not (map? (get-in fs path)))
+                      {:v (get-in fs path)})))
+                     (keys g)))
+        with-indices (merge coords-are-keys
+                            (add-indices (keys coords-are-keys)
+                                         (vals coords-are-keys)))
+        elements (map (fn [each]
+                        (cond (= (:type each) :ref)
+                              (dissoc each :v)
+                              true
+                              each))
+                      (map (fn [k]
+                             (merge k (get with-indices k)))
+                           (keys with-indices)))
+        ;; cleanup (1)
+        elements
+        (map #(if (or (= (:type %) :first-ref)
+                      (= (:type %) :other)
+                      (= (:type %) :ref))
+                (dissoc % :type)
+                %) elements)
+        
+        ;; cleanup (2)
+        elements ;; if :k, remove :index and :v
+        (map #(if (:k %)
+                (dissoc (dissoc % :index) :v)
+                %) elements)
+        
+        ;; cleanup (3)
+        elements (remove #(= nil (:v % :none)) elements)
+        
+        ;; cleanup (4)
+        elements (map #(if (= (:type %) :index)
+                         (merge {:i (:v %)}
+                                (dissoc (dissoc % :v) :type))
+                         %)
+                      elements)]
+    elements))
+        
+(defn width-of-column [fs column]
+  (let [sorted-horizontally
+        (sort-by (fn [elem]
+                   [(:x elem)(:y elem)])
+                 elements)
+
+        grouped-by-cols
+        (map (fn [col]
+               (sort-by (fn [elem]
+                          (:y elem))
+                        (filter #(= (:x %) col)
+                                sorted-horizontally)))
+             (range 1 (+ 1 width)))]
+    (apply max (map (fn [each] (count (str (or (:k each)(:i each)(:v each)))))
+                    (nth grouped-by-cols column)))))
+
 (defn print-out [fs]
   "print out a line-oriented, fixed-width character representation of
   a feature structure."
@@ -586,37 +653,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         with-indices (merge coords-are-keys
                             (add-indices (keys coords-are-keys)
                                          (vals coords-are-keys)))
-        elements (map (fn [each]
-                        (cond (= (:type each) :ref)
-                              (dissoc each :v)
-                              true
-                              each))
-                      (map (fn [k]
-                             (merge k (get with-indices k)))
-                           (keys with-indices)))
-        ;; cleanup (1)
-        elements
-        (map #(if (or (= (:type %) :first-ref)
-                      (= (:type %) :other)
-                      (= (:type %) :ref))
-                (dissoc % :type)
-                %) elements)
-
-        ;; cleanup (2)
-        elements ;; if :k, remove :index and :v
-        (map #(if (:k %)
-                (dissoc (dissoc % :index) :v)
-                %) elements)
-
-        ;; cleanup (3)
-        elements (remove #(= nil (:v % :none)) elements)
-
-        ;; cleanup (4)
-        elements (map #(if (= (:type %) :index)
-                         (merge {:i (:v %)}
-                                (dissoc (dissoc % :v) :type))
-                         %)
-                      elements)
+        elements (elements fs)
         
         elements-sorted-vertically
         (sort-by (fn [elem]
@@ -635,14 +672,14 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                           (:x elem))
                         (filter #(= (:y %) row)
                                 elements-sorted-vertically)))
-             (range 1 height))
+             (range 1 (+ 1 height)))
         grouped-by-cols
         (map (fn [col]
                (sort-by (fn [elem]
                           (:y elem))
                         (filter #(= (:x %) col)
                                 sorted-horizontally)))
-             (range 1 width))]
+             (range 1 (+ 1 width)))]
     (doall
      (map (fn [row]
             (let [line-elements
