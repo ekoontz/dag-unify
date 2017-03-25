@@ -633,6 +633,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (apply max (map (fn [each] (count (str (or (:k each)(:i each)(:v each)))))
                     (nth grouped-by-cols column)))))
 
+(defn elements-of-row [elements row]
+  (sort-by (fn [elem]
+             (:x elem))
+           (filter #(= (:y %) row)
+                   elements)))
+
 (defn print-out [fs]
   "print out a line-oriented, fixed-width character representation of
   a feature structure."
@@ -655,49 +661,35 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                          (vals coords-are-keys)))
         elements (elements fs)
         
-        elements-sorted-vertically
-        (sort-by (fn [elem]
-                   [(:y elem)(:x elem)])
-                 elements)
-        sorted-horizontally
-        (sort-by (fn [elem]
-                   [(:x elem)(:y elem)])
-                 elements)
+        elements-sorted-vertically (sort-by (fn [elem]
+                                              [(:y elem)(:x elem)])
+                                            elements)
+        elements-sorted-horizontally (sort-by (fn [elem]
+                                                [(:x elem)(:y elem)])
+                                              elements)
 
         height (apply max (map :y elements-sorted-vertically))
         width (apply max (map :x elements-sorted-vertically))
-        grouped-by-rows
-        (map (fn [row]
-               (sort-by (fn [elem]
-                          (:x elem))
-                        (filter #(= (:y %) row)
-                                elements-sorted-vertically)))
-             (range 1 (+ 1 height)))
-        grouped-by-cols
-        (map (fn [col]
-               (sort-by (fn [elem]
-                          (:y elem))
-                        (filter #(= (:x %) col)
-                                sorted-horizontally)))
-             (range 1 (+ 1 width)))]
+        grouped-by-rows (map (fn [row] (sort-by (fn [elem] (:x elem))
+                                                (filter #(= (:y %) row)
+                                                        elements-sorted-vertically)))
+                             (range 1 (+ 1 height)))
+        grouped-by-cols (map (fn [col] (sort-by (fn [elem] (:y elem))
+                                                (filter #(= (:x %) col)
+                                                        elements-sorted-horizontally)))
+                             (range 1 (+ 1 width)))]
     (doall
      (map (fn [row]
-            (let [line-elements
-                  (sort-by (fn [elem]
-                             (:x elem))
-                           (filter #(= (:y %) row)
-                                   elements-sorted-vertically))
-                  map-by-column
-                  (zipmap
-                   (range 1 (+ 1 width))
-                   (map (fn [column-index]
-                          (filter #(= (:x %) column-index)
-                                  line-elements))
-                        (range 1 (+ 1 width))))]
+            (let [line-elements (elements-of-row elements row)
+                  map-by-column (zipmap
+                                 (range 1 (+ 1 width))
+                                 (map (fn [column-index]
+                                        (filter #(= (:x %) column-index)
+                                                line-elements))
+                                      (range 1 (+ 1 width))))]
               (println (str (join "|"
                                   (map (fn [v]
                                          (cond (nil? v) "    "
-
                                                (= (:type v) :first-ref)
                                                (str (:k v) "")
 
