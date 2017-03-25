@@ -4,10 +4,9 @@
             [dag_unify.core :refer [all-refs annotate assoc-in
                                     create-path-in copy
                                     create-shared-values deserialize
-                                    elements
-                                    fail? find-paths-to-value get-in
-                                    gather-annotations get-refs isomorphic?
-                                    print-out
+                                    elements fail? find-paths-to-value
+                                    get-in gather-annotations get-refs
+                                    isomorphic?  print-out
                                     recursive-dissoc ref? ref-skel-map
                                     remove-matching-keys serialize
                                     skeletize skels width height unify
@@ -673,9 +672,9 @@ a given value in a given map."
       (is (= (height fs2) 4))
     (let [path-to-coordinates
           (gather-annotations (annotate fs2))]
-      (is (= (dissoc (get path-to-coordinates [:a]) :index)
+      (is (= (dissoc (get path-to-coordinates [:apricot]) :index)
              {:x 1 :y 1
               :type :first-ref}))
-      (is (= (dissoc (get path-to-coordinates [:a :c]) :index)
+      (is (= (dissoc (get path-to-coordinates [:apricot :cherry]) :index)
              {:x 3 :y 2
               :type :first-ref}))))))
