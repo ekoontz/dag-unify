@@ -616,28 +616,46 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                          %)
                       elements)]
     elements))
-        
-(defn width-of-column [fs column]
-  (let [sorted-horizontally
-        (sort-by (fn [elem]
-                   [(:x elem)(:y elem)])
-                 elements)
 
-        grouped-by-cols
-        (map (fn [col]
-               (sort-by (fn [elem]
-                          (:y elem))
-                        (filter #(= (:x %) col)
-                                sorted-horizontally)))
-             (range 1 (+ 1 width)))]
-    (apply max (map (fn [each] (count (str (or (:k each)(:i each)(:v each)))))
+(defn width-of-cell [cell]
+  (count (cond
+           (:k cell)
+           (str (:k cell))
+
+           (:i cell)
+           (str "[" (:i cell) "]")
+
+           (:v cell)
+           (str (:v cell))
+
+           true "")))
+
+(defn width-of-column [elements column]
+  (let [height (apply max (map :y elements))
+        width (apply max (map :x elements))
+        grouped-by-rows (map (fn [row] (sort-by (fn [elem] (:x elem))
+                                                (filter #(= (:y %) row)
+                                                        elements)))
+                             (range 1 (+ 1 height)))
+        grouped-by-cols (map (fn [col] (sort-by (fn [elem] (:y elem))
+                                                (filter #(= (:x %) col)
+                                                        elements)))
+                             (range 1 (+ 1 width)))]
+    (apply max (map width-of-cell
                     (nth grouped-by-cols column)))))
 
 (defn elements-of-row [elements row]
   (sort-by (fn [elem]
              (:x elem))
-           (filter #(= (:y %) row)
-                   elements)))
+           (map #(dissoc % :y)
+                (filter #(= (:y %) row)
+                        elements))))
+
+(defn padding [value width]
+  (join ""
+        (map (fn [index]
+               " ")
+             (range 0 (- width (width-of-cell value))))))
 
 (defn print-out [fs]
   "print out a line-oriented, fixed-width character representation of
@@ -677,41 +695,43 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         grouped-by-cols (map (fn [col] (sort-by (fn [elem] (:y elem))
                                                 (filter #(= (:x %) col)
                                                         elements-sorted-horizontally)))
-                             (range 1 (+ 1 width)))]
+                             (range 1 (+ 1 width)))
+        column-widths (map (fn [col-index]
+                             (width-of-column elements col-index))
+                           (range 0 width))]
     (doall
      (map (fn [row]
             (let [line-elements (elements-of-row elements row)
-                  map-by-column (zipmap
-                                 (range 1 (+ 1 width))
-                                 (map (fn [column-index]
-                                        (filter #(= (:x %) column-index)
-                                                line-elements))
-                                      (range 1 (+ 1 width))))]
-              (println (str (join "|"
-                                  (map (fn [v]
-                                         (cond (nil? v) "    "
-                                               (= (:type v) :first-ref)
-                                               (str (:k v) "")
+                  map-by-column (map (fn [column-index]
+                                       (filter #(= (:x %) column-index)
+                                               line-elements))
+                                     (range 1 (+ 1 width)))]
+              (println (str (join " "
+                                  (map (fn [column]
+                                         (let [v (first (nth map-by-column column))
+                                               padding (padding v (nth column-widths column))]
+                                           (cond (nil? v) padding
+                                                 (= (:type v) :first-ref)
+                                                 (str (:k v) padding)
 
                                                (= (:type v) :ref)
-                                               (str (:k v) "")
+                                               (str (:k v) padding)
 
                                                (:i v)
-                                               (str "[" (:i v) "]")
+                                               (str "[" (:i v) "]" padding)
 
                                                (:k v)
-                                               (str (:k v) "")
+                                               (str (:k v) padding)
                                                
                                                (:v v)
-                                               (str (:v v) "")
+                                               (str (:v v) padding)
 
                                                true
-                                               (str "?")))
-                                       (map first (vals map-by-column))))))))
+                                               (str padding))))
+                                       (range 0 width)))))))
           (range 1 (+ 1 height))))
-    {:grouped-by-rows grouped-by-rows
-     :grouped-by-cols grouped-by-cols
-     :elements elements-sorted-vertically}))
+    [width height]))
+
     
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
