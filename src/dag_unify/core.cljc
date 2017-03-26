@@ -657,9 +657,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                " ")
              (range 0 (- width (width-of-cell value))))))
 
-(defn print-out [fs]
-  "print out a line-oriented, fixed-width character representation of
-  a feature structure."
+(defn by-rows [fs]
+  "return an array of strings which are a line-oriented, fixed-width
+  character representation of the input _fs_"
   (let [g (gather-annotations (annotate fs))
         coords-are-keys
         (zipmap (map (fn [v]
@@ -706,33 +706,36 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                        (filter #(= (:x %) column-index)
                                                line-elements))
                                      (range 1 (+ 1 width)))]
-              (println (str (join " "
-                                  (map (fn [column]
-                                         (let [v (first (nth map-by-column column))
-                                               padding (padding v (nth column-widths column))]
-                                           (cond (nil? v) padding
-                                                 (= (:type v) :first-ref)
-                                                 (str (:k v) padding)
+              (str (clojure.string/trimr
+                    (join " "
+                          (map (fn [column]
+                                 (let [v (first (nth map-by-column column))
+                                       padding (padding v (nth column-widths column))]
+                                   (cond (nil? v) padding
+                                         (= (:type v) :first-ref)
+                                         (str (:k v) padding)
+                                         
+                                         (= (:type v) :ref)
+                                         (str (:k v) padding)
+                                         
+                                         (:i v)
+                                         (str "[" (:i v) "]" padding)
+                                         
+                                         (:k v)
+                                         (str (:k v) padding)
+                                         
+                                         (:v v)
+                                         (str (:v v) padding)
+                                        
+                                         true
+                                         (str padding))))
+                               (range 0 width)))))))
+          (range 1 (+ 1 height))))))
 
-                                               (= (:type v) :ref)
-                                               (str (:k v) padding)
+(defn print-out [fs]
+  (do (doall (map println (by-rows fs)))
+      nil))
 
-                                               (:i v)
-                                               (str "[" (:i v) "]" padding)
-
-                                               (:k v)
-                                               (str (:k v) padding)
-                                               
-                                               (:v v)
-                                               (str (:v v) padding)
-
-                                               true
-                                               (str padding))))
-                                       (range 0 width)))))))
-          (range 1 (+ 1 height))))
-    [width height]))
-
-    
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
   [map value path]

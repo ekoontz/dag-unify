@@ -1,12 +1,12 @@
 (ns dag_unify.core-test
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
-            [dag_unify.core :refer [all-refs annotate assoc-in
+            [dag_unify.core :refer [all-refs annotate assoc-in by-rows
                                     create-path-in copy
                                     create-shared-values deserialize
                                     elements fail? find-paths-to-value
                                     get-in gather-annotations get-refs
-                                    isomorphic?  print-out
+                                    isomorphic? print-out
                                     recursive-dissoc ref? ref-skel-map
                                     remove-matching-keys serialize
                                     skeletize skels width height unify
@@ -623,58 +623,31 @@ a given value in a given map."
     (is (empty? @result2))))
 
 (deftest print-out-test
-  (let [fs1 (let [a (atom 42)]
-             {:a a
-              :b a
-              :c {:d a
-                  :e 43}})]
-
-    ;; fs1: 
-    ;;     1   2   3 
-    ;;  1  a  [1]  42
-    ;;  2  b  [1]  42
-    ;;  3  c   d   [1]
-    ;;  4      e   43
-
-    (is (= (width fs1) 3))
-    (is (= (height fs1) 4))
-    (let [path-to-coordinates
-          (gather-annotations (annotate fs1))]
-      (is (= (get path-to-coordinates [:a])
-             {:x 1 :y 1
-              :type :first-ref :index 1}))
-      (is (= (get path-to-coordinates [:b])
-             {:x 1 :y 2
-              :type :ref :index 1}))
-      (is (= (get path-to-coordinates [:c])
-             {:x 1 :y 3
-              :type :map :index nil}))
-      (is (= (get path-to-coordinates [:c :d])
-             {:x 2 :y 3
-              :type :ref :index 1}))
-      (is (= (get path-to-coordinates [:c :e])
-             {:x 2 :y 4
-              :type :other :index nil})))
-
     ;; fs2:
-    ;;     1       2      3       4 
-    ;;  1  apricot [1]    banana  42
-    ;;  2          cherry [2]     43
-    ;;  3  date    fig    [2]
-    ;;  4          grape  mango   [1]
+    ;;
+    ;; :apricot [1]    :banana  42    
+    ;;                 :coconut [2] 43
+    ;; :date    :fig   [2]            
+    ;;          :grape :mango   [1]   
+    ;;
     (let [fs2 (let [two (atom 43)
                     one (atom {:banana 42
-                               :cherry two})]
+                               :coconut two})]
                 {:apricot one
                  :date {:fig two
-                        :grape {:mango one}}})]
-      (is (= (width fs2) 5))
-      (is (= (height fs2) 4))
-    (let [path-to-coordinates
-          (gather-annotations (annotate fs2))]
-      (is (= (dissoc (get path-to-coordinates [:apricot]) :index)
-             {:x 1 :y 1
-              :type :first-ref}))
-      (is (= (dissoc (get path-to-coordinates [:apricot :cherry]) :index)
-             {:x 3 :y 2
-              :type :first-ref}))))))
+                        :grape {:mango one}}})
+          line-oriented (by-rows fs2)]
+
+      (is (= (nth line-oriented 0)
+             ":apricot [1]    :banana  42"))
+
+      (is (= (nth line-oriented 1)
+             "                :coconut [2] 43"))
+
+      (is (= (nth line-oriented 2)
+             ":date    :fig   [2]"))
+
+      (is (= (nth line-oriented 3)
+             "         :grape :mango   [1]"))))
+
+             
