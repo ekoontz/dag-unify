@@ -660,42 +660,13 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn by-rows [fs]
   "return an array of strings which are a line-oriented, fixed-width
   character representation of the input _fs_"
-  (let [g (gather-annotations (annotate fs))
-        coords-are-keys
-        (zipmap (map (fn [v]
-                       (cond (nil? (:index v))
-                             (reduce dissoc v
-                                     [:type :index])
-                             true v))
-                     (vals g))
-            (map (fn [path]
-                   (merge 
-                    {:k (last path)}
-                    (if (not (map? (get-in fs path)))
-                      {:v (get-in fs path)})))
-                 (keys g)))
-        with-indices (merge coords-are-keys
-                            (add-indices (keys coords-are-keys)
-                                         (vals coords-are-keys)))
-        elements (elements fs)
-        
-        elements-sorted-vertically (sort-by (fn [elem]
-                                              [(:y elem)(:x elem)])
-                                            elements)
-        elements-sorted-horizontally (sort-by (fn [elem]
-                                                [(:x elem)(:y elem)])
-                                              elements)
-
-        height (apply max (map :y elements-sorted-vertically))
-        width (apply max (map :x elements-sorted-vertically))
+  (let [elements (elements fs)
+        height (apply max (map :y elements))
+        width (apply max (map :x elements))
         grouped-by-rows (map (fn [row] (sort-by (fn [elem] (:x elem))
                                                 (filter #(= (:y %) row)
-                                                        elements-sorted-vertically)))
+                                                        elements)))
                              (range 1 (+ 1 height)))
-        grouped-by-cols (map (fn [col] (sort-by (fn [elem] (:y elem))
-                                                (filter #(= (:x %) col)
-                                                        elements-sorted-horizontally)))
-                             (range 1 (+ 1 width)))
         column-widths (map (fn [col-index]
                              (width-of-column elements col-index))
                            (range 0 width))]
