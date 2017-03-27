@@ -695,7 +695,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                          (:k v)
                                          (str (:k v) padding)
                                          
-                                         (:v v)
+                                         (not (= ::none (:v v ::none)))
                                          (str (:v v) padding)
                                         
                                          true
