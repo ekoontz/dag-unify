@@ -704,7 +704,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (range 1 (+ 1 height))))))
 
 (defn print-out [fs]
-  (do (doall (map println (by-rows fs)))
+  (do (doall (map println (filter #(not (empty? %))
+                                  (by-rows fs))))
       nil))
 
 (defn find-paths-to-value
