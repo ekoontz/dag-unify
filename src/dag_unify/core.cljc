@@ -523,7 +523,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn gather-annotations [fs & [firsts path annotate]]
   (let [path (or path [])
-        firsts (or firsts (map first (map first (rest (serialize fs)))))
+        firsts (or firsts
+                   (map first (map
+                               (fn [set] (reverse (sort-by (fn [a] (str a)) set)))
+                               (map first (rest (serialize fs))))))
         annotate (or annotate (get fs ::annotate))
         is-path-first-ref? (is-first-ref? path firsts)]
     (cond (and (map? fs)
