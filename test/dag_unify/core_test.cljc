@@ -630,13 +630,13 @@ a given value in a given map."
     ;; :date    :fig   [2]            
     ;;          :grape :mango   [1]   
     ;;
-    (let [fs2 (let [two (atom 43)
-                    one (atom {:banana 42
-                               :coconut two})]
-                {:apricot one
-                 :date {:fig two
-                        :grape {:mango one}}})
-          line-oriented (by-rows fs2)]
+    (let [fs (let [two (atom 43)
+                   one (atom {:banana 42
+                              :coconut two})]
+               {:apricot one
+                :date {:fig two
+                       :grape {:mango one}}})
+          line-oriented (by-rows fs)]
 
       (is (= (nth line-oriented 0)
              ":apricot [1]    :banana  42"))
@@ -649,5 +649,3 @@ a given value in a given map."
 
       (is (= (nth line-oriented 3)
              "         :grape :mango   [1]"))))
-
-             
