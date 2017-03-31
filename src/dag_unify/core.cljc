@@ -522,6 +522,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           true fs)))
 
 (defn gather-annotations [fs & [firsts path annotate]]
+  "create a map from paths in _fs_ to the values at those paths."
   (let [path (or path [])
         firsts (or firsts
                    (map first (map
@@ -570,23 +571,26 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
             (add-indices (rest elements) (rest values))))))
 
 (defn elements [fs]
-  (let [g (gather-annotations (annotate fs))
-        coords-are-keys
-        (zipmap (map (fn [v]
-                       (cond (nil? (:index v))
-                             (reduce dissoc v
-                                     [:type :index])
-                             true v))
-                     (vals g))
-                (map (fn [path]
-                       (merge 
-                        {:k (last path)}
-                        (if (not (map? (get-in fs path)))
-                      {:v (get-in fs path)})))
-                     (keys g)))
-        with-indices (merge coords-are-keys
-                            (add-indices (keys coords-are-keys)
-                                         (vals coords-are-keys)))
+  (let [;; path => {:index :type :x :y}
+        path-to-cell (gather-annotations (annotate fs))
+        
+        ;; invert path-to-cell to: {:index :type :x :y} => path
+        cell-to-path (zipmap (map (fn [v]
+                                    (cond (nil? (:index v))
+                                          (reduce dissoc v
+                                                  [:type :index])
+                                          true v))
+                                  (vals path-to-cell))
+                             (map (fn [path]
+                                    (merge 
+                                     {:k (last path)}
+                                     (if (not (map? (get-in fs path)))
+                                       {:v (get-in fs path)})))
+                                  (keys path-to-cell)))
+
+        with-indices (merge cell-to-path
+                            (add-indices (keys cell-to-path)
+                                         (vals cell-to-path)))
         elements (map (fn [each]
                         (cond (= (:type each) :ref)
                               (dissoc each :v)
