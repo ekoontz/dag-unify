@@ -1048,49 +1048,9 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    :else
    map-with-refs))
 
-(defn remove-top-values [fs]
-  "Use case is logging where we don't care about uninformative key->value pairs where value is simply :top. Also strips refs for readability."
-  (cond
-
-   (= fs {})
-   {}
-
-   (map? fs)
-   (let [map-keys (sort (keys fs))]
-     (let [first-key (first (keys fs))
-           val (get fs first-key)]
-       (cond
-        (and (not (= first-key :1)) 
-             (not (= first-key :2)) 
-             (not (= first-key :3))
-             (= val :top)) ;; remove-top-values: core action of this function.
-        (remove-top-values (dissoc fs first-key))
-
-        (= first-key :comp-filter-fn) ;; TODO: deprecate and remove comp-filter-fn.
-        (remove-top-values (dissoc fs first-key))
-
-         ;; else, KV is not :top, so keep it.
-        true
-        (conj
-         {first-key (remove-top-values val)}
-         (remove-top-values (dissoc fs first-key))))))
-
-   (ref? fs)
-   ;; strip refs for readability.
-   (remove-top-values (deref fs))
-
-   :else
-   fs))
-
 (defn remove-matching-keys [fs pred]
   (let [serialized (serialize fs)]
     (deserialize-with-remove serialized pred)))
-
-(defn remove-top-values-log [fs]
-  (let [result (remove-top-values fs)]
-    ;; TODO: should not need to re-call this: workaround for the fact that remove-top-values doesn't work correctly,
-    ;; but does seem to work correctly if called again on its own output.
-    (remove-top-values result)))
 
 (defn dissoc-paths [fs & [paths]]
   "dissoc a path from a map; e.g.: (dissoc-paths {:a {:b 42 :c 43}} '(:a :b)) => {:a {:c 43}}."
@@ -1149,25 +1109,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                     (str "dissoc-paths: don't know what to do with this input argument (fs): "
                          fs)))
            (rest paths)))))
-
-(defn remove-false [spec]
-  (cond (map? spec)
-        (into {}
-              (map (fn [key]
-                     (let [val (get-in spec (list key))]
-                       (if (not (= val false))
-                         [key (remove-false val)])))
-                   (keys spec)))
-        
-        (seq? spec)
-        (map (fn [each]
-               (remove-false each))
-             spec)
-        (ref? spec)
-        (remove-false @spec)
-
-        true
-        spec))
 
 (defn isomorphic? [a b]
   (cond (and (map? a)
