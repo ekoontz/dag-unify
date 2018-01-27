@@ -5,7 +5,7 @@
                                     create-path-in copy
                                     create-shared-values deserialize
                                     elements fail? find-paths-to-value
-                                    get-in gather-annotations get-refs
+                                    get-in gather-annotations
                                     isomorphic? print-out
                                     recursive-dissoc ref? ref-skel-map
                                     remove-matching-keys serialize
@@ -17,7 +17,7 @@
 ;; TODO: add more tests for (dag_unify.core/isomorphic?)
 
 (defn ser-db [input-map]
-  (let [refs (get-refs input-map)
+  (let [refs (all-refs input-map)
         skels (skels input-map refs)]
     (ref-skel-map input-map)))
 

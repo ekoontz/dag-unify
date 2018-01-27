@@ -766,15 +766,10 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     input-val))
 
 ;; TODO s/map/input-map/
-;; TODO: merge or distinguish from all-refs (above)
-(defn get-refs [input-map]
-  (all-refs input-map))
-
-;; TODO s/map/input-map/
 (defn skels
   "create map from reference to their skeletons."
   [input-map refs]
-  (let [refs (get-refs input-map)]
+  (let [refs (all-refs input-map)]
     (zipmap
      refs
      (mapfn (fn [ref]
@@ -786,7 +781,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    1. its skeleton
    2. all paths to point to it."
   [input-map]
-  (let [refs (get-refs input-map)
+  (let [refs (all-refs input-map)
         ;; skels returns a map from a reference to its skeleton.
         skels (skels input-map refs)]
     (zipmap
