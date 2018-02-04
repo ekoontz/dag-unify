@@ -1155,3 +1155,38 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (fail-path-between fs1 fs2))
 
+
+(defn remove-top-values
+  "Remove any <key,value> pair in the input _fs_ if value=:top. Use case is logging where we don't care about uninformative key->value pairs where value is simply :top. Also strips refs for readability."
+  [fs]
+  (cond
+
+   (= fs {})
+   {}
+
+   (map? fs)
+   (let [map-keys (sort (keys fs))]
+     (let [first-key (first (keys fs))
+           val (get fs first-key)]
+       (cond
+        (and (not (= first-key :1))
+             (not (= first-key :2))
+             (not (= first-key :3))
+             (= val :top)) ;; remove-top-values: core action of this function.
+        (remove-top-values (dissoc fs first-key))
+
+        (= first-key :comp-filter-fn) ;; TODO: deprecate and remove comp-filter-fn.
+        (remove-top-values (dissoc fs first-key))
+
+         ;; else, KV is not :top, so keep it.
+        true
+        (conj
+         {first-key (remove-top-values val)}
+         (remove-top-values (dissoc fs first-key))))))
+
+   (ref? fs)
+   ;; strip refs for readability.
+   (remove-top-values (deref fs))
+
+   :else
+   fs))
