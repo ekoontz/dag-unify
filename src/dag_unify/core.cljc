@@ -13,6 +13,7 @@
   (:refer-clojure :exclude [assoc-in exists? get-in merge resolve]) ;; TODO: don't override (merge)
   (:require
    [clojure.repl :refer [doc]]
+   [clojure.pprint :as core-pprint]
    [clojure.string :refer [join]]))
 
 ;; use map or pmap.
@@ -1190,3 +1191,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
    :else
    fs))
+
+(defn pprint [input]
+  (core-pprint/pprint (dissoc input ::serialized)))
