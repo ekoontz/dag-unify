@@ -1,0 +1,145 @@
+;; This buffer is for notes you don't want to save, and for Lisp evaluation.
+;; If you want to create a file, visit that file with C-x C-f,
+;; then enter the text in that file's own buffer.
+
+output:
+
+  0 1 2 3 4 5 6 7 
+0 | a [ 1 ] 4 2 |
+1 | b [ 1 ]     |
+2 | c | d [ 1 ] |
+3 |   | e   4 3 |
+
+0. get all paths; sort by length
+a
+b
+c
+c d
+c e
+
+1. compute E = coordinates for drawing last-element-of-path
+
+(def E (zipmap (paths fs) (map (fn [path] {:x (+ (max 0 (- (count-refs-in-path path fs) 1) (count path)))
+                                                           :y (rank-within path fs)})
+                                               (paths fs))))
+path | x | y
+-----+---+--
+a    | 1 | 0
+b    | 1 | 1
+c    | 1 | 2
+c d  | 3 | 2
+c e  | 3 | 3
+
+
+2. compute R = coordinates for drawing refs
+
+(def R 
+     (zipmap (filter (fn [path]
+                        (ref? (get (get-in fs (butlast path)) (last path))))
+                      (paths fs))
+             (filter #(not (nil? %))
+                        (map (fn [path]
+                            (if (ref? (get (get-in fs (butlast path)) (last path)))
+                                    {:x (+ (count-refs-in-path path fs) (count path))
+                                     :y (rank-within path fs)}))
+                            (paths fs)))))
+path | x | y
+-----+---+--
+a    | 2 | 0
+b    | 2 | 1
+c    | - | -
+c d  | 4 | 2
+c e  | - | -
+
+3. compute V = coordinates for drawing vals
+
+path | x | y
+-----+---+--
+a    | 5 | 0
+b    | 5 | 1
+c    | - | -
+c d  | 7 | 2
+c e  | 5 | 3
+
+4. compute V': filter-first-instance-of-reference
+
+path | x | y
+-----+---+--
+a    | 5 | 0
+b    | - | -
+c    | - | -
+c d  | - | -
+c e  | 5 | 3
+
+5. find width  => max V'(x,for all y) =>  (x=5, y=0,3)
+
+6. find height => max V'(for all x, y) => (x=5, y=3)
+
+7. E' = invert E:
+{1,0} | a
+{1,1} | b
+{1,2} | c
+{3,2} | c d
+{3,3} | c e
+
+8. R' = invert R:
+{2,0} | @[a]
+{2,1} | @[b]
+{4,2} | @[c d]
+
+9. V'' = invert V':
+{5,0} | a
+{5,3} | c e
+
+10. E'' = E' -> vals -> last():
+{1,0} | a
+{1,1} | b
+{1,2} | c
+{3,2} | d
+{3,3} | e
+
+11. R'' = R' -> vals -> rank_of_ref()
+{2,0} | 1
+{2,1} | 1
+{4,2} | 1
+
+12. A = V'' -> resolve()
+
+{5,0} | 42
+{5,3} | 43
+
+13. merge E''+'F',R''+'R',A+'A'
+{1,0} | a:F
+{1,1} | b:F
+{1,2} | c:F
+{2,0} | 1:R
+{2,1} | 1:R
+{3,2} | d:F
+{3,3} | e:F
+{4,2} | 1:R
+{5,0} | 42:A
+{5,3} | 43:A
+
+14. sort by y,x ascending:
+{1,0} | a:F
+{2,0} | 1:R
+{5,0} | 42:A
+{1,1} | b:F
+{2,1} | 1:R
+{1,2} | c:F
+{3,2} | 1:R
+{4,2} | 1:R
+{3,3} | e:F
+{5,3} | 43:A
+
+print:
+
+  0  1  2  3  4  5 
+0 |  A [1] .  .  42
+
+1 |  B [1] .  .  .
+
+2 |  C  |  D [1]
+
+3 .  .  |  E  .  43
+
