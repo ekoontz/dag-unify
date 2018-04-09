@@ -15,22 +15,47 @@ value for the key in the combined map.
 ## Usage
 
 ```
+% git clone git@github.com:ekoontz/dag-unify.git
+% cd dag-unify
+% lein repl
+nREPL server started on port 56364 on host 127.0.0.1 - nrepl://127.0.0.1:56364
+REPL-y 0.3.7, nREPL 0.2.12
+Clojure 1.8.0
+Java HotSpot(TM) 64-Bit Server VM 1.8.0_121-b13
+    Docs: (doc function-name-here)
+          (find-doc "part-of-name-here")
+  Source: (source function-name-here)
+ Javadoc: (javadoc java-object-or-class-here)
+    Exit: Control+D or (exit) or (quit)
+ Results: Stored in vars *1, *2, *3, an exception in *e
 
-user> (require '[dag_unify.core :refer [unify]])
+user=> (require '[dag_unify.core :as dag])
 nil
-user> unify
-#function[dag-unify.core/unify]
-user> (def foo (let [shared-value (atom :top)]
-                 {:a {:b shared-value}
-                  :c shared-value}))
-#'user/foo
-user> foo
-{:a {:b #atom[:top 0x7d413a07]}, :c #atom[:top 0x7d413a07]}
-user> (unify foo {:a {:b 42}})
-{:c #atom[42 0x7d413a07], :a {:b #atom[42 0x7d413a07]}, :dag_unify.core/serialized ((nil {:c :top, :a {:b :top}}) (((:c) (:a :b)) 42))}
-user> 
+```
+
+First, let's create a directed acyclic graph by using a Clojure atom:
 
 ```
+user=> (def foo (let [shared-value (atom :top)]
+  #_=>                  {:a {:b shared-value}
+  #_=>                   :c shared-value}))
+#'user/foo
+user=> (dag/pprint foo)
+{:a {:b #<Atom@2bac2366: :top>}, :c #<Atom@2bac2366: :top>}
+nil
+```
+
+Note in the above that in the directed acyclic graph `foo`, the value for the
+path `[:a :b]` is set to the same value as the path `[:c]`.
+
+Now, let's unify this with a specific value at the path: `[:c]`, namely `42`.
+
+```
+user=> (dag/pprint (dag/unify foo {:c 42}))
+{:c #<Atom@7d8745bd: 42>, :a {:b #<Atom@7d8745bd: 42>}}
+nil
+user=>
+```   
 
 ## Unification
 
