@@ -57,6 +57,18 @@ nil
 user=>
 ```   
 
+Using dag-unify's built-in `get-in`, we get the same value for the
+paths `[:a :b]` and `[:c]`:
+
+```
+user=> (def foo2 (dag/unify foo {:c 42}))
+#'user/foo2
+user=> (dag/get-in foo2 [:a :b])
+42
+user=> (dag/get-in foo2 [:c])
+42
+```
+
 ## Unification
 
 Consider the behavior of Clojure's `merge`:
