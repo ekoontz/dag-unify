@@ -380,7 +380,7 @@
 (defn deref-map [input]
   input)
 
-(defn pathify-r
+(defn pathify
 "Transform a map into a map of paths/value pairs,
  where paths are lists of keywords, and values are atomic values.
  e.g.:
@@ -392,16 +392,14 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                   val (second kv)]
               (if (not (contains? *exclude-keys* key))
                 (if (map? val)
-                  (do
-                    (pathify-r val (concat prefix (list key))))
+                  (pathify val (concat prefix (list key)))
                   (if (and (ref? val)
                            (let [val @val]
                              (map? val)))
-                    (pathify-r @val (concat prefix (list key)))
-                  (do
-                    (list {(concat prefix (list key))
-                           (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
-                               val)})))))))
+                    (pathify @val (concat prefix (list key)))
+                    [{(concat prefix (list key))
+                      (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
+                          val)}])))))
           fs))
 
 (defn paths [fs]
@@ -1147,15 +1145,14 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn fail-path-between
   "If unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil. Not efficient: use only for diagnostics."
   [fs1 fs2]
-  (let [paths-in-fs1 (map #(first (first %)) (pathify-r fs1))
-        paths-in-fs2 (map #(first (first %)) (pathify-r fs2))]
+  (let [paths-in-fs1 (map #(first (first %)) (pathify fs1))
+        paths-in-fs2 (map #(first (first %)) (pathify fs2))]
     (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
 
 ;; shorter alternative to the above.
 (defn fail-path [fs1 fs2]
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (fail-path-between fs1 fs2))
-
 
 (defn remove-top-values
   "Remove any <key,value> pair in the input _fs_ if value=:top. Use case is logging where we don't care about uninformative key->value pairs where value is simply :top. Also strips refs for readability."
