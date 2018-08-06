@@ -1190,4 +1190,18 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
    fs))
 
 (defn pprint [input]
-  (core-pprint/pprint (dissoc input ::serialized)))
+  (cond
+    (or (empty? input)
+        (string? input)
+        (nil? input)
+        (= true input)
+        (= false input)
+        (keyword? input))
+    input
+    (map? input)
+    (core-pprint/pprint (dissoc input ::serialized))
+    (ref? input)
+    (pprint @input)
+    true
+    (core-pprint/pprint input)))
+
