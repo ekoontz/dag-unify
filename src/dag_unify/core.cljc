@@ -1191,12 +1191,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 (defn pprint [input]
   (cond
-    (or (empty? input)
+    (or (true? input)
+        (false? input)
         (string? input)
-        (nil? input)
-        (= true input)
-        (= false input)
-        (keyword? input))
+        (keyword? input)
+        (number? input)
+        (empty? input))
     input
     (map? input)
     (core-pprint/pprint (dissoc input ::serialized))
