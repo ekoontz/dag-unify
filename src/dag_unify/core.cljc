@@ -1062,10 +1062,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         
         (empty? fs)
         :top
-
-        (seq? fs)
-        (cons (dissoc-paths (first fs))
-              (dissoc-paths (rest fs)))
         
         true
         (let [path (first paths)]
