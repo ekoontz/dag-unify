@@ -1066,38 +1066,25 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         true
         (let [path (first paths)]
           (dissoc-paths
-           (cond (keyword fs)
-                 fs
-                 (and (map? fs)
-                      (not (empty? fs))
-                      (not (empty? path)))
-                 (let [fs (dissoc fs ::serialized) ;; remove the existing serialized version of the serialized structure, since
-                       ;; it will not be valid after we've altered the structure itself.
-                       feature (first path)]
-                   (cond (ref? fs)
-                         (dissoc-paths @fs (list path))
-                         (map? fs)
-                         (cond
-                           (and
-                            (empty? (rest path))
-                            (empty? (dissoc fs feature)))
-                           :top
-                           
-                           (empty? (rest path))
-                           (dissoc fs feature)
-                           
-                           (not (= :notfound (get-in fs (list feature) :notfound)))
-                           (conj
-                            {feature (dissoc-paths (get-in fs (list feature)) (list (rest path)))}
-                            (dissoc fs feature))
-                           
-                           true
-                           (dissoc-paths fs (rest paths)))))
-
-                 true
-                 (exception
-                  (str "dissoc-paths: don't know what to do with this input argument (fs): "
-                       fs)))
+           (let [fs (dissoc fs ::serialized) ;; remove the existing serialized version of the serialized structure, since
+                 ;; it will not be valid after we've altered the structure itself.
+                 feature (first path)]
+             (cond
+               (and
+                (empty? (rest path))
+                (empty? (dissoc fs feature)))
+               :top
+               
+               (empty? (rest path))
+               (dissoc fs feature)
+               
+               (not (= :notfound (get-in fs (list feature) :notfound)))
+               (conj
+                {feature (dissoc-paths (get-in fs (list feature)) (list (rest path)))}
+                (dissoc fs feature))
+               
+               true
+               (dissoc-paths fs (rest paths))))
            (rest paths)))))
 
 (defn isomorphic? [a b]
