@@ -1086,18 +1086,18 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                            (empty? (rest path))
                            (dissoc fs feature)
                            
-                            (not (= :notfound (get-in fs (list feature) :notfound)))
-                            (conj
-                             {feature (dissoc-paths (get-in fs (list feature)) (list (rest path)))}
-                             (dissoc fs feature))
-                            
-                            true
-                            (dissoc-paths fs (rest paths)))))
+                           (not (= :notfound (get-in fs (list feature) :notfound)))
+                           (conj
+                            {feature (dissoc-paths (get-in fs (list feature)) (list (rest path)))}
+                            (dissoc fs feature))
+                           
+                           true
+                           (dissoc-paths fs (rest paths)))))
 
-                   true
-                   (exception
-                    (str "dissoc-paths: don't know what to do with this input argument (fs): "
-                         fs)))
+                 true
+                 (exception
+                  (str "dissoc-paths: don't know what to do with this input argument (fs): "
+                       fs)))
            (rest paths)))))
 
 (defn isomorphic? [a b]
