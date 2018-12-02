@@ -1084,7 +1084,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                 (dissoc fs feature))
                
                true
-               (dissoc-paths fs (rest paths))))
+               fs))
            (rest paths)))))
 
 (defn isomorphic? [a b]
