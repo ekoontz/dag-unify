@@ -1,16 +1,18 @@
 (ns dag_unify.core-test
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
-            [dag_unify.core :refer [all-refs annotate assoc-in by-rows
-                                    create-path-in copy
-                                    create-shared-values deserialize
-                                    elements fail? find-paths-to-value
-                                    get-in gather-annotations
-                                    isomorphic? print-out
-                                    recursive-dissoc ref? ref-skel-map
-                                    remove-matching-keys serialize
-                                    skeletize skels width height unify
-                                    unify! width-of-column]])
+            [clojure.string :as string]
+            [dag_unify.core :as u
+             :refer [all-refs annotate assoc-in by-rows
+                     create-path-in copy
+                     create-shared-values deserialize
+                     elements fail? find-paths-to-value
+                     get-in gather-annotations
+                     isomorphic? pprint print-out
+                     recursive-dissoc ref? ref-skel-map
+                     remove-matching-keys serialize
+                     skeletize skels width height unify
+                     unify! width-of-column]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 ;; TODO: add tests for (dag_unify.core/dissoc-paths)
@@ -42,7 +44,7 @@
         result (unify! myref val)]
     (is (ref? result))
     (is (= @result 42))))
-      
+
 (deftest merging-with-inner-reference-keyset
   (let [fs1 {:b (atom :top)}
         fs2 {:b 42}
@@ -143,14 +145,14 @@
     (is (= (fail? fs2) true))
     (is (= (fail? {:a (atom :fail)}) true))
     (is (= (fail? {:a (atom 42)}) false)))
-    (is (= (fail? {:a (atom {:b :fail})}) true)))
+  (is (= (fail? {:a (atom {:b :fail})}) true)))
 
 
-;(deftest pathify-no-references
-;  "a simple test of pathify with no structure-sharing."
-;  (let [mymap {:a {:c 42}, :b {:c 42}, :c 42}
-;        pathify (pathify mymap)]
-;    (is (= pathify '((:a :c) 42 (:b :c) 42 (:c) 42)))))
+                                        ;(deftest pathify-no-references
+                                        ;  "a simple test of pathify with no structure-sharing."
+                                        ;  (let [mymap {:a {:c 42}, :b {:c 42}, :c 42}
+                                        ;        pathify (pathify mymap)]
+                                        ;    (is (= pathify '((:a :c) 42 (:b :c) 42 (:c) 42)))))
 
 (deftest find-paths-to-values-1
   "test path-to-value, which returns a list of all ways of reaching
@@ -294,7 +296,7 @@ a given value in a given map."
   (let [ref3 (atom "avere")
         ref2 (atom {:italian "fatto"})
         ref1 (atom {:infl :infinitive
-                   :italian ref3})
+                    :italian ref3})
         vp {:a ref1
             :b {:italian ref2
                 :root {:infl :infinitive
@@ -317,7 +319,7 @@ a given value in a given map."
         create-shared-vals (create-shared-values my-ser)
         are-refs? (map (fn [val]
                          (ref? val))
-                      create-shared-vals)
+                       create-shared-vals)
         derefs (map (fn [val]
                       @val)
                     create-shared-vals)]
@@ -383,7 +385,7 @@ a given value in a given map."
   (let [ref3 (atom "avere")
         ref2 (atom {:italian "fatto"})
         ref1 (atom {:infl :infinitive
-                   :italian ref3})
+                    :italian ref3})
         vp {:a ref1
             :b {:italian ref2
                 :root {:infl :infinitive
@@ -397,12 +399,12 @@ a given value in a given map."
     (not (nil? vp))
     (not (nil? myser))))
 
-;(if false (deftest pathify-one-atomic-reference
-;  "a map with one atom (42) shared"
-;  (let [ref1 (atom 42)
-;        mymap {:a ref1 :b ref1}
-;        pathify (pathify mymap)]
-;    (is (= pathify '((:a) 42 (:b) 42))))))
+                                        ;(if false (deftest pathify-one-atomic-reference
+                                        ;  "a map with one atom (42) shared"
+                                        ;  (let [ref1 (atom 42)
+                                        ;        mymap {:a ref1 :b ref1}
+                                        ;        pathify (pathify mymap)]
+                                        ;    (is (= pathify '((:a) 42 (:b) 42))))))
 
 ;;      (deftest
 ;;       "unifying two maps, both with references, overlapping features"
@@ -489,10 +491,10 @@ a given value in a given map."
                                           :3plur "were"}}}]
              [;; intransitive
               (unify! common
-                     {:synsem {:subcat {:1 {:cat :noun}
-                                        :2 '()}
-                               :sem {:pred :be}}})
-             
+                      {:synsem {:subcat {:1 {:cat :noun}
+                                         :2 '()}
+                                :sem {:pred :be}}})
+              
               ;; be + propernoun, e.g. "I am John"
               (let [subject-verb-agreement
                     (let [infl (atom :top)
@@ -507,30 +509,30 @@ a given value in a given map."
                     the-real-subj (atom :top)
                     the-obj (atom :top)]
                 (unify! common
-                       subject-verb-agreement
-                       {:intransitivize false
-                        :transitivize false
-                        :synsem {:agr subj-agr
-                                 :sem {:aspect :progressive
-                                       :pred :be-called
-                                       :tense :present
-                                       :subj the-real-subj
-                                       :obj the-obj}
-                                 :subcat {:1 {:cat :noun
-                                              :agr subj-agr
-                                              :sem {:pred :name
-                                                    :subj the-real-subj}
-                                             
-                                              }
-                                          :2 {:cat :noun
-                                              :agr subj-agr
-                                              :sem the-obj
-                                              :propernoun true ;; "I am John"
-                                              }
-                                          } ;; subcat {
-                                 } ;; synsem {
-                        } ;; end of map
-                       ))])]
+                        subject-verb-agreement
+                        {:intransitivize false
+                         :transitivize false
+                         :synsem {:agr subj-agr
+                                  :sem {:aspect :progressive
+                                        :pred :be-called
+                                        :tense :present
+                                        :subj the-real-subj
+                                        :obj the-obj}
+                                  :subcat {:1 {:cat :noun
+                                               :agr subj-agr
+                                               :sem {:pred :name
+                                                     :subj the-real-subj}
+                                               
+                                               }
+                                           :2 {:cat :noun
+                                               :agr subj-agr
+                                               :sem the-obj
+                                               :propernoun true ;; "I am John"
+                                               }
+                                           } ;; subcat {
+                                  } ;; synsem {
+                         } ;; end of map
+                        ))])]
     (is (= (count be) 2))
     (is (not (fail? (nth be 0))))
     (is (not (fail? (nth be 1))))))
@@ -547,7 +549,7 @@ a given value in a given map."
           {:a myref :b {:c myref} :d {:e 43}})
         removed
         (remove-matching-keys fs (fn [k]
-                                     (= k :c)))]
+                                   (= k :c)))]
     (is (map? removed))
     (is (= 42 (get-in removed [:a])))
     (is (= :none (get-in removed [:b :c] :none)))))
@@ -684,5 +686,255 @@ a given value in a given map."
         line-oriented (by-rows parse-tree)]
     (is (= true true))))
 
-    
-    
+(deftest dissoc-test
+  (let [test-fs (let [shared (atom {:c 42})]
+                  {:a shared
+                   :b shared})
+        dissociated
+        (u/dissoc-paths test-fs [[:a :c]])]
+    (is (= (->
+            dissociated
+            (u/get-in [:a])
+            :c)
+           (->
+            dissociated
+            (u/get-in [:b])
+            :c)))))
+
+(defn prefix?
+  "
+  return true iff seq a is a prefix of seq b:
+  (prefix? [:a   ] [:a :b])    => true
+  (prefix? [:a :b] [:a   ])    => false
+  (prefix? [:a :b] [:a :c]) => false
+  "
+  [a b]
+  (cond (empty? a) true
+        (empty? b) false
+        (= (first a) (first b))
+        (prefix? (rest a) (rest b))
+        true false))
+
+(defn remainder
+  "if seq a is a prefix of seq b,
+   then return what is left of b besides
+   the common prefix of a.
+   if seq a is not a prefix, return nil."
+  [a b]
+  (cond (empty? a)
+        b
+        (empty? b)
+        nil
+        (prefix? a b)
+        (remainder (rest a) (rest b))))
+
+(def truncate-this
+  (u/deserialize
+   [[nil
+     {:comp :top
+      :rule "Y"
+      :2    :top}]
+
+    [[[:comp][:2]]
+     {:comp :top
+      :head :top
+      :1    :top
+      :2    :top
+      :rule "X"}]
+
+    [[[:comp :comp]
+      [:comp :1]
+      [:2    :comp]
+      [:2    :1]]
+     {:surface "ga"
+      :phrasal false}]
+
+    [[[:comp :head]
+      [:comp :2]
+      [:2    :head]
+      [:2    :2]]
+     {:phrasal false
+      :cat    :v
+      :surface "ba"}]
+
+    [[[:comp :comp :cat]
+      [:comp :1    :cat]
+      [:comp :head :cat]
+      [:comp :2    :cat]
+      [:2    :comp :cat]
+      [:2    :1    :cat]
+      [:2    :head :cat]
+      [:2    :2    :cat]]
+     :v]]))
+
+(def truncated (u/dissoc-paths truncate-this [[:comp :head]]))
+
+(def serialized (u/serialize truncate-this))
+
+(def reentrance-sets (map first serialized))
+
+(defn dissoc-in [the-map path]
+  (if (empty? path)
+    the-map
+    (if (empty? (rest path))
+      (dissoc the-map (first path))
+      {(first path)
+       (let [result
+             (dissoc-in (get the-map (first path))
+                        (rest path))]
+         (if (= result {})
+           :top result))})))
+
+(defn dissoc-path [reentrance-pairs path]
+  (if (not (empty? reentrance-pairs))
+    (let [[reentrance-sets value] (first reentrance-pairs)]
+      (cond
+
+        ;; this is the root value.
+        (empty? reentrance-sets)
+        (cons [nil (dissoc-in value path)]
+              (dissoc-path (rest reentrance-pairs) path))
+
+        ;; remove this whole pair.
+        (some #(= path %) reentrance-sets)
+        (dissoc-path (rest reentrance-pairs) path)
+        
+        true
+        (cons (first reentrance-sets)
+              (dissoc-path (rest reentrance-pairs) path))))))
+
+
+
+
+
+(defn morph-ps [structure]
+  (cond (or (= :fail structure) 
+            (nil? structure)
+            (string? structure)) structure
+
+        (seq? structure)
+        (map morph-ps structure)
+        
+        (u/get-in structure [:surface])
+        (morph-ps (u/get-in structure [:surface]))
+
+        (= false (u/get-in structure [:phrasal] false))
+        "_"
+        
+        true
+        (let [one (cond (= (get structure :l)
+                           (get structure :head))
+                        "*"
+                        (= (get structure :l)
+                           (get structure :comp))
+                        "."
+                        true
+                        (throw (Exception. (str "the :l is neither :head nor :comp: "
+                                                (vec (:dag_unify.core/serialized structure))))))
+              
+              two (cond (= (get structure :r)
+                           (get structure :head))
+                        "*"
+                        (= (get structure :r)
+                           (get structure :comp))
+                        "."
+                        true
+                        (throw (Exception. (str "the :r is neither :head nor :comp: "
+                                                (vec (:dag_unify.core/serialized structure))))))]
+          
+          (string/join ""
+                       (map morph-ps
+                            ["[" (:rule structure)
+                             (if (get structure :babel.generate/done?)
+                               "+" " ")
+                             " "
+                             one (u/get-in structure [:l] "_") " "
+                             two (u/get-in structure [:r] "_")
+                             "]"])))))
+
+(def truncate-this
+  (u/deserialize
+   [[nil
+     {:a {:c {:d {:f 41}
+              :e 42}}
+      :b :top}]
+    [[[:a :c :d] [:b]]
+     {:f 43}]]))
+
+(defn dissoc-with [structure path]
+  (let [serialized (u/serialize structure)
+        serialized-map
+        (zipmap (map #(let [f (first %)]
+                        (cond (nil? f)
+                              []
+                              true f))
+                     (u/serialize truncate-this))
+                (map second (u/serialize truncate-this)))
+        reentrance-sets (keys serialized-map)]
+    (map (fn [each-set]
+           (let [;; In this case, the supplied path is a prefix of
+                 ;; some reentrance set.
+                 path-is-prefix? (remove false?
+                                         (map #(and (prefix? path %) %)
+                                              each-set))
+                 ;; In this case, some member of a reentrance set is
+                 ;; a prefix of the path.
+                 member-is-prefix? (remove false?
+                                           (map #(and (prefix? % path) %)
+                                                each-set))]
+
+             {:path-is-prefix? path-is-prefix?
+              :remainder (if path-is-prefix? (remainder path path-is-prefix?))
+              :member-is-prefix? member-is-prefix?
+              :member-is-prefix-in?
+              (if (not (nil? path-is-prefix?))
+                each-set
+                :no)
+              :shared (if (nil? path-is-prefix?)
+                        (get serialized-map (vec each-set)))}))
+         reentrance-sets)))
+
+(defn dissoc-at [structure path]
+  (cond (= path [:a])
+        (u/deserialize
+         [[nil
+           {}]])
+
+        (= path [:a :c])
+        (u/deserialize
+         [[nil
+           {:a :top}]])
+
+        (= path [:a :c :d])
+        (u/deserialize
+         [[nil
+           {:a {:e 42}}]])
+
+
+        (= path [:a :c :d :f])
+        (u/deserialize
+         [[nil
+           {:a {:c {:d :top}
+                :e 42}}]
+          [[[:a :c :d] [:b]]
+           :top]])
+        
+        true
+        :foo))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
