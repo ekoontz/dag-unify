@@ -1047,7 +1047,17 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (deserialize-with-remove serialized pred)))
 
 (defn dissoc-paths [fs & [paths]]
-  "dissoc a path from a map; e.g.: (dissoc-paths {:a {:b 42 :c 43}} '(:a :b)) => {:a {:c 43}}."
+  "dissoc a path from a map; e.g.: 
+
+    (dissoc-paths
+     {:a {:b 42 
+          :c 43}} 
+     [[:a :b]]) 
+
+     =>
+
+    {:a {:c 43}}."
+
   (cond (empty? paths)
         fs
         

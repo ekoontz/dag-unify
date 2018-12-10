@@ -855,7 +855,7 @@ a given value in a given map."
 (def truncate-this
   (u/deserialize
    [[nil
-     {:a {:c {:d {:f 41}
+     {:a {:c {:d :top
               :e 42}}
       :b :top}]
     [[[:a :c :d] [:b]]
@@ -895,41 +895,56 @@ a given value in a given map."
          reentrance-sets)))
 
 (defn dissoc-at [structure path]
-  (cond (= path [:a])
-        (u/deserialize
-         [[nil
-           {}]])
+  (cond
+    (empty? path)
+    structure
 
-        (= path [:a :c])
-        (u/deserialize
-         [[nil
-           {:a :top}]])
+    (= path [:a :c :d :f])
+    (u/deserialize
+     [[nil
+       {:a {:c {:d :top}
+            :e 42}}]
+      [[[:a :c :d] [:b]]
+       :top]])
 
-        (= path [:a :c :d])
-        (u/deserialize
-         [[nil
-           {:a {:e 42}}]])
+    (= path [:a :c :d])
+    (u/deserialize
+     [[nil
+       {:a {:e 42}}]])
 
+    (= path [:a :c])
+    (u/deserialize
+     [[nil
+       {:a :top}]])
+    
+    (= path [:a])
+    (u/deserialize
+     [[nil
+       {}]])
 
-        (= path [:a :c :d :f])
-        (u/deserialize
-         [[nil
-           {:a {:c {:d :top}
-                :e 42}}]
-          [[[:a :c :d] [:b]]
-           :top]])
-        
-        true
-        :foo))
+    true
+    structure))
 
+(deftest dissoc-test
+  (is (u/isomorphic?
+       truncate-this
+       (u/deserialize
+        [[nil
+          {:a {:c {:d :top
+                   :e 42}}
+           :b :top}]
+         [[[:a :c :d] [:b]]
+          {:f 43}]]))))
 
-
-
-
-
-
-
-
+(deftest d2
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a :c :d :f])
+       (u/deserialize
+        [[nil
+          {:a {:c {:d :top}
+               :e 42}}]
+         [[[:a :c :d] [:b]]
+          :top]]))))
 
 
 
