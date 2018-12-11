@@ -777,7 +777,10 @@ a given value in a given map."
   (if (empty? path)
     the-map
     (if (empty? (rest path))
-      (dissoc the-map (first path))
+      (let [retval (dissoc the-map (first path))]
+        (if (empty? retval)
+          :top
+          retval))
       {(first path)
        (let [result
              (dissoc-in (get the-map (first path))
@@ -915,28 +918,26 @@ a given value in a given map."
     (= path [:a :c])
     (u/deserialize
      [[nil
-       {:a :top}]])
+       {:a {:e 42}}]])
     
     (= path [:a])
     (u/deserialize
      [[nil
-       {}]])
+       :top]])
 
     true
     structure))
 
 (deftest dissoc-test
   (is (u/isomorphic?
-       truncate-this
+       (dissoc-at truncate-this [])
        (u/deserialize
         [[nil
           {:a {:c {:d :top
                    :e 42}}
            :b :top}]
          [[[:a :c :d] [:b]]
-          {:f 43}]]))))
-
-(deftest d2
+          {:f 43}]])))
   (is (u/isomorphic?
        (dissoc-at truncate-this [:a :c :d :f])
        (u/deserialize
@@ -944,12 +945,22 @@ a given value in a given map."
           {:a {:c {:d :top}
                :e 42}}]
          [[[:a :c :d] [:b]]
+          :top]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a :c :d])
+       (u/deserialize
+        [[nil
+          {:a {:e 42}}]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a :c])
+       (u/deserialize
+        [[nil
+          {:a {:e 42}}]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a])
+       (u/deserialize
+        [[nil
           :top]]))))
-
-
-
-
-
 
 
 
