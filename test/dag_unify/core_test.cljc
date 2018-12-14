@@ -915,7 +915,8 @@ a given value in a given map."
       ;; 
       (u/deserialize
        [
-        (nth serialized 0)
+        [(first (nth serialized 0))
+         (second (nth serialized 0))]
         [(first (nth serialized 1))
          (dissoc-in (second (nth serialized 1))
                     (remainder [:a :c :e] path))]])
