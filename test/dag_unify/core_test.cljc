@@ -890,57 +890,59 @@ a given value in a given map."
 
 (def truncate-this
   ;;
-  ;; {:a {:c {:d [1] {:f 44}
-  ;;          :e 42}
-  ;;      :d 43}
-  ;;  :b [1] {:f 44}}
+  ;; {:a {:c {:e [1] {:g 42}
+  ;;          :f 43}
+  ;;      :d 44}
+  ;;  :b [1] {:g 42}}
   ;; 
   (u/deserialize
    [[nil
-     {:a {:c {:d :top
-              :e 42}
-          :d 43}
+     {:a {:c {:e :top
+              :f 43}
+          :d 44}
       :b :top}]
-    [[[:a :c :d] [:b]]
-     {:f 44}]]))
-
+    [[[:a :c :e] [:b]]
+     {:g 42}]]))
 
 (defn dissoc-at [structure path]
   (cond
     (empty? path)
     structure
 
-    (= path [:a :c :d :f])
+    (= path [:a :c :e :g])
     ;;
-    ;; {:a {:c {:d [1] :top
-    ;;          :e 42}
-    ;;      :d 43}
+    ;; {:a {:c {:e [1] :top
+    ;;          :f 42}
+    ;;      :d 44}
     ;;  :b [1] :top}
     ;; 
     (u/deserialize
-     [[nil
-       {:a {:c {:d :top}
-            :e 42}}]
-      [[[:a :c :d] [:b]]
+     [
+      [nil
+       {:a {:c {:e :top
+                :f 43}
+            :d 44}}]
+
+      [[[:a :c :e] [:b]]
        :top]])
 
-    (= path [:a :c :d])
+    (= path [:a :c :e])
     ;;
-    ;; {:a {:c {:e 42}
-    ;;      :d 43}}
+    ;; {:a {:c {:f 43}
+    ;;      :d 44}}
     ;; 
     (u/deserialize
      [[nil
-       {:a {:c {:e 42}
-            :d 43}}]])
+       {:a {:c {:f 43}
+            :d 44}}]])
 
     (= path [:a :c])
     ;;
-    ;; {:a {:d 43}}
+    ;; {:a {:d 44}}
     ;;
     (u/deserialize
      [[nil
-       {:a {:d 43}}]])
+       {:a {:d 44}}]])
     
     (= path [:a])
     ;;
@@ -955,24 +957,25 @@ a given value in a given map."
 
 (deftest dissoc-test
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a :c :d :f])
+       (dissoc-at truncate-this [:a :c :e :g])
        (u/deserialize
         [[nil
-          {:a {:c {:d :top}
-               :e 42}}]
-         [[[:a :c :d] [:b]]
+          {:a {:c {:e :top
+                   :f 43}
+               :d 44}}]
+         [[[:a :c :e] [:b]]
           :top]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a :c :d])
+       (dissoc-at truncate-this [:a :c :e])
        (u/deserialize
         [[nil
-          {:a {:c {:e 42}
-               :d 43}}]])))
+          {:a {:c {:f 43}
+               :d 44}}]])))
   (is (u/isomorphic?
        (dissoc-at truncate-this [:a :c])
        (u/deserialize
         [[nil
-          {:a {:d 43}}]])))
+          {:a {:d 44}}]])))
   (is (u/isomorphic?
        (dissoc-at truncate-this [:a])
        (u/deserialize
@@ -982,12 +985,12 @@ a given value in a given map."
        (dissoc-at truncate-this [])
        (u/deserialize
         [[nil
-          {:a {:c {:d :top
-                   :e 42}
-               :d 43}
+          {:a {:c {:e :top
+                   :f 43}
+               :d 44}
            :b :top}]
-         [[[:a :c :d] [:b]]
-          {:f 44}]]))))
+         [[[:a :c :e] [:b]]
+          {:g 42}]]))))
 
 
 
