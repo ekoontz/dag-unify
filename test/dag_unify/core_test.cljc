@@ -918,7 +918,7 @@ a given value in a given map."
         (nth serialized 0)
         [(first (nth serialized 1))
          (dissoc-in (second (nth serialized 1))
-                    [:g])]])
+                    (remainder [:a :c :e] path))]])
       
       (= path [:a :c :e])
       ;;
