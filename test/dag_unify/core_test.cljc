@@ -806,10 +806,6 @@ a given value in a given map."
         (cons (first reentrance-sets)
               (dissoc-path (rest reentrance-pairs) path))))))
 
-
-
-
-
 (defn morph-ps [structure]
   (cond (or (= :fail structure) 
             (nil? structure)
@@ -905,55 +901,52 @@ a given value in a given map."
      {:g 42}]]))
 
 (defn dissoc-at [structure path]
-  (cond
-    (empty? path)
-    structure
+  (let [serialized (u/serialize structure)]
+    (cond
+      (empty? path)
+      structure
 
-    (= path [:a :c :e :g])
-    ;;
-    ;; {:a {:c {:e [1] :top
-    ;;          :f 42}
-    ;;      :d 44}
-    ;;  :b [1] :top}
-    ;; 
-    (u/deserialize
-     [
-      [nil
-       {:a {:c {:e :top
-                :f 43}
-            :d 44}}]
-
-      [[[:a :c :e] [:b]]
-       :top]])
-
-    (= path [:a :c :e])
-    ;;
-    ;; {:a {:c {:f 43}
-    ;;      :d 44}}
-    ;; 
-    (u/deserialize
-     [[nil
-       {:a {:c {:f 43}
-            :d 44}}]])
-
-    (= path [:a :c])
-    ;;
-    ;; {:a {:d 44}}
-    ;;
-    (u/deserialize
-     [[nil
-       {:a {:d 44}}]])
-    
-    (= path [:a])
-    ;;
-    ;; {}
-    ;; 
-    (u/deserialize
-     [[nil
-       :top]])
-
-    true
-    structure))
+      (= path [:a :c :e :g])
+      ;;
+      ;; {:a {:c {:e [1] :top
+      ;;          :f 42}
+      ;;      :d 44}
+      ;;  :b [1] :top}
+      ;; 
+      (u/deserialize
+       [
+        (first serialized)
+        [[[:a :c :e] [:b]]
+         :top]])
+      
+      (= path [:a :c :e])
+      ;;
+      ;; {:a {:c {:f 43}
+      ;;      :d 44}}
+      ;; 
+      (u/deserialize
+       [[nil
+         {:a {:c {:f 43}
+              :d 44}}]])
+      
+      (= path [:a :c])
+      ;;
+      ;; {:a {:d 44}}
+      ;;
+      (u/deserialize
+       [[nil
+         {:a {:d 44}}]])
+      
+      (= path [:a])
+      ;;
+      ;; {}
+      ;; 
+      (u/deserialize
+       [[nil
+         :top]])
+      
+      true
+      structure)))
 
 (deftest dissoc-test
   (is (u/isomorphic?
