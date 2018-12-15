@@ -783,8 +783,10 @@ a given value in a given map."
           retval))
       {(first path)
        (let [result
-             (dissoc-in (get the-map (first path))
-                        (rest path))]
+             (merge
+              (dissoc-in (get the-map (first path))
+                         (rest path))
+              (dissoc the-map (first path)))]
          (if (= result {})
            :top result))})))
 
