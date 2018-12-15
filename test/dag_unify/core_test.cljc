@@ -900,12 +900,16 @@ a given value in a given map."
     [[[:a :c :e] [:b]]
      {:g 42}]]))
 
-(defn dissoc-at-part [dissoc-part path]
-  (let [[path-at value-at] dissoc-part]
+(defn dissoc-at-part [dissoc-part path serialized]
+  (let [[paths-at value-at] dissoc-part]
     (cond
-      (empty? path-at)
-      [(first dissoc-part)
-       (second dissoc-part)])))
+      (empty? paths-at)
+      [paths-at value-at]
+
+      true
+      [paths-at
+       (dissoc-in value-at
+                  (remainder (first paths-at) path))])))
 
 (defn dissoc-at [structure path]
   (let [serialized (u/serialize structure)]
@@ -921,10 +925,8 @@ a given value in a given map."
       ;;  :b [1] :top}
       ;; 
       (u/deserialize
-       [(dissoc-at-part (nth serialized 0) path)
-        [(first (nth serialized 1))
-         (dissoc-in (second (nth serialized 1))
-                    (remainder [:a :c :e] path))]])
+       [(dissoc-at-part (nth serialized 0) path serialized)
+        (dissoc-at-part (nth serialized 1) path serialized)])
       
       (= path [:a :c :e])
       ;;
