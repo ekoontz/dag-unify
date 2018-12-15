@@ -728,7 +728,7 @@ a given value in a given map."
         (prefix? a b)
         (remainder (rest a) (rest b))))
 
-(def truncate-this
+(def truncate-this-2
   (u/deserialize
    [[nil
      {:comp :top
@@ -767,11 +767,9 @@ a given value in a given map."
       [:2    :2    :cat]]
      :v]]))
 
-(def truncated (u/dissoc-paths truncate-this [[:comp :head]]))
+(def truncated-2 (u/dissoc-paths truncate-this-2 [[:comp :head]]))
 
-(def serialized (u/serialize truncate-this))
-
-(def reentrance-sets (map first serialized))
+(def reentrance-sets (map first (serialize truncate-this-2)))
 
 (defn dissoc-in [the-map path]
   (if (empty? path)
@@ -860,8 +858,8 @@ a given value in a given map."
                         (cond (nil? f)
                               []
                               true f))
-                     (u/serialize truncate-this))
-                (map second (u/serialize truncate-this)))
+                     (u/serialize structure))
+                (map second (u/serialize structure)))
         reentrance-sets (keys serialized-map)]
     (map (fn [each-set]
            (let [;; In this case, the supplied path is a prefix of
@@ -885,23 +883,6 @@ a given value in a given map."
               :shared (if (nil? path-is-prefix?)
                         (get serialized-map (vec each-set)))}))
          reentrance-sets)))
-
-(def truncate-this
-  ;;
-  ;; {:a {:c {:e [1] {:g 42}
-  ;;          :f 43}
-  ;;      :d 44}
-  ;;  :b [1] {:g 42}}
-  ;; 
-  (u/deserialize
-   [[nil
-     {:a {:c {:e :top
-              :f 43}
-          :d 44}
-      :b :top}]
-    [[[:a :c :e] [:b]]
-     {:g 42}]]))
-
 
 (defn dissoc-at-serialized-part [dissoc-part path]
   (let [[paths-at value-at] dissoc-part
@@ -945,11 +926,17 @@ a given value in a given map."
       ;;
       ;; {:a {:c {:f 43}
       ;;      :d 44}}
-      ;; 
-      (u/deserialize
-       [[nil
-         {:a {:c {:f 43}
-              :d 44}}]])
+      ;;
+
+      ;; doesn't work yet:
+      (if false
+        (u/deserialize
+         (dissoc-at-serialized serialized path))
+
+        (u/deserialize
+         [[nil
+           {:a {:c {:f 43}
+                :d 44}}]]))
       
       (= path [:a :c])
       ;;
@@ -969,6 +956,28 @@ a given value in a given map."
       
       true
       structure)))
+
+
+
+
+
+(def truncate-this
+  ;;
+  ;; {:a {:c {:e [1] {:g 42}
+  ;;          :f 43}
+  ;;      :d 44}
+  ;;  :b [1] {:g 42}}
+  ;; 
+  (u/deserialize
+   [[nil
+     {:a {:c {:e :top
+              :f 43}
+          :d 44}
+      :b :top}]
+    [[[:a :c :e] [:b]]
+     {:g 42}]]))
+
+(def serialized (serialize truncate-this))
 
 (deftest dissoc-test
   (is (u/isomorphic?
@@ -1006,6 +1015,4 @@ a given value in a given map."
            :b :top}]
          [[[:a :c :e] [:b]]
           {:g 42}]]))))
-
-
 
