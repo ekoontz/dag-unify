@@ -943,7 +943,28 @@ a given value in a given map."
     [[[:a :c :e] [:b]]
      {:g 42}]]))
 
-(def serialized (serialize truncate-this))
+
+(def truncate-this-3
+  ;;
+  ;; {:a {:c {:e [1] {:g [2] 42
+  ;;                  :h [2]}
+  ;;          :f 43}
+  ;;      :d 44}
+  ;;  :b [1]}
+  ;; 
+  (u/deserialize
+   [[nil
+     {:a {:c {:e :top
+              :f 43}
+          :d 44}
+      :b :top}]
+
+    [[[:a :c :e] [:b]]
+     {:g :top
+      :h :top}]
+
+    [[[:b :g] [:b :h]]
+     42]]))
 
 (deftest dissoc-test
   (is (u/isomorphic?
