@@ -928,14 +928,18 @@ a given value in a given map."
                                          (first remainders)))
                                    reentrance-sets))))
 
-
-
-        [paths-to
-         (dissoc-in-all-paths value-at
-                              (vec (set (cons (first remainders)
-                                              (aliases-of
-                                               (concat (first paths-to) (first remainders))
-                                               reentrance-sets)))))]))))
+        (let [dissoc-at-v1
+              (vec (set (cons (first remainders)
+                              (aliases-of
+                               (concat (first paths-to) (first remainders))
+                               reentrance-sets))))
+              dissoc-at-v2
+              (vec all-remainders)]
+          (println (str "dissoc-at-v1: " dissoc-at-v1))
+          (println (str "dissoc-at-v2: " dissoc-at-v2))
+          [paths-to
+           (dissoc-in-all-paths value-at
+                                dissoc-at-v1)])))))
 
 (defn dissoc-at-serialized [serialized path]
   (let [reentrance-sets (map first serialized)]
@@ -1031,7 +1035,7 @@ a given value in a given map."
 
 (deftest dissoc-test-3
   (is
-   (or true ;; below test doesn't work yet.
+   (or false ;; below test doesn't work yet.
        (u/isomorphic? 
         (dissoc-at truncate-this-3 [:a :c :e :g])
         (u/deserialize
