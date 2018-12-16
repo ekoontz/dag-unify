@@ -772,21 +772,46 @@ a given value in a given map."
 (def reentrance-sets (map first (serialize truncate-this-2)))
 
 (defn dissoc-in [the-map path]
-  (if (empty? path)
-    the-map
-    (if (empty? (rest path))
-      (let [retval (dissoc the-map (first path))]
-        (if (empty? retval)
-          :top
-          retval))
-      {(first path)
-       (let [result
-             (merge
-              (dissoc-in (get the-map (first path))
-                         (rest path))
-              (dissoc the-map (first path)))]
-         (if (= result {})
-           :top result))})))
+  (cond (empty? path)
+        the-map
+
+        (= :top the-map)
+        the-map
+
+
+        (= ::none (get the-map (first path) ::none))
+        the-map
+
+        (and (empty? (rest path))
+             (empty? (dissoc the-map (first path))))
+        :top
+
+        (empty? (rest path))
+        (dissoc the-map (first path))
+        
+        true
+        (merge
+         (let [within
+               (dissoc-in (get the-map (first path))
+                          (rest path))]
+           {(first path)
+            within})
+         (dissoc the-map (first path)))))
+
+(defn dissoc-in-all-paths [value paths]
+  (if (empty? paths)
+    value
+    (dissoc-in-all-paths
+     (dissoc-in value (first paths))
+     (rest paths))))
+
+(defn aliases-of [path reentrance-sets]
+  (first
+   (filter
+    (fn [reentrance-set]
+      (some #(= (vec path) (vec %))
+            reentrance-set))
+    reentrance-sets)))
 
 (defn dissoc-path [reentrance-pairs path]
   (if (not (empty? reentrance-pairs))
@@ -795,7 +820,9 @@ a given value in a given map."
 
         ;; this is the root value.
         (empty? reentrance-sets)
-        (cons [nil (dissoc-in value path)]
+        (cons [nil
+               (dissoc-in-all-paths value
+                                    (aliases-of path (map first reentrance-pairs)))]
               (dissoc-path (rest reentrance-pairs) path))
 
         ;; remove this whole pair.
@@ -884,16 +911,31 @@ a given value in a given map."
                         (get serialized-map (vec each-set)))}))
          reentrance-sets)))
 
-(defn dissoc-at-serialized-part [dissoc-part path]
+(defn dissoc-at-serialized-part [dissoc-part path reentrance-sets]
   (let [[paths-at value-at] dissoc-part
+        equal-at (remove false?
+                         (map (fn [path-at]
+                                (= (vec path-at) (vec path)))
+                              paths-at))
         remainders (filter #(not (nil? %))
                            (map (fn [path-at]
                                   (remainder path-at path))
                                 paths-at))]
     (cond
-      (empty? paths-at)
-      [paths-at value-at]
+      (nil? paths-at)
 
+      (do
+        (println (str "dissocing all the aliases of: " value-at))
+        (println (str "aliases-of: " path " and reentrance-sets:" (vec reentrance-sets)))
+        [nil
+         (dissoc-in-all-paths value-at
+                              (aliases-of path reentrance-sets))])
+
+      (not (empty? equal-at))
+      (do
+        (println (str "got here."))
+        nil)
+      
       (not (empty? remainders))
       (do
         (println (str "remainders: " remainders))
@@ -902,9 +944,10 @@ a given value in a given map."
                     (first remainders))]))))
 
 (defn dissoc-at-serialized [serialized path]
-  (map (fn [dissoc-part]
-         (dissoc-at-serialized-part dissoc-part path))
-       serialized))
+  (remove nil?
+          (map (fn [dissoc-part]
+                 (dissoc-at-serialized-part dissoc-part path (map first serialized)))
+               serialized)))
 
 (defn dissoc-at [structure path]
   (let [serialized (u/serialize structure)]
@@ -912,7 +955,9 @@ a given value in a given map."
       (empty? path)
       structure
 
-      (= path [:a :c :e :g])
+      (or
+       (= path [:a :c :e])
+       (= path [:a :c :e :g]))
       ;;
       ;; {:a {:c {:e [1] :top
       ;;          :f 42}
@@ -922,22 +967,6 @@ a given value in a given map."
       (u/deserialize
        (dissoc-at-serialized serialized path))
       
-      (= path [:a :c :e])
-      ;;
-      ;; {:a {:c {:f 43}
-      ;;      :d 44}}
-      ;;
-
-      ;; doesn't work yet:
-      (if false
-        (u/deserialize
-         (dissoc-at-serialized serialized path))
-
-        (u/deserialize
-         [[nil
-           {:a {:c {:f 43}
-                :d 44}}]]))
-      
       (= path [:a :c])
       ;;
       ;; {:a {:d 44}}
@@ -945,7 +974,7 @@ a given value in a given map."
       (u/deserialize
        [[nil
          {:a {:d 44}}]])
-      
+
       (= path [:a])
       ;;
       ;; {}
@@ -953,13 +982,9 @@ a given value in a given map."
       (u/deserialize
        [[nil
          :top]])
-      
+
       true
       structure)))
-
-
-
-
 
 (def truncate-this
   ;;
