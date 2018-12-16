@@ -769,7 +769,7 @@ a given value in a given map."
 
 (def truncated-2 (u/dissoc-paths truncate-this-2 [[:comp :head]]))
 
-(def reentrance-sets (map first (serialize truncate-this-2)))
+(def reentrance-sets-2 (map first (serialize truncate-this-2)))
 
 (defn dissoc-in [the-map path]
   (cond (empty? path)
@@ -809,7 +809,7 @@ a given value in a given map."
   (first
    (filter
     (fn [reentrance-set]
-      (some #(= (vec path) (vec %))
+      (some #(prefix? (vec path) (vec %))
             reentrance-set))
     reentrance-sets)))
 
@@ -878,58 +878,24 @@ a given value in a given map."
                              two (u/get-in structure [:r] "_")
                              "]"])))))
 
-(defn dissoc-with [structure path]
-  (let [serialized (u/serialize structure)
-        serialized-map
-        (zipmap (map #(let [f (first %)]
-                        (cond (nil? f)
-                              []
-                              true f))
-                     (u/serialize structure))
-                (map second (u/serialize structure)))
-        reentrance-sets (keys serialized-map)]
-    (map (fn [each-set]
-           (let [;; In this case, the supplied path is a prefix of
-                 ;; some reentrance set.
-                 path-is-prefix? (remove false?
-                                         (map #(and (prefix? path %) %)
-                                              each-set))
-                 ;; In this case, some member of a reentrance set is
-                 ;; a prefix of the path.
-                 member-is-prefix? (remove false?
-                                           (map #(and (prefix? % path) %)
-                                                each-set))]
-
-             {:path-is-prefix? path-is-prefix?
-              :remainder (if path-is-prefix? (remainder path path-is-prefix?))
-              :member-is-prefix? member-is-prefix?
-              :member-is-prefix-in?
-              (if (not (nil? path-is-prefix?))
-                each-set
-                :no)
-              :shared (if (nil? path-is-prefix?)
-                        (get serialized-map (vec each-set)))}))
-         reentrance-sets)))
-
 (defn dissoc-at-serialized-part [dissoc-part path reentrance-sets]
-  (let [[paths-at value-at] dissoc-part
+  (let [[paths-to value-at] dissoc-part
         equal-at (remove false?
                          (map (fn [path-at]
                                 (= (vec path-at) (vec path)))
-                              paths-at))
+                              paths-to))
         remainders (filter #(not (nil? %))
                            (map (fn [path-at]
                                   (remainder path-at path))
-                                paths-at))]
+                                paths-to))]
     (cond
-      (nil? paths-at)
+      (nil? paths-to)
 
       (do
-        (println (str "dissocing all the aliases of: " value-at))
-        (println (str "aliases-of: " path " and reentrance-sets:" (vec reentrance-sets)))
         [nil
          (dissoc-in-all-paths value-at
-                              (aliases-of path reentrance-sets))])
+                              (vec (set (cons path
+                                              (aliases-of path reentrance-sets)))))])
 
       (not (empty? equal-at))
       (do
@@ -938,53 +904,26 @@ a given value in a given map."
       
       (not (empty? remainders))
       (do
-        (println (str "remainders: " remainders))
-        [paths-at
+        (println (str "remainders: " (vec remainders)))
+        [paths-to
          (dissoc-in value-at
                     (first remainders))]))))
 
 (defn dissoc-at-serialized [serialized path]
-  (remove nil?
-          (map (fn [dissoc-part]
-                 (dissoc-at-serialized-part dissoc-part path (map first serialized)))
-               serialized)))
+  (let [reentrance-sets (map first serialized)]
+    (remove nil?
+            (map (fn [dissoc-part]
+                   (dissoc-at-serialized-part dissoc-part path reentrance-sets))
+                 serialized))))
 
 (defn dissoc-at [structure path]
-  (let [serialized (u/serialize structure)]
-    (cond
-      (empty? path)
-      structure
+  (cond
+    (empty? path)
+    structure
 
-      (or
-       (= path [:a :c :e])
-       (= path [:a :c :e :g]))
-      ;;
-      ;; {:a {:c {:e [1] :top
-      ;;          :f 42}
-      ;;      :d 44}
-      ;;  :b [1] :top}
-      ;; 
-      (u/deserialize
-       (dissoc-at-serialized serialized path))
-      
-      (= path [:a :c])
-      ;;
-      ;; {:a {:d 44}}
-      ;;
-      (u/deserialize
-       [[nil
-         {:a {:d 44}}]])
-
-      (= path [:a])
-      ;;
-      ;; {}
-      ;; 
-      (u/deserialize
-       [[nil
-         :top]])
-
-      true
-      structure)))
+    true
+    (u/deserialize
+     (dissoc-at-serialized (u/serialize structure) path))))
 
 (def truncate-this
   ;;
