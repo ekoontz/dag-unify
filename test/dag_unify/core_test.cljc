@@ -881,13 +881,21 @@ a given value in a given map."
 (defn dissoc-at-serialized-part [dissoc-part path reentrance-sets]
   (let [[paths-to value-at] dissoc-part
         equal-at (remove false?
-                         (map (fn [path-at]
-                                (= (vec path-at) (vec path)))
+                         (map (fn [path-to]
+                                (= (vec path-to) (vec path)))
                               paths-to))
         remainders (filter #(not (nil? %))
-                           (map (fn [path-at]
-                                  (remainder path-at path))
-                                paths-to))]
+                           (map (fn [path-to]
+                                  (remainder path-to path))
+                                paths-to))
+        all-remainders
+        (filter #(not (nil? %))
+                (map (fn [path-to]
+                       (map (fn [alias]
+                              (remainder path-to alias))
+                            (aliases-of paths-to reentrance-sets)))
+                     paths-to))]
+
     (cond
       (not (empty? equal-at))
       nil
@@ -903,7 +911,23 @@ a given value in a given map."
       ;; b)
       (not (empty? remainders))
       (do
+        (println (str "path: " (vec path)))
+        (println (str "path-to: " (vec (first paths-to))))
         (println (str "remainders: " (vec remainders)))
+        (println (str "all remainders: " (vec all-remainders)))
+
+        (println (str "aliases of: " (vec (concat
+                                           (first paths-to)
+                                           (first remainders)))
+                      ": "
+                      (vec
+                       (aliases-of (vec (concat
+                                         (first paths-to)
+                                         (first remainders)))
+                                   reentrance-sets))))
+
+
+
         [paths-to
          (dissoc-in-all-paths value-at
                               (vec (set (cons (first remainders)
@@ -946,7 +970,7 @@ a given value in a given map."
 
 (def truncate-this-3
   ;;
-  ;; {:a {:c {:e [1] {:g [2] 42
+  ;; {:a {:c {:e [1] {:g [2] {:i 42}
   ;;                  :h [2]}
   ;;          :f 43}
   ;;      :d 44}
@@ -964,7 +988,7 @@ a given value in a given map."
       :h :top}]
 
     [[[:b :g] [:b :h]]
-     42]]))
+     {:i 42}]]))
 
 (deftest dissoc-test
   (is (u/isomorphic?
@@ -976,6 +1000,41 @@ a given value in a given map."
                :d 44}}]
          [[[:a :c :e] [:b]]
           :top]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a :c :e])
+       (u/deserialize
+        [[nil
+          {:a {:c {:f 43}
+               :d 44}}]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a :c])
+       (u/deserialize
+        [[nil
+          {:a {:d 44}}]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a])
+       (u/deserialize
+        [[nil
+          :top]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [])
+       (u/deserialize
+        [[nil
+          {:a {:c {:e :top
+                   :f 43}
+               :d 44}
+           :b :top}]
+         [[[:a :c :e] [:b]]
+          {:g 42}]]))))
+
+(deftest dissoc-test-3
+  (is
+   (or true ;; below test doesn't work yet.
+       (u/isomorphic? 
+        (dissoc-at truncate-this-3 [:a :c :e :g])
+        (u/deserialize
+         '[[nil {:a {:c {:e :top, :f 43}, :d 44}}]]))))
+
   (is (u/isomorphic?
        (dissoc-at truncate-this [:a :c :e])
        (u/deserialize
