@@ -889,25 +889,27 @@ a given value in a given map."
                                   (remainder path-at path))
                                 paths-to))]
     (cond
-      (nil? paths-to)
+      (not (empty? equal-at))
+      nil
 
+      ;; TODO: combine: a) and b) below.
+      ;; a)
+      (nil? paths-to)
       (do
         [nil
          (dissoc-in-all-paths value-at
                               (vec (set (cons path
                                               (aliases-of path reentrance-sets)))))])
-
-      (not (empty? equal-at))
-      (do
-        (println (str "got here."))
-        nil)
-      
+      ;; b)
       (not (empty? remainders))
       (do
         (println (str "remainders: " (vec remainders)))
         [paths-to
-         (dissoc-in value-at
-                    (first remainders))]))))
+         (dissoc-in-all-paths value-at
+                              (vec (set (cons (first remainders)
+                                              (aliases-of
+                                               (concat (first paths-to) (first remainders))
+                                               reentrance-sets)))))]))))
 
 (defn dissoc-at-serialized [serialized path]
   (let [reentrance-sets (map first serialized)]
