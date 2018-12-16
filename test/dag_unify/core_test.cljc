@@ -889,12 +889,13 @@ a given value in a given map."
                                   (remainder path-to path))
                                 paths-to))
         all-remainders
-        (filter #(not (nil? %))
-                (map (fn [path-to]
-                       (map (fn [alias]
-                              (remainder path-to alias))
-                            (aliases-of paths-to reentrance-sets)))
-                     paths-to))]
+        (vec (set
+              (filter #(not (nil? %))
+                      (mapcat (fn [path-to]
+                                (map (fn [alias]
+                                       (remainder path-to alias))
+                                     (aliases-of path reentrance-sets)))
+                              paths-to))))]
 
     (cond
       (not (empty? equal-at))
@@ -912,7 +913,8 @@ a given value in a given map."
       (not (empty? remainders))
       (do
         (println (str "path: " (vec path)))
-        (println (str "path-to: " (vec (first paths-to))))
+        (println (str "paths-to: " (vec paths-to)))
+        (println (str "value-at: " value-at))
         (println (str "remainders: " (vec remainders)))
         (println (str "all remainders: " (vec all-remainders)))
 
