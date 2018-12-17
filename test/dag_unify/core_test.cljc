@@ -856,12 +856,12 @@ a given value in a given map."
         (dissoc-path (rest reentrance-pairs) path)
         
         true
-        ;; the reentrance-set stays, but the value will
-        ;; get modified with parts of it being dissoc'ed
-        ;; if necessary.
+        ;; the reentrance-set stays, but _value_ will be
+        ;; modified as necessary.
         (cons [reentrance-sets
                (dissoc-in-all-paths value
-                                    (aliases-of path (map first reentrance-pairs)))]
+                                    (cons path
+                                          (aliases-of path (map first reentrance-pairs))))]
               (dissoc-path (rest reentrance-pairs) path))))))
 
 (defn morph-ps [structure]
