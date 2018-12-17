@@ -728,6 +728,12 @@ a given value in a given map."
         (= (first a) (first b))
         (remainder (rest a) (rest b))))
 
+(defn prefix
+  "if seq a is a prefix of seq b,
+   then return a; else return nil."
+  [a b]
+  (if (prefix? a b) a))
+
 (def truncate-this-2
   (u/deserialize
    [[nil
@@ -806,42 +812,56 @@ a given value in a given map."
      (rest paths))))
 
 (defn aliases-of [path reentrance-sets]
-  (mapcat
-   (fn [set-with-prefix]
-     (mapcat (fn [prefix-path]
-               (let [remainders
-                     (remove nil?
-                             (map (fn [member-of-set]
-                                    (remainder member-of-set path))
-                                  set-with-prefix))]
-                 (map (fn [remainder]
-                        (concat prefix-path remainder))
-                      remainders)))
-             set-with-prefix))
-   (filter
-    (fn [reentrance-set]
-      (some #(prefix? (vec %) (vec path))
-            reentrance-set))
-    reentrance-sets)))
+  (concat
+   ;; 1. find aliases of _path_ where some member of
+   ;; some reentrance set is a prefix of _path_.
+   (mapcat
+    (fn [set-with-prefix]
+      (mapcat (fn [prefix-path]
+                (let [remainders
+                      (remove nil?
+                              (map (fn [member-of-set]
+                                     (remainder member-of-set path))
+                                   set-with-prefix))]
+                  (map (fn [remainder]
+                         (concat prefix-path remainder))
+                       remainders)))
+              set-with-prefix))
+    (filter
+     (fn [reentrance-set]
+       (some #(prefix? (vec %) (vec path))
+             reentrance-set))
+     reentrance-sets))
+
+   ;; 2. find aliases of _path_ where _path_ is a prefix of
+   ;; some member of some reentrance set.
+   (mapcat
+    (fn [set-with-prefix]
+      (map (fn [prefix-path]
+             prefix-path)
+           set-with-prefix))
+    (filter
+     (fn [reentrance-set]
+       (some #(prefix? (vec path) (vec %))
+             reentrance-set))
+     reentrance-sets))))
 
 (defn dissoc-path [reentrance-pairs path]
   (if (not (empty? reentrance-pairs))
     (let [[reentrance-sets value] (first reentrance-pairs)]
       (cond
-
-        ;; this is the root value.
-        (empty? reentrance-sets)
-        (cons [nil
-               (dissoc-in-all-paths value
-                                    (aliases-of path (map first reentrance-pairs)))]
-              (dissoc-path (rest reentrance-pairs) path))
-
-        ;; remove this whole pair.
+        ;; remove the reentrance-set and the value if
+        ;; path matches a path in this reentrance-set.
         (some #(= path %) reentrance-sets)
         (dissoc-path (rest reentrance-pairs) path)
         
         true
-        (cons (first reentrance-sets)
+        ;; the reentrance-set stays, but the value will
+        ;; get modified with parts of it being dissoc'ed
+        ;; if necessary.
+        (cons [reentrance-sets
+               (dissoc-in-all-paths value
+                                    (aliases-of path (map first reentrance-pairs)))]
               (dissoc-path (rest reentrance-pairs) path))))))
 
 (defn morph-ps [structure]
@@ -900,10 +920,12 @@ a given value in a given map."
                                   (remainder path-to path))
                                 paths-to))
 
-        aliases-of (aliases-of path reentrance-sets)
+        aliases-of (vec (set (cons path
+                                   (aliases-of path reentrance-sets))))
 
         dissoc-at-paths
         (cond (empty? paths-to)
+              ;; root object.
               aliases-of
 
               true
@@ -995,17 +1017,17 @@ a given value in a given map."
                :d 44}}]
          [[[:a :c :e] [:b]]
           :top]])))
-  (is (or true (u/isomorphic?
-                (dissoc-at truncate-this [:a :c :e])
-                (u/deserialize
-                 [[nil
-                   {:a {:c {:f 43}
-                        :d 44}}]]))))
-  (is (or true (u/isomorphic?
-                (dissoc-at truncate-this [:a :c])
-                (u/deserialize
-                 [[nil
-                   {:a {:d 44}}]]))))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a :c :e])
+       (u/deserialize
+        [[nil
+          {:a {:c {:f 43}
+               :d 44}}]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a :c])
+       (u/deserialize
+        [[nil
+          {:a {:d 44}}]])))
   (is (or true (u/isomorphic?
                 (dissoc-at truncate-this [:a])
                 (u/deserialize
@@ -1023,12 +1045,10 @@ a given value in a given map."
                    {:g 42}]])))))
 
 (deftest dissoc-test-3
-  (is
-   (or false ;; below test doesn't work yet.
-       (u/isomorphic? 
-        (dissoc-at truncate-this-3 [:a :c :e :g])
-        (u/deserialize
-         '[[nil {:a {:c {:e :top, :f 43}, :d 44}}]]))))
+  (is (u/isomorphic? 
+       (dissoc-at truncate-this-3 [:a :c :e :g])
+       (u/deserialize
+        [[nil {:a {:c {:e :top, :f 43}, :d 44}}]])))
 
   (is (u/isomorphic?
        (dissoc-at truncate-this [:a :c :e])
