@@ -899,22 +899,29 @@ a given value in a given map."
                            (map (fn [path-to]
                                   (remainder path-to path))
                                 paths-to))
-        all-remainders
-        (vec (set
-              (filter #(not (nil? %))
-                      (mapcat (fn [path-to]
-                                (map (fn [alias]
-                                       (remainder path-to alias))
-                                     (aliases-of path reentrance-sets)))
-                              paths-to))))
+
         aliases-of (aliases-of path reentrance-sets)
-        dissoc-at-paths all-remainders]
+
+        dissoc-at-paths
+        (cond (empty? paths-to)
+              aliases-of
+
+              true
+              (vec (set
+                    (filter #(not (nil? %))
+                            (mapcat (fn [path-to]
+                                      (map (fn [alias]
+                                             (remainder path-to alias))
+                                           aliases-of))
+                                    paths-to)))))]
     (println (str "dissoc-at-serialized-part: " dissoc-part))
     (println (str "path:" path))
     (println (str "paths-to: " (vec paths-to) "; value-at: " value-at))
     (println (str "reentrances: " (vec reentrance-sets)))
     (println (str "aliases-of path:" (vec aliases-of)))
-    (println (str "dissoc-at-paths:" all-remainders))
+    (println (str "dissoc-at-paths:" (vec dissoc-at-paths)))
+    (println (str "equal-at:" (vec equal-at)))
+    (println (str ""))
     (cond
       (not (empty? equal-at))
       nil
