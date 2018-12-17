@@ -784,7 +784,6 @@ a given value in a given map."
         (= :top the-map)
         the-map
 
-
         (= ::none (get the-map (first path) ::none))
         the-map
 
@@ -853,6 +852,9 @@ a given value in a given map."
         ;; remove the reentrance-set and the value if
         ;; path matches a path in this reentrance-set.
         (some #(= path %) reentrance-sets)
+        (dissoc-path (rest reentrance-pairs) path)
+
+        (some #(prefix? path %) reentrance-sets)
         (dissoc-path (rest reentrance-pairs) path)
         
         true
@@ -966,7 +968,7 @@ a given value in a given map."
 
     true
     (u/deserialize
-     (dissoc-at-serialized (u/serialize structure) path))))
+     (dissoc-path (u/serialize structure) path))))
 
 (def truncate-this
   ;;
