@@ -763,7 +763,7 @@ a given value in a given map."
 
         (= :top the-map)
         the-map
-
+        
         (= ::none (get the-map (first path) ::none))
         the-map
 
@@ -846,8 +846,8 @@ a given value in a given map."
         (cons [reentrance-set
                (dissoc-in-all-paths value
                                     (get-remainders-for
-                                     (set (cons path
-                                                (aliases-of path (map first serialized))))
+                                     (cons path
+                                           (aliases-of path (map first serialized)))
                                      reentrance-set))]
               (dissoc-path (rest serialized) path))))))
 
