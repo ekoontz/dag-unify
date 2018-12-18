@@ -827,13 +827,12 @@ a given value in a given map."
   (cond (empty? reentrance-set)
         aliases-of-path
         true
-        (let [results (set (mapcat (fn [each-alias-of-path]
-                                     (remove nil?
-                                             (map (fn [each-reentrance-path]
-                                                    (remainder each-reentrance-path each-alias-of-path))
-                                                  reentrance-set)))
-                                   aliases-of-path))]
-          results)))
+        (mapcat (fn [each-alias-of-path]
+                  (remove nil?
+                          (map (fn [each-reentrance-path]
+                                 (remainder each-reentrance-path each-alias-of-path))
+                               reentrance-set)))
+                aliases-of-path)))
 
 (defn dissoc-in-all-paths [value paths]
   (if (empty? paths)
