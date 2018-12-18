@@ -831,8 +831,6 @@ a given value in a given map."
      reentrance-sets))))
 
 (defn get-remainders-for [aliases-of-path reentrance-set]
-  (println (str "grf: aliases-of-path:" (vec aliases-of-path)))
-  (println (str "grf: reentrance-set :" (vec reentrance-set)))
   (cond (empty? reentrance-set)
         aliases-of-path
         true
@@ -842,7 +840,6 @@ a given value in a given map."
                                                     (remainder each-reentrance-path each-alias-of-path))
                                                   reentrance-set)))
                                    aliases-of-path))]
-          (println (str "grf: results:" (vec results)))
           results)))
 
 (defn dissoc-path [reentrance-pairs path]
