@@ -686,21 +686,6 @@ a given value in a given map."
         line-oriented (by-rows parse-tree)]
     (is (= true true))))
 
-(deftest dissoc-test
-  (let [test-fs (let [shared (atom {:c 42})]
-                  {:a shared
-                   :b shared})
-        dissociated
-        (u/dissoc-paths test-fs [[:a :c]])]
-    (is (= (->
-            dissociated
-            (u/get-in [:a])
-            :c)
-           (->
-            dissociated
-            (u/get-in [:b])
-            :c)))))
-
 (defn prefix?
   "
   return true iff seq a is a prefix of seq b:
@@ -949,6 +934,17 @@ a given value in a given map."
       :b :top}]
     [[[:a :c :e] [:b]]
      {:g 42}]]))
+
+(deftest dissoc-test
+  (let [test-fs (let [shared (atom {:c 42})]
+                  {:a shared
+                   :b shared})
+        dissociated
+        (dissoc-at test-fs [:a :c])]
+    (is (isomorphic? dissociated
+                     (let [shared (atom :top)]
+                       {:a shared
+                        :b shared})))))
 
 (deftest dissoc-test-1
   (is (u/isomorphic?
