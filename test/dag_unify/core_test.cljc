@@ -785,30 +785,25 @@ a given value in a given map."
 
 (defn aliases-of [path reentrance-sets]
   (concat
-   ;; 1. find aliases of _path_ where some member of
+   ;; 1. find reentrance sets where some member of
    ;; some reentrance set is a prefix of _path_:
    (->>
     reentrance-sets
-    (filter
-     (fn [reentrance-set]
-       (some #(prefix? (vec %) (vec path))
-             reentrance-set)))
-
     (mapcat
-     (fn [set-with-prefix]
+     (fn [reentrance-set]
        (->>
-        set-with-prefix
+        reentrance-set
         (mapcat (fn [prefix-path]
                   (->>
-                   set-with-prefix
+                   reentrance-set
                    (map (fn [member-of-set]
                           (remainder member-of-set path)))
                    (remove nil?)
                    (map (fn [remainder]
                           (concat prefix-path remainder))))))))))
 
-   ;; 2. find aliases of _path_ where _path_ is a prefix of
-   ;; some member of some reentrance set:
+   ;; 2. get all paths in reentrance sets where
+   ;; _path_ is a prefix of a member of the reentrance set.
    (->>
     reentrance-sets
     (filter
