@@ -786,37 +786,36 @@ a given value in a given map."
 (defn aliases-of [path reentrance-sets]
   (concat
    ;; 1. find aliases of _path_ where some member of
-   ;; some reentrance set is a prefix of _path_.
-   (mapcat
-    (fn [set-with-prefix]
-      (mapcat (fn [prefix-path]
-                (let [remainders
-                      (remove nil?
-                              (map (fn [member-of-set]
-                                     (remainder member-of-set path))
-                                   set-with-prefix))]
-                  (map (fn [remainder]
-                         (concat prefix-path remainder))
-                       remainders)))
-              set-with-prefix))
+   ;; some reentrance set is a prefix of _path_:
+   (->>
     (filter
      (fn [reentrance-set]
        (some #(prefix? (vec %) (vec path))
              reentrance-set))
-     reentrance-sets))
+     reentrance-sets)
+
+    (mapcat
+     (fn [set-with-prefix]
+       (->>
+        set-with-prefix
+        (mapcat (fn [prefix-path]
+                  (->>
+                   (remove nil?
+                           (map (fn [member-of-set]
+                                  (remainder member-of-set path))
+                                set-with-prefix))
+                   (map (fn [remainder]
+                          (concat prefix-path remainder))))))))))
 
    ;; 2. find aliases of _path_ where _path_ is a prefix of
-   ;; some member of some reentrance set.
-   (mapcat
-    (fn [set-with-prefix]
-      (map (fn [prefix-path]
-             prefix-path)
-           set-with-prefix))
+   ;; some member of some reentrance set:
+   (->>
+    reentrance-sets
     (filter
      (fn [reentrance-set]
        (some #(prefix? (vec path) (vec %))
-             reentrance-set))
-     reentrance-sets))))
+             reentrance-set)))
+    (reduce concat))))
 
 (defn get-remainders-for [aliases-of-path reentrance-set]
   (cond (empty? reentrance-set)
