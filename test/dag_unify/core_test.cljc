@@ -1000,29 +1000,6 @@ a given value in a given map."
     [[[:a :c :e] [:b]]
      {:g 42}]]))
 
-
-(def truncate-this-3
-  ;;
-  ;; {:a {:c {:e [1] {:g [2] {:i 42}
-  ;;                  :h [2]}
-  ;;          :f 43}
-  ;;      :d 44}
-  ;;  :b [1]}
-  ;; 
-  (u/deserialize
-   [[nil
-     {:a {:c {:e :top
-              :f 43}
-          :d 44}
-      :b :top}]
-
-    [[[:a :c :e] [:b]]
-     {:g :top
-      :h :top}]
-
-    [[[:b :g] [:b :h]]
-     {:i 42}]]))
-
 (deftest dissoc-test-1
   (is (u/isomorphic?
        (dissoc-at truncate-this [:a :c :e :g])
@@ -1060,11 +1037,41 @@ a given value in a given map."
                   [[[:a :c :e] [:b]]
                    {:g 42}]])))))
 
+
+(def truncate-this-3
+  ;;
+  ;; {:a {:c {:e [1] {:g [2] {:i 42}
+  ;;                  :h [2]}
+  ;;          :f 43}
+  ;;      :d 44}
+  ;;  :b [1]}
+  ;; 
+  (u/deserialize
+   [[nil
+     {:a {:c {:e :top
+              :f 43}
+          :d 44}
+      :b :top}]
+
+    [[[:a :c :e] [:b]]
+     {:g :top
+      :h :top}]
+
+    [[[:b :g] [:b :h]]
+     {:i 42}]]))
+
 (deftest dissoc-test-3
   (is (u/isomorphic? 
        (dissoc-at truncate-this-3 [:a :c :e :g])
        (u/deserialize
-        [[nil {:a {:c {:e :top, :f 43}, :d 44}}]])))
+        [[nil
+          {:a {:c {:e :top
+                   :f 43}
+               :d 44}
+           :b :top}]
+
+         [[[:a :c :e] [:b]]
+          :top]])))
 
   (is (u/isomorphic?
        (dissoc-at truncate-this [:a :c :e])
