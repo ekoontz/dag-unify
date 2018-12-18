@@ -964,21 +964,21 @@ a given value in a given map."
        (u/deserialize
         [[nil
           {:a {:d 44}}]])))
-  (is (or true (u/isomorphic?
-                (dissoc-at truncate-this [:a])
-                (u/deserialize
-                 [[nil
-                   :top]]))))
-  (is (or true (u/isomorphic?
-                (dissoc-at truncate-this [])
-                (u/deserialize
-                 [[nil
-                   {:a {:c {:e :top
-                            :f 43}
-                        :d 44}
-                    :b :top}]
-                  [[[:a :c :e] [:b]]
-                   {:g 42}]])))))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [:a])
+       (u/deserialize
+        [[nil
+          :top]])))
+  (is (u/isomorphic?
+       (dissoc-at truncate-this [])
+       (u/deserialize
+        [[nil
+          {:a {:c {:e :top
+                   :f 43}
+               :d 44}
+           :b :top}]
+         [[[:a :c :e] [:b]]
+          {:g 42}]]))))
 
 
 (def truncate-this-3
