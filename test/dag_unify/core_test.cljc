@@ -800,10 +800,10 @@ a given value in a given map."
         set-with-prefix
         (mapcat (fn [prefix-path]
                   (->>
-                   (remove nil?
-                           (map (fn [member-of-set]
-                                  (remainder member-of-set path))
-                                set-with-prefix))
+                   set-with-prefix
+                   (map (fn [member-of-set]
+                          (remainder member-of-set path)))
+                   (remove nil?)
                    (map (fn [remainder]
                           (concat prefix-path remainder))))))))))
 
