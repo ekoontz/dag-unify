@@ -686,39 +686,6 @@ a given value in a given map."
         line-oriented (by-rows parse-tree)]
     (is (= true true))))
 
-(defn prefix?
-  "
-  return true iff seq a is a prefix of seq b:
-  (prefix? [:a   ] [:a :b])    => true
-  (prefix? [:a :b] [:a   ])    => false
-  (prefix? [:a :b] [:a :c]) => false
-  "
-  [a b]
-  (cond (empty? a) true
-        (empty? b) false
-        (= (first a) (first b))
-        (prefix? (rest a) (rest b))
-        true false))
-
-(defn remainder
-  "if seq a is a prefix of seq b,
-   then return what is left of b besides
-   the common prefix of a.
-   if seq a is not a prefix, return nil."
-  [a b]
-  (cond (empty? a)
-        b
-        (empty? b)
-        nil
-        (= (first a) (first b))
-        (remainder (rest a) (rest b))))
-
-(defn prefix
-  "if seq a is a prefix of seq b,
-   then return a; else return nil."
-  [a b]
-  (if (prefix? a b) a))
-
 (def truncate-this-2
   (u/deserialize
    [[nil
@@ -761,6 +728,34 @@ a given value in a given map."
 (def truncated-2 (u/dissoc-paths truncate-this-2 [[:comp :head]]))
 
 (def reentrance-sets-2 (map first (serialize truncate-this-2)))
+
+
+(defn prefix?
+  "
+  return true iff seq a is a prefix of seq b:
+  (prefix? [:a   ] [:a :b])    => true
+  (prefix? [:a :b] [:a   ])    => false
+  (prefix? [:a :b] [:a :c]) => false
+  "
+  [a b]
+  (cond (empty? a) true
+        (empty? b) false
+        (= (first a) (first b))
+        (prefix? (rest a) (rest b))
+        true false))
+
+(defn remainder
+  "if seq a is a prefix of seq b,
+   then return what is left of b besides
+   the common prefix of a.
+   if seq a is not a prefix, return nil."
+  [a b]
+  (cond (empty? a)
+        b
+        (empty? b)
+        nil
+        (= (first a) (first b))
+        (remainder (rest a) (rest b))))
 
 (defn dissoc-in [the-map path]
   (cond (empty? path)
