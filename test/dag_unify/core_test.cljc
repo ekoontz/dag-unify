@@ -788,13 +788,6 @@ a given value in a given map."
             within})
          (dissoc the-map (first path)))))
 
-(defn dissoc-in-all-paths [value paths]
-  (if (empty? paths)
-    value
-    (dissoc-in-all-paths
-     (dissoc-in value (first paths))
-     (rest paths))))
-
 (defn aliases-of [path reentrance-sets]
   (concat
    ;; 1. find aliases of _path_ where some member of
@@ -842,14 +835,21 @@ a given value in a given map."
                                    aliases-of-path))]
           results)))
 
-(defn dissoc-path [reentrance-pairs path]
-  (if (not (empty? reentrance-pairs))
-    (let [[reentrance-set value] (first reentrance-pairs)]
+(defn dissoc-in-all-paths [value paths]
+  (if (empty? paths)
+    value
+    (dissoc-in-all-paths
+     (dissoc-in value (first paths))
+     (rest paths))))
+
+(defn dissoc-path [serialized path]
+  (if (not (empty? serialized))
+    (let [[reentrance-set value] (first serialized)]
       (cond
         ;; remove the reentrance-set and the value if
         ;; path matches a path in this reentrance-set.
         (some #(prefix? path %) reentrance-set)
-        (dissoc-path (rest reentrance-pairs) path)
+        (dissoc-path (rest serialized) path)
         
         true
         ;; the reentrance-set stays, but _value_ will be
@@ -858,9 +858,9 @@ a given value in a given map."
                (dissoc-in-all-paths value
                                     (get-remainders-for
                                      (set (cons path
-                                                (aliases-of path (map first reentrance-pairs))))
+                                                (aliases-of path (map first serialized))))
                                      reentrance-set))]
-              (dissoc-path (rest reentrance-pairs) path))))))
+              (dissoc-path (rest serialized) path))))))
 
 (defn morph-ps [structure]
   (cond (or (= :fail structure) 
