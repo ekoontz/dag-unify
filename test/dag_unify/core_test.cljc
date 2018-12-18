@@ -788,11 +788,11 @@ a given value in a given map."
    ;; 1. find aliases of _path_ where some member of
    ;; some reentrance set is a prefix of _path_:
    (->>
+    reentrance-sets
     (filter
      (fn [reentrance-set]
        (some #(prefix? (vec %) (vec path))
-             reentrance-set))
-     reentrance-sets)
+             reentrance-set)))
 
     (mapcat
      (fn [set-with-prefix]
