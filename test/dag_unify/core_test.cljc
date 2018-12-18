@@ -925,56 +925,6 @@ a given value in a given map."
                              two (u/get-in structure [:r] "_")
                              "]"])))))
 
-(defn dissoc-at-serialized-part [dissoc-part path reentrance-sets]
-  (let [[paths-to value-at] dissoc-part
-        equal-at (remove false?
-                         (map (fn [path-to]
-                                (= (vec path-to) (vec path)))
-                              paths-to))
-        remainders (filter #(not (nil? %))
-                           (map (fn [path-to]
-                                  (remainder path-to path))
-                                paths-to))
-
-        aliases-of (vec (set (cons path
-                                   (aliases-of path reentrance-sets))))
-
-        dissoc-at-paths
-        (cond (empty? paths-to)
-              ;; root object.
-              aliases-of
-
-              true
-              (vec (set
-                    (filter #(not (nil? %))
-                            (mapcat (fn [path-to]
-                                      (map (fn [alias]
-                                             (remainder path-to alias))
-                                           aliases-of))
-                                    paths-to)))))]
-    (println (str "dissoc-at-serialized-part: " dissoc-part))
-    (println (str "path:" path))
-    (println (str "paths-to: " (vec paths-to) "; value-at: " value-at))
-    (println (str "reentrances: " (vec reentrance-sets)))
-    (println (str "aliases-of path:" (vec aliases-of)))
-    (println (str "dissoc-at-paths:" (vec dissoc-at-paths)))
-    (println (str "equal-at:" (vec equal-at)))
-    (println (str ""))
-    (cond
-      (not (empty? equal-at))
-      nil
-
-      true
-      [paths-to
-       (dissoc-in-all-paths value-at dissoc-at-paths)])))
-
-(defn dissoc-at-serialized [serialized path]
-  (let [reentrance-sets (map first serialized)]
-    (remove nil?
-            (map (fn [dissoc-part]
-                   (dissoc-at-serialized-part dissoc-part path reentrance-sets))
-                 serialized))))
-
 (defn dissoc-at [structure path]
   (cond
     (empty? path)
