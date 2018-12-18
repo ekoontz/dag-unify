@@ -845,25 +845,39 @@ a given value in a given map."
              reentrance-set))
      reentrance-sets))))
 
+(defn get-remainders-for [aliases-of-path reentrance-set]
+  (println (str "grf: aliases-of-path:" (vec aliases-of-path)))
+  (println (str "grf: reentrance-set :" (vec reentrance-set)))
+  (cond (empty? reentrance-set)
+        aliases-of-path
+        true
+        (let [results (set (mapcat (fn [each-alias-of-path]
+                                     (remove nil?
+                                             (map (fn [each-reentrance-path]
+                                                    (remainder each-reentrance-path each-alias-of-path))
+                                                  reentrance-set)))
+                                   aliases-of-path))]
+          (println (str "grf: results:" (vec results)))
+          results)))
+
 (defn dissoc-path [reentrance-pairs path]
   (if (not (empty? reentrance-pairs))
-    (let [[reentrance-sets value] (first reentrance-pairs)]
+    (let [[reentrance-set value] (first reentrance-pairs)]
       (cond
         ;; remove the reentrance-set and the value if
         ;; path matches a path in this reentrance-set.
-        (some #(= path %) reentrance-sets)
-        (dissoc-path (rest reentrance-pairs) path)
-
-        (some #(prefix? path %) reentrance-sets)
+        (some #(prefix? path %) reentrance-set)
         (dissoc-path (rest reentrance-pairs) path)
         
         true
         ;; the reentrance-set stays, but _value_ will be
         ;; modified as necessary.
-        (cons [reentrance-sets
+        (cons [reentrance-set
                (dissoc-in-all-paths value
-                                    (cons path
-                                          (aliases-of path (map first reentrance-pairs))))]
+                                    (get-remainders-for
+                                     (set (cons path
+                                                (aliases-of path (map first reentrance-pairs))))
+                                     reentrance-set))]
               (dissoc-path (rest reentrance-pairs) path))))))
 
 (defn morph-ps [structure]
