@@ -852,6 +852,17 @@ a given value in a given map."
                                      reentrance-set))]
               (dissoc-path (rest serialized) path))))))
 
+(defn dissoc-in
+  "dissoc a path in a dag, as well as any other path in the dag to the same value."
+  [structure path]
+  (cond
+    (empty? path)
+    structure
+
+    true
+    (u/deserialize
+     (dissoc-path (u/serialize structure) path))))
+
 (defn morph-ps [structure]
   (cond (or (= :fail structure) 
             (nil? structure)
@@ -896,17 +907,6 @@ a given value in a given map."
                              one (u/get-in structure [:l] "_") " "
                              two (u/get-in structure [:r] "_")
                              "]"])))))
-
-(defn dissoc-in
-  "dissoc a path in a dag, as well as any other path in the dag to the same value."
-  [structure path]
-  (cond
-    (empty? path)
-    structure
-
-    true
-    (u/deserialize
-     (dissoc-path (u/serialize structure) path))))
 
 (def truncate-this
   ;;
