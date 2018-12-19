@@ -793,14 +793,14 @@ a given value in a given map."
      (fn [reentrance-set]
        (->>
         reentrance-set
-        (map (fn [prefix-path]
+        (map (fn [reentrance-path]
                (->>
                 reentrance-set
                 (map (fn [member-of-set]
                        (remainder member-of-set path)))
                 (remove nil?)
                 (map (fn [remainder]
-                       (concat prefix-path remainder))))))
+                       (concat reentrance-path remainder))))))
         (reduce concat)))))
 
    ;; 2. get all paths in reentrance sets where
