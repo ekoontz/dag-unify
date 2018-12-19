@@ -793,15 +793,12 @@ a given value in a given map."
      (fn [reentrance-set]
        (->>
         reentrance-set
-        (map (fn [reentrance-path]
-               (->>
-                reentrance-set
-                (map (fn [member-of-set]
-                       (remainder member-of-set path)))
-                (remove nil?)
-                (map (fn [remainder]
-                       (concat reentrance-path remainder))))))
-        (reduce concat)))))
+        (mapcat (fn [reentrance-path]
+                  (->>
+                   reentrance-set
+                   (remove #(= % reentrance-path))
+                   (map #(remainder % path))
+                   (map #(concat reentrance-path %)))))))))
 
    ;; 2. get all paths in reentrance sets where
    ;; _path_ is a prefix of a member of the reentrance set.
@@ -809,7 +806,7 @@ a given value in a given map."
     reentrance-sets
     (filter
      (fn [reentrance-set]
-       (some #(prefix? (vec path) (vec %))
+       (some #(prefix? path %)
              reentrance-set)))
     (reduce concat))))
 
