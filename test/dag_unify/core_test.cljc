@@ -729,14 +729,11 @@ a given value in a given map."
 
 (def reentrance-sets-2 (map first (serialize truncate-this-2)))
 
-
 (defn prefix?
-  "
-  return true iff seq a is a prefix of seq b:
+  "return true iff seq a is a prefix of seq b:
   (prefix? [:a   ] [:a :b])    => true
   (prefix? [:a :b] [:a   ])    => false
-  (prefix? [:a :b] [:a :c]) => false
-  "
+  (prefix? [:a :b] [:a :c]) => false"
   [a b]
   (cond (empty? a) true
         (empty? b) false
@@ -807,6 +804,8 @@ a given value in a given map."
 
    ;; 2. get all paths in reentrance sets where
    ;; _path_ is a prefix of a member of the reentrance set.
+   ;; TODO: pull 2. out into its own function; it's not
+   ;; returning aliases of path, but rather prefixes.
    (->>
     reentrance-sets
     (filter
