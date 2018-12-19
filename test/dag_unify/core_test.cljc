@@ -757,7 +757,10 @@ a given value in a given map."
         (= (first a) (first b))
         (remainder (rest a) (rest b))))
 
-(defn dissoc-in [the-map path]
+(defn dissoc-in-map
+  "dissoc a nested path from the-map; e.g.:
+  (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
+  [the-map path]
   (cond (empty? path)
         the-map
 
@@ -776,14 +779,16 @@ a given value in a given map."
         
         true
         (merge
-         (let [within
-               (dissoc-in (get the-map (first path))
-                          (rest path))]
-           {(first path)
-            within})
+         {(first path)
+          (dissoc-in-map (get the-map (first path))
+                         (rest path))}
          (dissoc the-map (first path)))))
 
-(defn aliases-of [path reentrance-sets]
+(defn aliases-of
+  "given _path_ and a set of set of paths, for each subset s,
+   if a member m1 of s is a prefix of _path_, concatenate
+   each member other m2 of s to remainder(m2,path)."
+  [path reentrance-sets]
   (concat
    ;; 1. find reentrance sets where some member of
    ;; some reentrance set is a prefix of _path_:
@@ -825,7 +830,7 @@ a given value in a given map."
   (if (empty? paths)
     value
     (dissoc-in-all-paths
-     (dissoc-in value (first paths))
+     (dissoc-in-map value (first paths))
      (rest paths))))
 
 (defn dissoc-path [serialized path]
@@ -847,6 +852,11 @@ a given value in a given map."
                                            (aliases-of path (map first serialized)))
                                      reentrance-set))]
               (dissoc-path (rest serialized) path))))))
+
+(defn dissoc-in
+  "dissoc a path in a dag, as well as any other path in the dag to the same value."
+  [dag path]
+  (u/deserialize (dissoc-path (u/serialize dag) path)))
 
 (defn morph-ps [structure]
   (cond (or (= :fail structure) 
