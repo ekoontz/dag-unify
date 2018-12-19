@@ -853,11 +853,6 @@ a given value in a given map."
                                      reentrance-set))]
               (dissoc-path (rest serialized) path))))))
 
-(defn dissoc-in
-  "dissoc a path in a dag, as well as any other path in the dag to the same value."
-  [dag path]
-  (u/deserialize (dissoc-path (u/serialize dag) path)))
-
 (defn morph-ps [structure]
   (cond (or (= :fail structure) 
             (nil? structure)
@@ -903,7 +898,9 @@ a given value in a given map."
                              two (u/get-in structure [:r] "_")
                              "]"])))))
 
-(defn dissoc-at [structure path]
+(defn dissoc-in
+  "dissoc a path in a dag, as well as any other path in the dag to the same value."
+  [structure path]
   (cond
     (empty? path)
     structure
@@ -933,7 +930,7 @@ a given value in a given map."
                   {:a shared
                    :b shared})
         dissociated
-        (dissoc-at test-fs [:a :c])]
+        (dissoc-in test-fs [:a :c])]
     (is (isomorphic? dissociated
                      (let [shared (atom :top)]
                        {:a shared
@@ -941,7 +938,7 @@ a given value in a given map."
 
 (deftest dissoc-test-1
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a :c :e :g])
+       (dissoc-in truncate-this [:a :c :e :g])
        (u/deserialize
         [[nil
           {:a {:c {:e :top
@@ -950,23 +947,23 @@ a given value in a given map."
          [[[:a :c :e] [:b]]
           :top]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a :c :e])
+       (dissoc-in truncate-this [:a :c :e])
        (u/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a :c])
+       (dissoc-in truncate-this [:a :c])
        (u/deserialize
         [[nil
           {:a {:d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a])
+       (dissoc-in truncate-this [:a])
        (u/deserialize
         [[nil
           :top]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [])
+       (dissoc-in truncate-this [])
        (u/deserialize
         [[nil
           {:a {:c {:e :top
@@ -1001,7 +998,7 @@ a given value in a given map."
 
 (deftest dissoc-test-3
   (is (u/isomorphic? 
-       (dissoc-at truncate-this-3 [:a :c :e :g])
+       (dissoc-in truncate-this-3 [:a :c :e :g])
        (u/deserialize
         [[nil
           {:a {:c {:e :top
@@ -1013,23 +1010,23 @@ a given value in a given map."
           :top]])))
 
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a :c :e])
+       (dissoc-in truncate-this [:a :c :e])
        (u/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a :c])
+       (dissoc-in truncate-this [:a :c])
        (u/deserialize
         [[nil
           {:a {:d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [:a])
+       (dissoc-in truncate-this [:a])
        (u/deserialize
         [[nil
           :top]])))
   (is (u/isomorphic?
-       (dissoc-at truncate-this [])
+       (dissoc-in truncate-this [])
        (u/deserialize
         [[nil
           {:a {:c {:e :top
