@@ -1046,57 +1046,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   (let [serialized (serialize fs)]
     (deserialize-with-remove serialized pred)))
 
-(defn dissoc-paths [fs & [paths]]
-  "dissoc a path from a map; e.g.: 
-
-    (dissoc-paths
-     {:a {:b 42 
-          :c 43}} 
-     [[:a :b]]) 
-
-     =>
-
-    {:a {:c 43}}."
-
-  (cond (empty? paths)
-        fs
-        
-        (seq? fs)
-        (map #(dissoc-paths % paths) fs)
-        
-        (ref? fs)
-        (dissoc-paths @fs paths)
-        
-        (keyword? fs)
-        fs
-        
-        (empty? fs)
-        :top
-        
-        true
-        (let [path (first paths)]
-          (dissoc-paths
-           (let [fs (dissoc fs ::serialized) ;; remove the existing serialized version of the serialized structure, since
-                 ;; it will not be valid after we've altered the structure itself.
-                 feature (first path)]
-             (cond
-               (and
-                (empty? (rest path))
-                (empty? (dissoc fs feature)))
-               :top
-               
-               (empty? (rest path))
-               (dissoc fs feature)
-               
-               (not (= :notfound (get-in fs (list feature) :notfound)))
-               (conj
-                {feature (dissoc-paths (get-in fs (list feature)) (list (rest path)))}
-                (dissoc fs feature))
-               
-               true
-               fs))
-           (rest paths)))))
-
 (defn isomorphic? [a b]
   (cond (and (map? a)
              (map? b)
@@ -1199,7 +1148,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (core-pprint/pprint input)))
 
 
-;; 'new generation dissoc' code starts here.
+;; 'dissoc-in' function defined here along with
+;; its supporting functions. 
 ;; the idea is to remove a value at a given
 ;; path from a dag, so that, as well as removing the given path,
 ;; all other paths in the dag that refer to that value are

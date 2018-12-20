@@ -15,7 +15,6 @@
                      unify! width-of-column]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
-;; TODO: add tests for (dag_unify.core/dissoc-paths)
 ;; TODO: add more tests for (dag_unify.core/isomorphic?)
 
 (defn ser-db [input-map]
@@ -724,8 +723,6 @@ a given value in a given map."
       [:2    :head :cat]
       [:2    :2    :cat]]
      :v]]))
-
-(def truncated-2 (u/dissoc-paths truncate-this-2 [[:comp :head]]))
 
 (def reentrance-sets-2 (map first (serialize truncate-this-2)))
 
