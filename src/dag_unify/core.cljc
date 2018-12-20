@@ -1205,6 +1205,43 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 ;; all other paths in the dag that refer to that value are
 ;; also removed.
 
+(declare dissoc-path)
+(defn dissoc-in
+  "dissoc a path in a dag, as well as any other path in the dag to the same value."
+  [structure path]
+  (cond
+    (empty? path)
+    structure
+
+    true
+    (deserialize
+     (dissoc-path (serialize structure) path))))
+
+(declare aliases-of)
+(declare dissoc-in-all-paths)
+(declare get-remainders-for)
+(declare prefix?)
+
+(defn dissoc-path [serialized path]
+  (if (not (empty? serialized))
+    (let [[reentrance-set value] (first serialized)]
+      (cond
+        ;; remove the reentrance-set and the value if
+        ;; path matches a path in this reentrance-set.
+        (some #(prefix? path %) reentrance-set)
+        (dissoc-path (rest serialized) path)
+        
+        true
+        ;; the reentrance-set stays, but _value_ will be
+        ;; modified as necessary.
+        (cons [reentrance-set
+               (dissoc-in-all-paths value
+                                    (get-remainders-for
+                                     (cons path
+                                           (aliases-of path (map first serialized)))
+                                     reentrance-set))]
+              (dissoc-path (rest serialized) path))))))
+
 (defn dissoc-in-map
   "dissoc a nested path from the-map; e.g.:
   (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
@@ -1232,7 +1269,12 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                          (rest path))}
          (dissoc the-map (first path)))))
 
-
+(defn dissoc-in-all-paths [value paths]
+  (if (empty? paths)
+    value
+    (dissoc-in-all-paths
+     (dissoc-in-map value (first paths))
+     (rest paths))))
 
 (defn prefix?
   "return true iff seq a is a prefix of seq b:
@@ -1303,40 +1345,3 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                reentrance-set)))
                 aliases-of-path)))
 
-(defn dissoc-in-all-paths [value paths]
-  (if (empty? paths)
-    value
-    (dissoc-in-all-paths
-     (dissoc-in-map value (first paths))
-     (rest paths))))
-
-(defn dissoc-path [serialized path]
-  (if (not (empty? serialized))
-    (let [[reentrance-set value] (first serialized)]
-      (cond
-        ;; remove the reentrance-set and the value if
-        ;; path matches a path in this reentrance-set.
-        (some #(prefix? path %) reentrance-set)
-        (dissoc-path (rest serialized) path)
-        
-        true
-        ;; the reentrance-set stays, but _value_ will be
-        ;; modified as necessary.
-        (cons [reentrance-set
-               (dissoc-in-all-paths value
-                                    (get-remainders-for
-                                     (cons path
-                                           (aliases-of path (map first serialized)))
-                                     reentrance-set))]
-              (dissoc-path (rest serialized) path))))))
-
-(defn dissoc-in
-  "dissoc a path in a dag, as well as any other path in the dag to the same value."
-  [structure path]
-  (cond
-    (empty? path)
-    structure
-
-    true
-    (deserialize
-     (dissoc-path (serialize structure) path))))
