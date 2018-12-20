@@ -754,33 +754,6 @@ a given value in a given map."
         (= (first a) (first b))
         (remainder (rest a) (rest b))))
 
-(defn dissoc-in-map
-  "dissoc a nested path from the-map; e.g.:
-  (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
-  [the-map path]
-  (cond (empty? path)
-        the-map
-
-        (= :top the-map)
-        the-map
-        
-        (= ::none (get the-map (first path) ::none))
-        the-map
-
-        (and (empty? (rest path))
-             (empty? (dissoc the-map (first path))))
-        :top
-
-        (empty? (rest path))
-        (dissoc the-map (first path))
-        
-        true
-        (merge
-         {(first path)
-          (dissoc-in-map (get the-map (first path))
-                         (rest path))}
-         (dissoc the-map (first path)))))
-
 (defn aliases-of
   "given _path_ and a set of set of paths, for each subset s,
    if a member m1 of s is a prefix of _path_, concatenate
@@ -829,7 +802,7 @@ a given value in a given map."
   (if (empty? paths)
     value
     (dissoc-in-all-paths
-     (dissoc-in-map value (first paths))
+     (u/dissoc-in-map value (first paths))
      (rest paths))))
 
 (defn dissoc-path [serialized path]
