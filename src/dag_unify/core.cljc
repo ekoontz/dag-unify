@@ -927,30 +927,30 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
          (dissoc the-map (first path)))))
 
 (defn deserialize-with-remove [serialized pred]
-  (cond true (let [base (recursive-dissoc (second (first serialized)) pred)]
-               (apply merge
-                      (let [all
-                            (cons base
-                                  (flatten
-                                   (map (fn [paths-val]
-                                          (let [paths (first paths-val)
-                                                val (atom
-                                                     (cond (map? atom)
-                                                           (recursive-dissoc
-                                                            (second paths-val)
-                                                            pred)
-                                                           true
-                                                           (second paths-val)))]
-                                            (map (fn [path]
-                                                   (if (empty?
-                                                        (remove false?
-                                                                (map (fn [key-in-path]
-                                                                       (pred key-in-path))
-                                                                     path)))
-                                                     (create-path-in path val)))
-                                                 paths)))
-                                        (rest serialized))))]
-                        all)))))
+  (let [base (recursive-dissoc (second (first serialized)) pred)]
+    (apply merge
+           (let [all
+                 (cons base
+                       (flatten
+                        (map (fn [paths-val]
+                               (let [paths (first paths-val)
+                                     val (atom
+                                          (cond (map? atom)
+                                                (recursive-dissoc
+                                                 (second paths-val)
+                                                 pred)
+                                                true
+                                                (second paths-val)))]
+                                 (map (fn [path]
+                                        (if (empty?
+                                             (remove false?
+                                                     (map (fn [key-in-path]
+                                                            (pred key-in-path))
+                                                          path)))
+                                          (create-path-in path val)))
+                                      paths)))
+                             (rest serialized))))]
+             all))))
 
 (defn serialize [input-map]
   (let [memoized (get input-map ::serialized :none)]
