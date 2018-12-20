@@ -899,33 +899,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                (rest serialized))))]
              all))))
 
-(defn dissoc-in-map
-  "dissoc a nested path from the-map; e.g.:
-  (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
-  [the-map path]
-  (cond (empty? path)
-        the-map
-
-        (= :top the-map)
-        the-map
-        
-        (= ::none (get the-map (first path) ::none))
-        the-map
-
-        (and (empty? (rest path))
-             (empty? (dissoc the-map (first path))))
-        :top
-
-        (empty? (rest path))
-        (dissoc the-map (first path))
-        
-        true
-        (merge
-         {(first path)
-          (dissoc-in-map (get the-map (first path))
-                         (rest path))}
-         (dissoc the-map (first path)))))
-
 (defn recursive-dissoc
   "like dissoc, but works recursively. Only works on reference-free maps (contains no atoms)."
   [a-map pred]
@@ -1224,4 +1197,38 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (pprint @input)
     true
     (core-pprint/pprint input)))
+
+
+;; 'new generation dissoc' code starts here.
+;; the idea is to remove a value at a given
+;; path from a dag, so that, as well as removing the given path,
+;; all other paths in the dag that refer to that value are
+;; also removed.
+
+(defn dissoc-in-map
+  "dissoc a nested path from the-map; e.g.:
+  (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
+  [the-map path]
+  (cond (empty? path)
+        the-map
+
+        (= :top the-map)
+        the-map
+        
+        (= ::none (get the-map (first path) ::none))
+        the-map
+
+        (and (empty? (rest path))
+             (empty? (dissoc the-map (first path))))
+        :top
+
+        (empty? (rest path))
+        (dissoc the-map (first path))
+        
+        true
+        (merge
+         {(first path)
+          (dissoc-in-map (get the-map (first path))
+                         (rest path))}
+         (dissoc the-map (first path)))))
 
