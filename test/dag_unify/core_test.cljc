@@ -449,16 +449,16 @@ a given value in a given map."
        (unify! '() {:foo 42}))))
 
 (deftest isomorphic-true1
-  (is (= true (isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43 :c 44}))))
+  (is (= true (u/isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43 :c 44}))))
 
 (deftest isomorphic-false1
-  (is (= false (isomorphic? {:a 42 :b 43 :c 45} {:a 42 :b 43 :c 44}))))
+  (is (= false (u/isomorphic? {:a 42 :b 43 :c 45} {:a 42 :b 43 :c 44}))))
 
 (deftest isomorphic-false2
-  (is (= false (isomorphic? {:a 42 :b 43} {:a 42 :b 43 :c 44}))))
+  (is (= false (u/isomorphic? {:a 42 :b 43} {:a 42 :b 43 :c 44}))))
 
 (deftest isomorphic-false3
-  (is (= false (isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43}))))
+  (is (= false (u/isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43}))))
 
 (deftest unify-with-string3
   (let [arg1 {:italiano "gatto"}
@@ -729,113 +729,6 @@ a given value in a given map."
 
 (def reentrance-sets-2 (map first (serialize truncate-this-2)))
 
-(defn prefix?
-  "return true iff seq a is a prefix of seq b:
-  (prefix? [:a   ] [:a :b])    => true
-  (prefix? [:a :b] [:a   ])    => false
-  (prefix? [:a :b] [:a :c]) => false"
-  [a b]
-  (cond (empty? a) true
-        (empty? b) false
-        (= (first a) (first b))
-        (prefix? (rest a) (rest b))
-        true false))
-
-(defn remainder
-  "if seq a is a prefix of seq b,
-   then return what is left of b besides
-   the common prefix of a.
-   if seq a is not a prefix, return nil."
-  [a b]
-  (cond (empty? a)
-        b
-        (empty? b)
-        nil
-        (= (first a) (first b))
-        (remainder (rest a) (rest b))))
-
-(defn aliases-of
-  "given _path_ and a set of set of paths, for each subset s,
-   if a member m1 of s is a prefix of _path_, concatenate
-   each member other m2 of s to remainder(m2,path)."
-  [path reentrance-sets]
-  (concat
-   ;; 1. find reentrance sets where some member of
-   ;; some reentrance set is a prefix of _path_:
-   (->>
-    reentrance-sets
-    (mapcat
-     (fn [reentrance-set]
-       (->>
-        reentrance-set
-        (mapcat (fn [reentrance-path]
-                  (->>
-                   reentrance-set
-                   (remove #(= % reentrance-path))
-                   (map #(remainder % path))
-                   (map #(concat reentrance-path %)))))))))
-
-   ;; 2. get all paths in reentrance sets where
-   ;; _path_ is a prefix of a member of the reentrance set.
-   ;; TODO: pull 2. out into its own function; it's not
-   ;; returning aliases of path, but rather prefixes.
-   (->>
-    reentrance-sets
-    (filter
-     (fn [reentrance-set]
-       (some #(prefix? path %)
-             reentrance-set)))
-    (reduce concat))))
-
-(defn get-remainders-for [aliases-of-path reentrance-set]
-  (cond (empty? reentrance-set)
-        aliases-of-path
-        true
-        (mapcat (fn [each-alias-of-path]
-                  (remove nil?
-                          (map (fn [each-reentrance-path]
-                                 (remainder each-reentrance-path each-alias-of-path))
-                               reentrance-set)))
-                aliases-of-path)))
-
-(defn dissoc-in-all-paths [value paths]
-  (if (empty? paths)
-    value
-    (dissoc-in-all-paths
-     (u/dissoc-in-map value (first paths))
-     (rest paths))))
-
-(defn dissoc-path [serialized path]
-  (if (not (empty? serialized))
-    (let [[reentrance-set value] (first serialized)]
-      (cond
-        ;; remove the reentrance-set and the value if
-        ;; path matches a path in this reentrance-set.
-        (some #(prefix? path %) reentrance-set)
-        (dissoc-path (rest serialized) path)
-        
-        true
-        ;; the reentrance-set stays, but _value_ will be
-        ;; modified as necessary.
-        (cons [reentrance-set
-               (dissoc-in-all-paths value
-                                    (get-remainders-for
-                                     (cons path
-                                           (aliases-of path (map first serialized)))
-                                     reentrance-set))]
-              (dissoc-path (rest serialized) path))))))
-
-(defn dissoc-in
-  "dissoc a path in a dag, as well as any other path in the dag to the same value."
-  [structure path]
-  (cond
-    (empty? path)
-    structure
-
-    true
-    (u/deserialize
-     (dissoc-path (u/serialize structure) path))))
-
 (defn morph-ps [structure]
   (cond (or (= :fail structure) 
             (nil? structure)
@@ -902,15 +795,15 @@ a given value in a given map."
                   {:a shared
                    :b shared})
         dissociated
-        (dissoc-in test-fs [:a :c])]
-    (is (isomorphic? dissociated
+        (u/dissoc-in test-fs [:a :c])]
+    (is (u/isomorphic? dissociated
                      (let [shared (atom :top)]
                        {:a shared
                         :b shared})))))
 
 (deftest dissoc-test-1
   (is (u/isomorphic?
-       (dissoc-in truncate-this [:a :c :e :g])
+       (u/dissoc-in truncate-this [:a :c :e :g])
        (u/deserialize
         [[nil
           {:a {:c {:e :top
@@ -919,23 +812,23 @@ a given value in a given map."
          [[[:a :c :e] [:b]]
           :top]])))
   (is (u/isomorphic?
-       (dissoc-in truncate-this [:a :c :e])
+       (u/dissoc-in truncate-this [:a :c :e])
        (u/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-in truncate-this [:a :c])
+       (u/dissoc-in truncate-this [:a :c])
        (u/deserialize
         [[nil
           {:a {:d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-in truncate-this [:a])
+       (u/dissoc-in truncate-this [:a])
        (u/deserialize
         [[nil
           :top]])))
   (is (u/isomorphic?
-       (dissoc-in truncate-this [])
+       (u/dissoc-in truncate-this [])
        (u/deserialize
         [[nil
           {:a {:c {:e :top
@@ -970,7 +863,7 @@ a given value in a given map."
 
 (deftest dissoc-test-3
   (is (u/isomorphic? 
-       (dissoc-in truncate-this-3 [:a :c :e :g])
+       (u/dissoc-in truncate-this-3 [:a :c :e :g])
        (u/deserialize
         [[nil
           {:a {:c {:e :top
@@ -982,23 +875,23 @@ a given value in a given map."
           :top]])))
 
   (is (u/isomorphic?
-       (dissoc-in truncate-this [:a :c :e])
+       (u/dissoc-in truncate-this [:a :c :e])
        (u/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-in truncate-this [:a :c])
+       (u/dissoc-in truncate-this [:a :c])
        (u/deserialize
         [[nil
           {:a {:d 44}}]])))
   (is (u/isomorphic?
-       (dissoc-in truncate-this [:a])
+       (u/dissoc-in truncate-this [:a])
        (u/deserialize
         [[nil
           :top]])))
   (is (u/isomorphic?
-       (dissoc-in truncate-this [])
+       (u/dissoc-in truncate-this [])
        (u/deserialize
         [[nil
           {:a {:c {:e :top

@@ -1232,3 +1232,111 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                          (rest path))}
          (dissoc the-map (first path)))))
 
+
+
+(defn prefix?
+  "return true iff seq a is a prefix of seq b:
+  (prefix? [:a   ] [:a :b])    => true
+  (prefix? [:a :b] [:a   ])    => false
+  (prefix? [:a :b] [:a :c]) => false"
+  [a b]
+  (cond (empty? a) true
+        (empty? b) false
+        (= (first a) (first b))
+        (prefix? (rest a) (rest b))
+        true false))
+
+(defn remainder
+  "if seq a is a prefix of seq b,
+   then return what is left of b besides
+   the common prefix of a.
+   if seq a is not a prefix, return nil."
+  [a b]
+  (cond (empty? a)
+        b
+        (empty? b)
+        nil
+        (= (first a) (first b))
+        (remainder (rest a) (rest b))))
+
+(defn aliases-of
+  "given _path_ and a set of set of paths, for each subset s,
+   if a member m1 of s is a prefix of _path_, concatenate
+   each member other m2 of s to remainder(m2,path)."
+  [path reentrance-sets]
+  (concat
+   ;; 1. find reentrance sets where some member of
+   ;; some reentrance set is a prefix of _path_:
+   (->>
+    reentrance-sets
+    (mapcat
+     (fn [reentrance-set]
+       (->>
+        reentrance-set
+        (mapcat (fn [reentrance-path]
+                  (->>
+                   reentrance-set
+                   (remove #(= % reentrance-path))
+                   (map #(remainder % path))
+                   (map #(concat reentrance-path %)))))))))
+
+   ;; 2. get all paths in reentrance sets where
+   ;; _path_ is a prefix of a member of the reentrance set.
+   ;; TODO: pull 2. out into its own function; it's not
+   ;; returning aliases of path, but rather prefixes.
+   (->>
+    reentrance-sets
+    (filter
+     (fn [reentrance-set]
+       (some #(prefix? path %)
+             reentrance-set)))
+    (reduce concat))))
+
+(defn get-remainders-for [aliases-of-path reentrance-set]
+  (cond (empty? reentrance-set)
+        aliases-of-path
+        true
+        (mapcat (fn [each-alias-of-path]
+                  (remove nil?
+                          (map (fn [each-reentrance-path]
+                                 (remainder each-reentrance-path each-alias-of-path))
+                               reentrance-set)))
+                aliases-of-path)))
+
+(defn dissoc-in-all-paths [value paths]
+  (if (empty? paths)
+    value
+    (dissoc-in-all-paths
+     (dissoc-in-map value (first paths))
+     (rest paths))))
+
+(defn dissoc-path [serialized path]
+  (if (not (empty? serialized))
+    (let [[reentrance-set value] (first serialized)]
+      (cond
+        ;; remove the reentrance-set and the value if
+        ;; path matches a path in this reentrance-set.
+        (some #(prefix? path %) reentrance-set)
+        (dissoc-path (rest serialized) path)
+        
+        true
+        ;; the reentrance-set stays, but _value_ will be
+        ;; modified as necessary.
+        (cons [reentrance-set
+               (dissoc-in-all-paths value
+                                    (get-remainders-for
+                                     (cons path
+                                           (aliases-of path (map first serialized)))
+                                     reentrance-set))]
+              (dissoc-path (rest serialized) path))))))
+
+(defn dissoc-in
+  "dissoc a path in a dag, as well as any other path in the dag to the same value."
+  [structure path]
+  (cond
+    (empty? path)
+    structure
+
+    true
+    (deserialize
+     (dissoc-path (serialize structure) path))))
