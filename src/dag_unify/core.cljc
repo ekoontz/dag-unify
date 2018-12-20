@@ -899,6 +899,32 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                           (rest serialized))))]
              all))))
 
+(defn dissoc-in-map
+  "dissoc a nested path from the-map; e.g.:
+  (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
+  [the-map path]
+  (cond (empty? path)
+        the-map
+
+        (= :top the-map)
+        the-map
+        
+        (= ::none (get the-map (first path) ::none))
+        the-map
+
+        (and (empty? (rest path))
+             (empty? (dissoc the-map (first path))))
+        :top
+
+        (empty? (rest path))
+        (dissoc the-map (first path))
+        
+        true
+        (merge
+         {(first path)
+          (dissoc-in-map (get the-map (first path))
+                         (rest path))}
+         (dissoc the-map (first path)))))
 
 (defn deserialize-with-remove [serialized pred]
   (cond true (let [base (recursive-dissoc (second (first serialized)) pred)]
