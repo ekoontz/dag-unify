@@ -896,7 +896,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                                    (mapfn (fn [path]
                                             (create-path-in path val))
                                           paths)))
-                                          (rest serialized))))]
+                               (rest serialized))))]
              all))))
 
 (defn dissoc-in-map
@@ -1033,24 +1033,24 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 (defn strip-refs [map-with-refs]
   "return a map like map-with-refs, but without refs - (e.g. {:foo (atom 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
   (cond
-   (or (vector? map-with-refs)
-       (seq? map-with-refs))
-   (map strip-refs map-with-refs)
-   (= map-with-refs {})
-   {}
-   (map? map-with-refs)
-   (let [map-keys (sort (keys map-with-refs))]
-     (let [first-key (first (keys map-with-refs))
-           val (get map-with-refs first-key)]
-       (dissoc
-        (conj
-         {first-key (strip-refs val)}
-         (strip-refs (dissoc map-with-refs first-key)))
-        ::serialized)))
-   (ref? map-with-refs)
-   (strip-refs (deref map-with-refs))
-   :else
-   map-with-refs))
+    (or (vector? map-with-refs)
+        (seq? map-with-refs))
+    (map strip-refs map-with-refs)
+    (= map-with-refs {})
+    {}
+    (map? map-with-refs)
+    (let [map-keys (sort (keys map-with-refs))]
+      (let [first-key (first (keys map-with-refs))
+            val (get map-with-refs first-key)]
+        (dissoc
+         (conj
+          {first-key (strip-refs val)}
+          (strip-refs (dissoc map-with-refs first-key)))
+         ::serialized)))
+    (ref? map-with-refs)
+    (strip-refs (deref map-with-refs))
+    :else
+    map-with-refs))
 
 (defn remove-matching-keys [fs pred]
   (let [serialized (serialize fs)]
@@ -1162,35 +1162,35 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   [fs]
   (cond
 
-   (= fs {})
-   {}
+    (= fs {})
+    {}
 
-   (map? fs)
-   (let [map-keys (sort (keys fs))]
-     (let [first-key (first (keys fs))
-           val (get fs first-key)]
-       (cond
-        (and (not (= first-key :1))
-             (not (= first-key :2))
-             (not (= first-key :3))
-             (= val :top)) ;; remove-top-values: core action of this function.
-        (remove-top-values (dissoc fs first-key))
+    (map? fs)
+    (let [map-keys (sort (keys fs))]
+      (let [first-key (first (keys fs))
+            val (get fs first-key)]
+        (cond
+          (and (not (= first-key :1))
+               (not (= first-key :2))
+               (not (= first-key :3))
+               (= val :top)) ;; remove-top-values: core action of this function.
+          (remove-top-values (dissoc fs first-key))
 
-        (= first-key :comp-filter-fn) ;; TODO: deprecate and remove comp-filter-fn.
-        (remove-top-values (dissoc fs first-key))
+          (= first-key :comp-filter-fn) ;; TODO: deprecate and remove comp-filter-fn.
+          (remove-top-values (dissoc fs first-key))
 
-         ;; else, KV is not :top, so keep it.
-        true
-        (conj
-         {first-key (remove-top-values val)}
-         (remove-top-values (dissoc fs first-key))))))
+          ;; else, KV is not :top, so keep it.
+          true
+          (conj
+           {first-key (remove-top-values val)}
+           (remove-top-values (dissoc fs first-key))))))
 
-   (ref? fs)
-   ;; strip refs for readability.
-   (remove-top-values (deref fs))
+    (ref? fs)
+    ;; strip refs for readability.
+    (remove-top-values (deref fs))
 
-   :else
-   fs))
+    :else
+    fs))
 
 (defn pprint [input]
   (cond
