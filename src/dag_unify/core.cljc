@@ -1187,8 +1187,8 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         (cons [reentrance-set
                (dissoc-in-all-paths value
                                     (get-remainders-for
-                                     (cons path
-                                           (aliases-of path (map first serialized)))
+                                     (set (cons path
+                                                (aliases-of path (map first serialized))))
                                      reentrance-set))]
               (dissoc-path (rest serialized) path))))))
 
@@ -1285,13 +1285,14 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (reduce concat))))
 
 (defn get-remainders-for [aliases-of-path reentrance-set]
-  (cond (empty? reentrance-set)
-        aliases-of-path
-        true
-        (mapcat (fn [each-alias-of-path]
-                  (remove nil?
-                          (map (fn [each-reentrance-path]
-                                 (remainder each-reentrance-path each-alias-of-path))
-                               reentrance-set)))
-                aliases-of-path)))
+  (set
+   (cond (empty? reentrance-set)
+         aliases-of-path
+         true
+         (mapcat (fn [each-alias-of-path]
+                   (remove nil?
+                           (map (fn [each-reentrance-path]
+                                  (remainder each-reentrance-path each-alias-of-path))
+                                reentrance-set)))
+                 aliases-of-path))))
 
