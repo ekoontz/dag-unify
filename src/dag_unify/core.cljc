@@ -381,12 +381,12 @@
   input)
 
 (defn pathify
-"Transform a map into a map of paths/value pairs,
- where paths are lists of keywords, and values are atomic values.
- e.g.:
- {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
-The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
- [fs & [prefix]]
+  "Transform a map into a map of paths/value pairs,
+  where paths are lists of keywords, and values are atomic values.
+  e.g.:
+  {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
+  The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
+  [fs & [prefix]]
   (mapcat (fn [kv]
             (let [key (first kv)
                   val (second kv)]
@@ -401,16 +401,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                       (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
                           val)}])))))
           fs))
-
-(defn paths [fs]
-  "return all paths within input map."
-  (if (map? fs)
-    (concat (map list (keys fs))
-            (mapcat (fn [k]
-                      (map (fn [path]
-                             (cons k path))
-                           (paths (get-in fs [k]))))
-                    (keys fs)))))
 
 (defn key-rank [k keys]
   "used for drawing: determine y axis of k within keys."
@@ -1096,41 +1086,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
   (fail-path-between fs1 fs2))
 
-(defn remove-top-values
-  "Remove any <key,value> pair in the input _fs_ if value=:top. Use case is logging where we don't care about uninformative key->value pairs where value is simply :top. Also strips refs for readability."
-  [fs]
-  (cond
-
-    (= fs {})
-    {}
-
-    (map? fs)
-    (let [map-keys (sort (keys fs))]
-      (let [first-key (first (keys fs))
-            val (get fs first-key)]
-        (cond
-          (and (not (= first-key :1))
-               (not (= first-key :2))
-               (not (= first-key :3))
-               (= val :top)) ;; remove-top-values: core action of this function.
-          (remove-top-values (dissoc fs first-key))
-
-          (= first-key :comp-filter-fn) ;; TODO: deprecate and remove comp-filter-fn.
-          (remove-top-values (dissoc fs first-key))
-
-          ;; else, KV is not :top, so keep it.
-          true
-          (conj
-           {first-key (remove-top-values val)}
-           (remove-top-values (dissoc fs first-key))))))
-
-    (ref? fs)
-    ;; strip refs for readability.
-    (remove-top-values (deref fs))
-
-    :else
-    fs))
-
 (defn pprint [input]
   (cond
     (or (true? input)
@@ -1146,153 +1101,4 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
     (pprint @input)
     true
     (core-pprint/pprint input)))
-
-
-;; 'dissoc-in' function defined here along with
-;; its supporting functions. 
-;; the idea is to remove a value at a given
-;; path from a dag, so that, as well as removing the given path,
-;; all other paths in the dag that refer to that value are
-;; also removed.
-
-(declare dissoc-path)
-(defn dissoc-in
-  "dissoc a path in a dag, as well as any other path in the dag to the same value."
-  [structure path]
-  (cond
-    (empty? path)
-    structure
-
-    true
-    (deserialize
-     (dissoc-path (serialize structure) path))))
-
-(declare aliases-of)
-(declare dissoc-in-all-paths)
-(declare get-remainders-for)
-(declare prefix?)
-
-(defn dissoc-path [serialized path]
-  (if (not (empty? serialized))
-    (let [[reentrance-set value] (first serialized)]
-      (cond
-        ;; remove the reentrance-set and the value if
-        ;; path matches a path in this reentrance-set.
-        (some #(prefix? path %) reentrance-set)
-        (dissoc-path (rest serialized) path)
-        
-        true
-        ;; the reentrance-set stays, but _value_ will be
-        ;; modified as necessary.
-        (cons [reentrance-set
-               (dissoc-in-all-paths value
-                                    (get-remainders-for
-                                     (set (cons path
-                                                (aliases-of path (map first serialized))))
-                                     reentrance-set))]
-              (dissoc-path (rest serialized) path))))))
-
-(defn dissoc-in-map
-  "dissoc a nested path from the-map; e.g.:
-  (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
-  [the-map path]
-  (cond (empty? path)
-        the-map
-
-        (= :top the-map)
-        the-map
-        
-        (= ::none (get the-map (first path) ::none))
-        the-map
-
-        (and (empty? (rest path))
-             (empty? (dissoc the-map (first path))))
-        :top
-
-        (empty? (rest path))
-        (dissoc the-map (first path))
-        
-        true
-        (merge
-         {(first path)
-          (dissoc-in-map (get the-map (first path))
-                         (rest path))}
-         (dissoc the-map (first path)))))
-
-(defn dissoc-in-all-paths [value paths]
-  (if (empty? paths)
-    value
-    (dissoc-in-all-paths
-     (dissoc-in-map value (first paths))
-     (rest paths))))
-
-(defn prefix?
-  "return true iff seq a is a prefix of seq b:
-  (prefix? [:a   ] [:a :b])    => true
-  (prefix? [:a :b] [:a   ])    => false
-  (prefix? [:a :b] [:a :c]) => false"
-  [a b]
-  (cond (empty? a) true
-        (empty? b) false
-        (= (first a) (first b))
-        (prefix? (rest a) (rest b))
-        true false))
-
-(defn remainder
-  "if seq a is a prefix of seq b,
-   then return what is left of b besides
-   the common prefix of a.
-   if seq a is not a prefix, return nil."
-  [a b]
-  (cond (empty? a)
-        b
-        (empty? b)
-        nil
-        (= (first a) (first b))
-        (remainder (rest a) (rest b))))
-
-(defn aliases-of
-  "given _path_ and a set of set of paths, for each subset s,
-   if a member m1 of s is a prefix of _path_, concatenate
-   each member other m2 of s to remainder(m2,path)."
-  [path reentrance-sets]
-  (concat
-   ;; 1. find reentrance sets where some member of
-   ;; some reentrance set is a prefix of _path_:
-   (->>
-    reentrance-sets
-    (mapcat
-     (fn [reentrance-set]
-       (->>
-        reentrance-set
-        (mapcat (fn [reentrance-path]
-                  (->>
-                   reentrance-set
-                   (remove #(= % reentrance-path))
-                   (map #(remainder % path))
-                   (map #(concat reentrance-path %)))))))))
-
-   ;; 2. get all paths in reentrance sets where
-   ;; _path_ is a prefix of a member of the reentrance set.
-   ;; TODO: pull 2. out into its own function; it's not
-   ;; returning aliases of path, but rather prefixes.
-   (->>
-    reentrance-sets
-    (filter
-     (fn [reentrance-set]
-       (some #(prefix? path %)
-             reentrance-set)))
-    (reduce concat))))
-
-(defn get-remainders-for [aliases-of-path reentrance-set]
-  (set
-   (cond (empty? reentrance-set)
-         aliases-of-path
-         true
-         (mapcat (fn [each-alias-of-path]
-                   (remove nil?
-                           (map (fn [each-reentrance-path]
-                                  (remainder each-reentrance-path each-alias-of-path))
-                                reentrance-set)))
-                 aliases-of-path))))
 
