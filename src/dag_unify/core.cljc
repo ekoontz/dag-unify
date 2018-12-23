@@ -402,16 +402,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
                           val)}])))))
           fs))
 
-(defn paths [fs]
-  "return all paths within input map."
-  (if (map? fs)
-    (concat (map list (keys fs))
-            (mapcat (fn [k]
-                      (map (fn [path]
-                             (cons k path))
-                           (paths (get-in fs [k]))))
-                    (keys fs)))))
-
 (defn key-rank [k keys]
   "used for drawing: determine y axis of k within keys."
   (if (= k (first keys))
