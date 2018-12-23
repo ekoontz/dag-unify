@@ -1114,7 +1114,7 @@
 
 ;; can be overridden to only dissoc
 ;; certain paths and not others.
-(def ^:dynamic remove-path-if (fn [path] true))
+(def ^:dynamic remove-path? (fn [path] true))
 
 (defn dissoc-in
   "dissoc a path in a dag, as well as any other path in the dag to the same value."
@@ -1146,7 +1146,8 @@
         ;; modified as necessary.
         (cons [reentrance-set
                (reduce (fn [value path]
-                         (dissoc-in-map value path))
+                         (if (remove-path? path)
+                           (dissoc-in-map value path)))
                        value
                        (get-remainders-for
                         (set (cons path
