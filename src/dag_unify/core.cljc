@@ -1163,7 +1163,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
      (dissoc-path (serialize structure) path))))
 
 (declare aliases-of)
-(declare dissoc-in-all-paths)
+(declare dissoc-in-map)
 (declare get-remainders-for)
 (declare prefix?)
 
@@ -1180,11 +1180,13 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
         ;; the reentrance-set stays, but _value_ will be
         ;; modified as necessary.
         (cons [reentrance-set
-               (dissoc-in-all-paths value
-                                    (get-remainders-for
-                                     (set (cons path
-                                                (aliases-of path (map first serialized))))
-                                     reentrance-set))]
+               (reduce (fn [value path]
+                         (dissoc-in-map value path))
+                       value
+                       (get-remainders-for
+                        (set (cons path
+                                   (aliases-of path (map first serialized))))
+                        reentrance-set))]
               (dissoc-path (rest serialized) path))))))
 
 (defn dissoc-in-map
@@ -1213,13 +1215,6 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
           (dissoc-in-map (get the-map (first path))
                          (rest path))}
          (dissoc the-map (first path)))))
-
-(defn dissoc-in-all-paths [value paths]
-  (if (empty? paths)
-    value
-    (dissoc-in-all-paths
-     (dissoc-in-map value (first paths))
-     (rest paths))))
 
 (defn prefix?
   "return true iff seq a is a prefix of seq b:
