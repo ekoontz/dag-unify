@@ -1159,7 +1159,7 @@ The idea is to map the key :foo to the (recursive) result of pathify on :foo's v
 
 ;; can be overridden to only dissoc
 ;; certain paths and not others.
-(def ^:dynamic remove-paths ::all)
+(def ^:dynamic remove-path-if (fn [path] true))
 
 (defn dissoc-in
   "dissoc a path in a dag, as well as any other path in the dag to the same value."
