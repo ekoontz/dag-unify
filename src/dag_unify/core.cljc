@@ -1114,7 +1114,11 @@
 
 ;; can be overridden to only dissoc
 ;; certain paths and not others.
-(def ^:dynamic remove-path? (fn [path] true))
+(def ^:dynamic remove-path? (fn [path]
+                              (not (= path [:cat]))))
+
+;; TODO: ^ :cat is an example here; should be changed to:
+;; (def ^:dynamic remove-path? (fn [path] true))
 
 (defn dissoc-in
   "dissoc a path in a dag, as well as any other path in the dag to the same value."
@@ -1134,20 +1138,33 @@
 
 (defn dissoc-path [serialized path]
   (if (not (empty? serialized))
-    (let [[reentrance-set value] (first serialized)]
+    (let [[reentrance-set value] (first serialized)
+          filtered-reentrance-set (remove #(remove-path? %) reentrance-set)]
       (cond
         ;; remove the reentrance-set and the value if
         ;; path matches a path in this reentrance-set.
-        (some #(prefix? path %) reentrance-set)
+        (and (some #(prefix? path %) reentrance-set)
+             (empty? filtered-reentrance-set))
         (dissoc-path (rest serialized) path)
+        
+        ;; TODO: add comment about what's going on here.
+        (some #(prefix? path %) reentrance-set)
+        (cons [filtered-reentrance-set
+               (reduce (fn [value path]
+                         (dissoc-in-map value path))
+                       value
+                       (get-remainders-for
+                        (set (cons path
+                                   (aliases-of path (map first serialized))))
+                        reentrance-set))]
+              (dissoc-path (rest serialized) path))
         
         true
         ;; the reentrance-set stays, but _value_ will be
         ;; modified as necessary.
         (cons [reentrance-set
                (reduce (fn [value path]
-                         (if (remove-path? path)
-                           (dissoc-in-map value path)))
+                         (dissoc-in-map value path))
                        value
                        (get-remainders-for
                         (set (cons path

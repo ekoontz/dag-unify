@@ -685,47 +685,6 @@ a given value in a given map."
         line-oriented (by-rows parse-tree)]
     (is (= true true))))
 
-(def truncate-this-2
-  (u/deserialize
-   [[nil
-     {:comp :top
-      :rule "Y"
-      :2    :top}]
-
-    [[[:comp][:2]]
-     {:comp :top
-      :head :top
-      :1    :top
-      :2    :top
-      :rule "X"}]
-
-    [[[:comp :comp]
-      [:comp :1]
-      [:2    :comp]
-      [:2    :1]]
-     {:surface "ga"
-      :phrasal false}]
-
-    [[[:comp :head]
-      [:comp :2]
-      [:2    :head]
-      [:2    :2]]
-     {:phrasal false
-      :cat    :v
-      :surface "ba"}]
-
-    [[[:comp :comp :cat]
-      [:comp :1    :cat]
-      [:comp :head :cat]
-      [:comp :2    :cat]
-      [:2    :comp :cat]
-      [:2    :1    :cat]
-      [:2    :head :cat]
-      [:2    :2    :cat]]
-     :v]]))
-
-(def reentrance-sets-2 (map first (serialize truncate-this-2)))
-
 (defn morph-ps [structure]
   (cond (or (= :fail structure) 
             (nil? structure)
@@ -835,6 +794,48 @@ a given value in a given map."
          [[[:a :c :e] [:b]]
           {:g 42}]]))))
 
+
+(def truncate-this-2
+  (u/deserialize
+   '((nil
+      {:comp :top,
+       :head :top,
+       :cat :top,
+       :rule "Y",
+       :phrasal true,
+       :1 :top,
+       :2 :top})
+     (((:comp) (:2))
+      {:comp :top,
+       :head :top,
+       :cat :top,
+       :1 :top,
+       :2 :top,
+       :rule "X",
+       :phrasal true})
+     (((:head) (:1))
+      {:cat :top,
+       :phrasal false,
+       :surface "ba"})
+     (((:comp :comp) (:comp :1) (:2 :comp) (:2 :1))
+      {:surface "ga",
+       :cat :top,
+       :phrasal false})
+     (((:comp :head) (:comp :2) (:2 :head) (:2 :2))
+      {:phrasal false,
+       :cat :top,
+       :surface "ba"})
+     (((:head :cat) (:cat) (:1 :cat)) :v)
+     (((:comp :comp :cat) (:comp :1 :cat) (:2 :comp :cat) (:2 :1 :cat)) :p)
+     (((:comp :head :cat)
+       (:comp :cat)
+       (:comp :2 :cat)
+       (:2 :head :cat)
+       (:2 :cat)
+       (:2 :2 :cat))
+      :n))))
+
+(def reentrance-sets-2 (map first (serialize truncate-this-2)))
 
 (def truncate-this-3
   ;;
