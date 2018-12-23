@@ -1113,12 +1113,10 @@
 (declare dissoc-path)
 
 ;; can be overridden to only dissoc
-;; certain paths and not others.
-(def ^:dynamic remove-path? (fn [path]
-                              (not (= path [:cat]))))
+;; certain paths and not others:
+;; see core_test/dissoc-test-3.
+(def ^:dynamic remove-path? (fn [path] true))
 
-;; TODO: ^ :cat is an example here; should be changed to:
-;; (def ^:dynamic remove-path? (fn [path] true))
 
 (defn dissoc-in
   "dissoc a path in a dag, as well as any other path in the dag to the same value."
