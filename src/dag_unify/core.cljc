@@ -381,12 +381,12 @@
   input)
 
 (defn pathify
-"Transform a map into a map of paths/value pairs,
- where paths are lists of keywords, and values are atomic values.
- e.g.:
- {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
-The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
- [fs & [prefix]]
+  "Transform a map into a map of paths/value pairs,
+  where paths are lists of keywords, and values are atomic values.
+  e.g.:
+  {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
+  The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
+  [fs & [prefix]]
   (mapcat (fn [kv]
             (let [key (first kv)
                   val (second kv)]
