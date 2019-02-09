@@ -779,15 +779,14 @@
         skels (skels input-map refs)]
     (zipmap
      ;; associate each ref with its skeleton.
-     (mapfn (fn [ref]
-             {:ref ref
-              :skel (get skels ref)})
-           refs)
+     (map (fn [ref]
+            {:skel (get skels ref)})
+          refs)
 
      ;; list of all paths that point to each ref in _input-map_.
      (mapfn (fn [eachref]
-             (find-paths-to-value input-map eachref nil))
-           refs))))
+              (find-paths-to-value input-map eachref nil))
+            refs))))
 
 ;; (((:a :c) (:b :c) (:d))
 ;;  ((:a) (:b))
