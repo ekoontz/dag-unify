@@ -773,7 +773,7 @@
   "associate each reference in _input-map_ with:
    1. its skeleton
    2. all paths to point to it."
-  [input-map]
+  [^clojure.lang.PersistentHashMap input-map]
   (let [refs (all-refs input-map)
         ;; skels returns a map from a reference to its skeleton.
         skels (skels input-map refs)]
