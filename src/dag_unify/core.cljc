@@ -706,17 +706,21 @@
 
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
-  [map value path]
+  [input value path]
   (cond
-    (ref? map)
-    (cond (= map value) [path] ;; found the value that we were looking for.
-          true (find-paths-to-value @map value path))
-    (map? map) (mapcat (fn [key]
-                         (find-paths-to-value
-                          (get map key)
-                          value
-                          (concat path [key])))
-                       (keys map))))
+    (ref? input)
+    (cond (= input value) [path] ;; found the value that we were looking for.
+          true
+          ;; did not find the value, so keep looking within this value.
+          (find-paths-to-value @input value path))
+    (map? input)
+    (apply concat
+           (map (fn [key]
+                  (find-paths-to-value
+                   (get input key)
+                   value
+                   (concat path [key])))
+                (keys input)))))
 
 (defn all-refs [input]
   (cond
