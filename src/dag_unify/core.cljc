@@ -827,9 +827,7 @@
 (defn ser-intermed [input-map]
   (let [top-level (skeletize input-map)
         rsk (ref-skel-map input-map)
-        sk (mapfn (fn [ref-skel]
-                    (:skel ref-skel))
-                  (keys rsk))]
+        sk (map :skel (keys rsk))]
     (clojure.core/merge
      {nil top-level}
      (zipmap
