@@ -143,9 +143,10 @@
           keys))))
 
 (defn sort-by-max-lengths [serialization]
-  (let [max-lengths (max-lengths serialization)]
-    (sort (fn [x y] (< (second x) (second y)))
-          max-lengths)))
+  (if true serialization
+    (let [max-lengths (max-lengths serialization)]
+      (sort (fn [x y] (< (second x) (second y)))
+            max-lengths))))
 
 (defn serialize [input-map]
   (let [memoized (get input-map ::serialized :none)]
