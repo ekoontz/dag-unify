@@ -27,8 +27,7 @@
         ser (ser-db mymap)]
     (is (= ser
            {
-            {:ref ref1
-             :skel 42} '((:a)(:b))}))))
+            {:skel 42} '((:a)(:b))}))))
 
 ;; TODO: this test is unnecessarily strict: see below for specifics
 (deftest ser-db-2
@@ -39,11 +38,9 @@
     (is (=
          ser
          {
-          {:ref ref1
-           ;; TODO: could also be '((:b)(:a)).
+          {;; TODO: could also be '((:b)(:a)).
            :skel {:c :top}} '((:a)(:b))
-          {:ref ref2
-           ;; TODO: could also be '((:b :c)(:a :c)(:d))
+          {;; TODO: could also be '((:b :c)(:a :c)(:d))
            ;; (or other possible orderings).
            :skel 42} '((:a :c)(:b :c)(:d))}))))
           
