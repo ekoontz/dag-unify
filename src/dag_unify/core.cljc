@@ -891,49 +891,6 @@
                                (rest serialized))))]
              all))))
 
-(defn recursive-dissoc
-  "like dissoc, but works recursively. Only works on reference-free maps (contains no atoms)."
-  [a-map pred]
-  (if (not (empty? a-map))
-    (let [k (first (first a-map))
-          v (second (first a-map))]
-      (if (pred k)
-        (recursive-dissoc (dissoc a-map k)
-                          pred)
-        (conj
-         {k (cond (map? v)
-                  (recursive-dissoc v pred)
-                  true v)}
-         (recursive-dissoc (dissoc a-map k)
-                           pred))))
-    {}))
-
-(defn deserialize-with-remove [serialized pred]
-  (let [base (recursive-dissoc (second (first serialized)) pred)]
-    (apply merge
-           (let [all
-                 (cons base
-                       (flatten
-                        (map (fn [paths-val]
-                               (let [paths (first paths-val)
-                                     val (atom
-                                          (cond (map? atom)
-                                                (recursive-dissoc
-                                                 (second paths-val)
-                                                 pred)
-                                                true
-                                                (second paths-val)))]
-                                 (map (fn [path]
-                                        (if (empty?
-                                             (remove false?
-                                                     (map (fn [key-in-path]
-                                                            (pred key-in-path))
-                                                          path)))
-                                          (create-path-in path val)))
-                                      paths)))
-                             (rest serialized))))]
-             all))))
-
 (defn serialize [input-map]
   (let [memoized (get input-map ::serialized :none)]
     (if (not (= memoized :none))
@@ -1033,10 +990,6 @@
     (strip-refs (deref map-with-refs))
     :else
     map-with-refs))
-
-(defn remove-matching-keys [fs pred]
-  (let [serialized (serialize fs)]
-    (deserialize-with-remove serialized pred)))
 
 (defn isomorphic? [a b]
   (cond (and (map? a)

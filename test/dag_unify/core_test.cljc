@@ -9,8 +9,7 @@
                      elements fail? find-paths-to-value
                      get-in gather-annotations
                      isomorphic? pprint print-out
-                     recursive-dissoc ref? ref-skel-map
-                     remove-matching-keys serialize
+                     ref? ref-skel-map serialize
                      skeletize skels width height unify
                      unify! width-of-column]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
@@ -535,23 +534,6 @@ a given value in a given map."
     (is (= (count be) 2))
     (is (not (fail? (nth be 0))))
     (is (not (fail? (nth be 1))))))
-
-(deftest recursive-dissoc-test
-  (let [fs {:a 42 :b {:c 43}}
-        result (recursive-dissoc fs
-                                 (fn [k] (= k :c)))]
-    (is (= (get-in result [:b]) {}))))
-
-(deftest remove-matching-keys-test
-  (let [fs
-        (let [myref (atom 42)]
-          {:a myref :b {:c myref} :d {:e 43}})
-        removed
-        (remove-matching-keys fs (fn [k]
-                                   (= k :c)))]
-    (is (map? removed))
-    (is (= 42 (get-in removed [:a])))
-    (is (= :none (get-in removed [:b :c] :none)))))
 
 (deftest prevent-cyclic-graph-1
   (let [foo
