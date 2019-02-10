@@ -16,4 +16,171 @@
                          u/unify
                          (take 50 (repeatedly (fn [] (s/deserialize serialized)))))))))))
 
+(defn ser-db [input-map]
+  (let [refs (s/all-refs input-map)
+        skels (s/skels input-map refs)]
+    (s/ref-skel-map input-map)))
 
+(deftest ser-db-1
+  (let [ref1 (atom 42)
+        mymap {:a ref1, :b ref1}
+        ser (ser-db mymap)]
+    (is (= ser
+           {
+            {:ref ref1
+             :skel 42} '((:a)(:b))}))))
+
+;; TODO: this test is unnecessarily strict: see below for specifics
+(deftest ser-db-2
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
+        mymap {:a ref1 :b ref1 :d ref2}
+        ser (ser-db mymap)]
+    (is (=
+         ser
+         {
+          {:ref ref1
+           ;; TODO: could also be '((:b)(:a)).
+           :skel {:c :top}} '((:a)(:b))
+          {:ref ref2
+           ;; TODO: could also be '((:b :c)(:a :c)(:d))
+           ;; (or other possible orderings).
+           :skel 42} '((:a :c)(:b :c)(:d))}))))
+          
+
+(deftest serialize-1
+  (let [ref1 (atom 42)
+        mymap {:a ref1, :b ref1}
+        ser (s/serialize mymap)]
+    (is (= ser
+
+           '((nil {:b :top :a :top})
+
+             ;; TODO: could be '((:b)(:a))
+             (((:a)(:b)) 42))))))
+
+(deftest serialize-2
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
+        mymap {:a ref1, :b ref1 :d ref2}
+        ser (s/serialize mymap)]
+    (is (= ser
+
+           '((nil {:d :top, :b :top, :a :top})
+
+             ;; TODO: could be '((:b)(:a))
+             (((:a) (:b)) {:c :top})
+
+             ;; TODO: could be '((:b :c)(:a c)..etc
+             (((:a :c) (:b :c) (:d)) 42))))))
+
+(deftest serialize-3
+  (let [mymap {:a 42 :b (atom 43)}]
+    (is (not (nil? (s/serialize mymap))))))
+
+(deftest serialize-4
+  (let [ref3 (atom "avere")
+        ref2 (atom {:italian "fatto"})
+        ref1 (atom {:infl :infinitive
+                    :italian ref3})
+        vp {:a ref1
+            :b {:italian ref2
+                :root {:infl :infinitive
+                       :pass-prossimo ref2
+                       :pass-prossimo-aux ref1}}
+            :italian {:a ref3
+                      :b ref2}
+            :infl :infinitive}
+        serialized (s/serialize vp)]
+        
+    (not (nil? vp))
+    (not (nil? serialized))
+    (= (count serialized) 4)))
+
+(deftest create-shared-values-1
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
+        mymap {:a ref1, :b ref1 :d ref2}
+        my-ser (s/serialize mymap)
+        create-shared-vals (u/create-shared-values my-ser)
+        are-refs? (map (fn [val]
+                         (s/ref? val))
+                       create-shared-vals)
+        derefs (map (fn [val]
+                      @val)
+                    create-shared-vals)]
+    (is (= (first derefs)
+           {:d :top
+            :b :top
+            :a :top}))
+    (is (= (second derefs)
+           {:c :top}))
+
+    (is (= (nth derefs 2)
+           42))
+    
+    (is (= are-refs? (list true true true)))))
+
+(deftest create-path-in-1
+  (let [path '(:a :b :c :d :e)
+        val 43
+        result (s/create-path-in path val)]
+    (is (= (u/get-in result path) val))))
+
+(deftest deser-with-ref
+  (let [serialized [[nil {:a "PH"}] [[["a"]] 42]]
+        deserialized (s/deserialize serialized)]
+    (is (not (nil? deserialized)))
+    (is (= (s/ref? (:a deserialized))))
+    (is (= @(:a deserialized) 42))))
+
+;; deserialize a map's serialized form
+(deftest deser-1
+  (let [ref2 (atom 42)
+        ref1 (atom {:c ref2})
+        mymap {:a ref1, :b ref1 :d ref2}
+        my-ser (s/serialize mymap)
+        my-deser (s/deserialize my-ser)]
+    (is (not (= my-ser nil)))
+    (is (s/ref? (:a my-deser)))
+
+    ;; a)
+    (is (= (s/ref? (get @(get my-deser :a) :c))))
+    (is (= (s/ref? (get @(get my-deser :b) :c))))
+    (is (= (s/ref? (:d my-deser))))
+    (is (= (:a my-deser) (:b my-deser)))
+    (is (= (get @(get my-deser :a) :c)
+           (get my-deser :d)))
+    (is (= (get @(get my-deser :b) :c)
+           (get my-deser :d)))
+    (is (= @(get @(get my-deser :a) :c)
+           42))
+
+    ;; similar tests as a) above, but using fs/get-in
+    (is (number? (u/get-in my-deser [:a :c])))
+    (is (number? (u/get-in my-deser [:b :c])))
+    (is (number? (u/get-in my-deser [:d])))
+    (is (= (u/get-in my-deser [:a :c])
+           (u/get-in my-deser [:d])))
+    (is (= (u/get-in my-deser [:b :c])
+           (u/get-in my-deser [:d])))
+    (is (= (u/get-in my-deser [:a :c])
+           42))))
+
+(deftest deser-2
+  (let [ref3 (atom "avere")
+        ref2 (atom {:italian "fatto"})
+        ref1 (atom {:infl :infinitive
+                    :italian ref3})
+        vp {:a ref1
+            :b {:italian ref2
+                :root {:infl :infinitive
+                       :pass-prossimo ref2
+                       :pass-prossimo-aux ref1}}
+            :italian {:a ref3
+                      :b ref2}
+            :infl :infinitive}
+        myser (s/serialize vp)]
+        
+    (not (nil? vp))
+    (not (nil? myser))))
