@@ -140,6 +140,7 @@
                    reentrance-set
                    (remove #(= % reentrance-path))
                    (map #(remainder % path))
+                   (remove nil?)
                    (map #(concat reentrance-path %)))))))))
 
    ;; 2. get all paths in reentrance sets where
