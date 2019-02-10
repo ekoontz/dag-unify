@@ -12,7 +12,7 @@
 
 ;; can be overridden to only dissoc
 ;; certain paths and not others:
-;; see core_test/dissoc-test-3.
+;; see dissoc-test/dissoc-test-3.
 (def ^:dynamic remove-path? (fn [path] true))
 
 (declare dissoc-path)
@@ -152,7 +152,8 @@
      (fn [reentrance-set]
        (some #(prefix? path %)
              reentrance-set)))
-    (reduce concat))))
+    (reduce concat)
+    (remove (fn [x] false)))))
 
 (defn get-remainders-for [aliases-of-path reentrance-set]
   (set
