@@ -152,8 +152,7 @@
      (fn [reentrance-set]
        (some #(prefix? path %)
              reentrance-set)))
-    (reduce concat)
-    (remove (fn [x] false)))))
+    (reduce concat))))
 
 (defn get-remainders-for [aliases-of-path reentrance-set]
   (set
