@@ -93,7 +93,8 @@
     (zipmap
      ;; associate each ref with its skeleton.
      (map (fn [ref]
-            {:skel (get skels ref)})
+            {:ref ref
+             :skel (get skels ref)})
           refs)
 
      ;; list of all paths that point to each ref in _input-map_.
