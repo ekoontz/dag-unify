@@ -2,7 +2,8 @@
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [dag_unify.core :as u]
-            [dag_unify.dissoc :as d]))
+            [dag_unify.dissoc :as d]
+            [dag_unify.serialization :as s]))
 
 (def truncate-this
   ;;
@@ -11,7 +12,7 @@
   ;;      :d 44}
   ;;  :b [1] {:g 42}}
   ;; 
-  (u/deserialize
+  (s/deserialize
    [[nil
      {:a {:c {:e :top
               :f 43}
@@ -34,7 +35,7 @@
 (deftest dissoc-test-1
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [:a :c :e :g])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:c {:e :top
                    :f 43}
@@ -43,23 +44,23 @@
           :top]])))
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [:a :c :e])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [:a :c])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:d 44}}]])))
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [:a])
-       (u/deserialize
+       (s/deserialize
         [[nil
           :top]])))
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:c {:e :top
                    :f 43}
@@ -76,7 +77,7 @@
   ;;      :d 44}
   ;;  :b [1]}
   ;; 
-  (u/deserialize
+  (s/deserialize
    [[nil
      {:a {:c {:e :top
               :f 43}
@@ -93,7 +94,7 @@
 (deftest dissoc-test-2
   (is (u/isomorphic? 
        (d/dissoc-in truncate-this-2 [:a :c :e :g])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:c {:e :top
                    :f 43}
@@ -105,23 +106,23 @@
 
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [:a :c :e])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [:a :c])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:d 44}}]])))
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [:a])
-       (u/deserialize
+       (s/deserialize
         [[nil
           :top]])))
   (is (u/isomorphic?
        (d/dissoc-in truncate-this [])
-       (u/deserialize
+       (s/deserialize
         [[nil
           {:a {:c {:e :top
                    :f 43}
@@ -131,7 +132,7 @@
           {:g 42}]]))))
 
 (def truncate-this-3
-  (u/deserialize
+  (s/deserialize
    '((nil
       {:comp :top,
        :head :top,
@@ -177,7 +178,7 @@
                                    (d/prefix? [:head] path)
                                    (d/prefix? [:1] path)))]
          (d/dissoc-in truncate-this-3 [:head]))
-       (u/deserialize
+       (s/deserialize
         '((nil {:rule "Y", :phrasal true, :comp :top, :2 :top, :cat :top})
           (((:comp) (:2))
            {:rule "X",

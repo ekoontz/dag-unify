@@ -1,6 +1,7 @@
 (ns dag_unify.dissoc
   (:require
-   [dag_unify.core :as u]))
+   [dag_unify.core :as u]
+   [dag_unify.serialization :as s]))
 
 ;; 'dissoc-in' function defined here along with
 ;; its supporting functions. 
@@ -24,8 +25,8 @@
     structure
 
     true
-    (u/deserialize
-     (dissoc-path (u/serialize structure) path))))
+    (s/deserialize
+     (dissoc-path (s/serialize structure) path))))
 
 (declare aliases-of)
 (declare dissoc-in-map)

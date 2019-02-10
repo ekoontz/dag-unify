@@ -1,7 +1,8 @@
 (ns dag_unify.pprint
   (:require
    [clojure.string :refer [join]]
-   [dag_unify.core :as u :refer [ref? serialize unify]]))
+   [dag_unify.core :as u :refer [unify]]
+   [dag_unify.serialization :as s :refer [ref? serialize]]))
 
 (def ^:dynamic *local-keys* (set #{:dag_unify.core/serialized ::annotate}))
 

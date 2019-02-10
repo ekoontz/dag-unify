@@ -3,15 +3,16 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [clojure.string :as string]
             [dag_unify.core :as u
-             :refer [all-refs assoc-in
-                     create-path-in copy
-                     create-shared-values deserialize
-                     fail? find-paths-to-value
+             :refer [assoc-in copy
+                     create-shared-values
+                     fail?
                      get-in
-                     isomorphic? pprint
-                     ref? ref-skel-map serialize
-                     skeletize skels unify
-                     unify!]])
+                     isomorphic?
+                     unify
+                     unify!]]
+            [dag_unify.serialization
+             :refer [all-refs create-path-in deserialize find-paths-to-value serialize
+                     skeletize ref? ref-skel-map skels]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 ;; TODO: add more tests for (dag_unify.core/isomorphic?)
