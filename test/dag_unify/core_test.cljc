@@ -443,18 +443,13 @@ a given value in a given map."
                              :subcat {:1 :top}},
                          :1 :top},
                 :sem {:obj :top,
-                      :subj :top,
-                      :tense :future}}]
+                      :subj :top}}]
           ['((:subcat :2 :sem)
              (:sem :obj)) {:subj :top}]
           ['((:subcat :2 :sem :subj)
-             (:subcat :2 :subcat :1 :sem)
-             (:subcat :1 :sem)
+
              (:sem :obj :subj)
-             (:sem :subj)) :top]
-          ['((:subcat :2 :subcat :1)) :top]
-          ['((:subcat :1))
-           :top]])
+             (:sem :subj)) :top]])
         arg2
         (deserialize
          [[nil {:sem :top,
