@@ -453,7 +453,7 @@ a given value in a given map."
              (:subcat :1 :sem)
              (:sem :obj :subj)
              (:sem :subj)) :top]
-          ['((:subcat :2 :subcat :1)) {:sem :top}]
+          ['((:subcat :2 :subcat :1)) :top]
           ['((:subcat :1))
            {:sem :top,
             :subcat []}]])
@@ -461,14 +461,9 @@ a given value in a given map."
         (deserialize
          [[nil {:sem :top,
                 :subcat {:1 :top,
-                         :2 {:agr :top,
-                             :sem :top,
-                             :subcat {:1 :top,
-                                      :2 []}}}}]
+                         :2 {:sem :top}}}]
           ['((:sem)
-             (:subcat :2 :sem)) :top]
-          ['((:subcat :1)
-             (:subcat :2 :subcat :1)) :top]])]
+             (:subcat :2 :sem)) :top]])]
     (is (map? (unify arg1 arg2)))))
 
 
