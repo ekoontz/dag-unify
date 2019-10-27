@@ -444,9 +444,9 @@ a given value in a given map."
                 :sem {:obj :top,
                       :subj :top}}]
           ['((:subcat :2 :sem)
-             (:sem :obj)) {:subj :top}]
+             (:sem :obj))
+           {:subj :top}]
           ['((:subcat :2 :sem :subj)
-             (:sem :obj :subj)
              (:sem :subj)) :top]])
         arg2
         (deserialize
