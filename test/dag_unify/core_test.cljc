@@ -436,3 +436,28 @@ a given value in a given map."
     (is (empty? @result1))
     (is (empty? @result2))))
 
+(deftest entanglement
+  (let [arg1
+        (deserialize '([nil {:agr :top, :sem :top, :subcat {:1 {:agr :top, :sem :top}}}]
+                       [((:agr) (:subcat :1 :agr)) :top]
+                       [((:sem) (:subcat :1 :sem)) :top]))
+        arg2
+        (deserialize '([nil
+                        {:cat :comp,
+                         :agr :top,
+                         :slash false,
+                         :sense 2,
+                         :subcat
+                         {:1
+                          {:agr :top,
+                           :cat :verb,
+                           :subcat {:1 {:agr :top, :cat :noun, :case :nom}, :2 []},
+                           :slash false},
+                          :2 []}}]
+                       [((:agr) (:subcat :1 :agr) (:subcat :1 :subcat :1 :agr)) :top]))]
+    (is (map? (unify arg1 arg2)))))
+
+
+
+
+
