@@ -439,15 +439,13 @@ a given value in a given map."
 (deftest entanglement
   (let [arg1
         (deserialize
-         [[nil {:subcat {:2 {:sem :top,
-                             :subcat {:1 :top}},
+         [[nil {:subcat {:2 {:sem :top}
                          :1 :top},
                 :sem {:obj :top,
                       :subj :top}}]
           ['((:subcat :2 :sem)
              (:sem :obj)) {:subj :top}]
           ['((:subcat :2 :sem :subj)
-
              (:sem :obj :subj)
              (:sem :subj)) :top]])
         arg2
