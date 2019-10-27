@@ -439,42 +439,50 @@ a given value in a given map."
 (deftest entanglement
   (let [arg1
         (deserialize
-         [[nil {:aux true, :cat :verb,
-                :derivation {:1 {:aux-verbs {:match? true},
-                                 :ditransitive-false {:match? true},
-                                 :modal-base {:marker 2, :match? true},
-                                 :subject-verb-agreement {:match? true}}},
-                :phrasal false,
-                :inflected? true, :infl :base, :reflexive false,
-                :subcat {:2 {:aux false, :infl :base, :cat :verb,
-                             :modal false, :reflexive false,
-                             :sem :top, :subcat {:1 :top}},
+         [[nil {:reflexive false,
+                :subcat {:2 {:sem :top,
+                             :subcat {:1 :top}},
                          :3 [],
                          :1 :top},
-                :agr :top,
-                :modal :base,
                 :sem {:obj :top,
                       :subj :top,
-                      :tense :future},
-                :canonical "will"}]
-          ['((:subcat :2 :sem) (:sem :obj)) {:subj :top}]
-          ['((:subcat :2 :sem :subj) (:subcat :2 :subcat :1 :sem) (:subcat :1 :sem) (:sem :obj :subj)
+                      :tense :future}}]
+          ['((:subcat :2 :sem)
+             (:sem :obj)) {:subj :top}]
+          ['((:subcat :2 :sem :subj)
+             (:subcat :2 :subcat :1 :sem)
+             (:subcat :1 :sem)
+             (:sem :obj :subj)
              (:sem :subj)) :top]
           ['((:subcat :2 :subcat :1)) {:sem :top}]
-          ['((:subcat :1)) {:sem :top, :subcat [], :cat :noun, :agr :top, :case :nom}]
-          ['((:subcat :1 :agr) (:agr)) :top]])
+          ['((:subcat :1))
+           {:sem :top,
+            :subcat []}]])
         arg2
         (deserialize
          [[nil {:agr :top,
-                :derivation {:2 {:aux-verbs-with-verb-arg {:sense 1}}},
                 :reflexive :top,
                 :sem :top,
                 :subcat {:1 :top,
-                         :2 {:agr :top, :modal false, :reflexive :top, :slash false, :aux false, :cat :verb, :sem :top, :subcat {:1 :top, :2 []}}}}]
-          ['((:agr) (:subcat :1 :agr) (:subcat :2 :agr) (:subcat :2 :subcat :1 :agr)) :top]
-          ['((:reflexive) (:subcat :2 :reflexive)) :top]
-          ['((:sem) (:subcat :2 :sem)) :top]
-          ['((:subcat :1) (:subcat :2 :subcat :1)) {:agr :top, :cat :noun, :subcat []}]])]
+                         :2 {:agr :top,
+                             :modal false,
+                             :reflexive :top,
+                             :slash false,
+                             :aux false,
+                             :cat :verb,
+                             :sem :top,
+                             :subcat {:1 :top,
+                                      :2 []}}}}]
+          ['((:agr)
+             (:subcat :1 :agr)
+             (:subcat :2 :agr)
+             (:subcat :2 :subcat :1 :agr)) :top]
+          ['((:reflexive)
+             (:subcat :2 :reflexive)) :top]
+          ['((:sem)
+             (:subcat :2 :sem)) :top]
+          ['((:subcat :1)
+             (:subcat :2 :subcat :1)) {:agr :top, :cat :noun, :subcat []}]])]
     (is (map? (unify arg1 arg2)))))
 
 
