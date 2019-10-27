@@ -64,6 +64,13 @@
   (not (= :does-not-exist
           (get-in the-map path :does-not-exist))))
 
+(declare fail?)
+
+(defn failr? [fs keys]
+  (and (not (empty? keys))
+       (or (fail? (get fs (first keys)))
+           (failr? fs (rest keys)))))
+
 ;; TODO: use multi-methods.
 ;; TODO: keep list of already-seen references to avoid
 ;; cost of traversing substructures more than once.
@@ -73,7 +80,7 @@
   (cond (= :fail fs) true
         (seq? fs) false ;; a sequence is never fail.
         (= fs :fail) true ;; :fail is always fail.
- 
+
         (and (map? fs) (fail? (get-in fs [:fail] :top))) true
         (and (map? fs) (= true (get-in fs [:fail] :top))) true ;; note: :top != true, and (fail? {:fail :top}) => false.
 
@@ -87,10 +94,6 @@
         ;; otherwise, check recursively.
         ;; TODO: rewrite using (recur)
         (do
-          (defn failr? [fs keys]
-            (and (not (empty? keys))
-                 (or (fail? (get fs (first keys)))
-                     (failr? fs (rest keys)))))
           (cond
             (= fs :fail) true
             (map? fs)
