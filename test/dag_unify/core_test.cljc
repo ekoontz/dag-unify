@@ -372,7 +372,10 @@ a given value in a given map."
         (let [shared (atom :top)]
           {:a shared
            :b {:c shared}})]
-    (is (fail? (unify! foo bar)))))
+    (let [result
+          (try (unify! foo bar)
+               (catch Exception e :an-exception-was-thrown))]
+      (is (= :an-exception-was-thrown result)))))
 
 (deftest prevent-cyclic-graph-2
   (is (fail? (unify
