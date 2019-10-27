@@ -442,9 +442,7 @@ a given value in a given map."
          [[nil {}]
           ['((:a :b)
              (:b :c))
-           :top]
-          ['((:a :b :d)
-             (:b :d)) :top]])
+           :top]])
         arg2
         (deserialize
          [[nil {}]
