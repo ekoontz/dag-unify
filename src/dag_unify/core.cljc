@@ -199,7 +199,7 @@
      (do
        (cond
          (contains? (set (all-refs val2)) val1)
-         :fail ;; cannot unify these because it would create a cycle.
+         (throw (Exception. (str "CONTAINMENT FAILURE."))) ;; cannot unify these because it would create a cycle.
          
          true
          (do (swap! val1
@@ -213,7 +213,8 @@
      (do
        (cond
          (contains? (set (all-refs val1)) val2)
-         :fail
+         (throw (Exception. (str "CONTAINMENT FAILURE: "
+                                 " val1: " val1 "'s references contain val2: " val2)))
          true
          (do
            (swap! val2
