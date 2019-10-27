@@ -440,16 +440,16 @@ a given value in a given map."
   (let [arg1
         (deserialize
          [[nil {}]
-          ['((:subcat :2 :sem)
-             (:sem :obj))
+          ['((:a :b)
+             (:b :c))
            :top]
-          ['((:subcat :2 :sem :subj)
-             (:sem :subj)) :top]])
+          ['((:a :b :d)
+             (:b :d)) :top]])
         arg2
         (deserialize
          [[nil {}]
-          ['((:sem)
-             (:subcat :2 :sem)) :top]])]
+          ['((:b)
+             (:a :b)) :top]])]
     (is (map? (unify arg1 arg2)))))
 
 
