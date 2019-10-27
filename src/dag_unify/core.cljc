@@ -11,9 +11,10 @@
 
   (:refer-clojure :exclude [assoc-in exists? get-in merge resolve]) ;; TODO: don't override (merge)
   (:require
-   [clojure.repl :refer [doc]]
    [clojure.pprint :as core-pprint]
+   [clojure.repl :refer [doc]]
    [clojure.string :refer [join]]
+   [clojure.tools.logging :as log]
    [dag_unify.serialization :refer [all-refs create-path-in deserialize exception
                                     serialize]]))
 
@@ -154,6 +155,7 @@
    val1)
   
   ([val1 val2 & rest-args]
+   (log/info (str "val1: " (type val1) "; val2: " (type val2)))
    (cond
      ;; This is the canonical unification case: unifying two DAGs
      ;; (maps with possible references within them).
@@ -199,7 +201,8 @@
      (do
        (cond
          (contains? (set (all-refs val2)) val1)
-         (throw (Exception. (str "CONTAINMENT FAILURE."))) ;; cannot unify these because it would create a cycle.
+         (throw (Exception. (str "containment failure: "
+                                 " val2: " val2 "'s references contain val1: " val1)))
          
          true
          (do (swap! val1
@@ -213,7 +216,7 @@
      (do
        (cond
          (contains? (set (all-refs val1)) val2)
-         (throw (Exception. (str "CONTAINMENT FAILURE: "
+         (throw (Exception. (str "containment failure: "
                                  " val1: " val1 "'s references contain val2: " val2)))
          true
          (do
