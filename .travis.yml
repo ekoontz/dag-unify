@@ -3,5 +3,5 @@ lein: lein
 script: lein test
 sudo: false
 jdk:
-  - oraclejdk8
+  - openjdk11
 
