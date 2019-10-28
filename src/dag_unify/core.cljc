@@ -300,8 +300,11 @@
         ;; were *not* in arg1.
         (empty? keys-of-arg1) arg2
 
-        ;; TODO: consider using: (= :fail result) rather than (expensive) (fail?).
-        (fail? result) :fail
+        (= :fail result) :fail
+
+        (and (ref? result)
+             (= :fail @result)) :fail
+
         true (recur arg1
                     (clojure.core/merge
                      {key1 result}
