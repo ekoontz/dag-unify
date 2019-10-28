@@ -378,13 +378,17 @@ a given value in a given map."
       (is (= :an-exception-was-thrown result)))))
 
 (deftest prevent-cyclic-graph-2
-  (is (fail? (unify
-              (let [shared (atom :top)]
-                {:synsem {:subcat {:2 {:sem {:obj shared}}}
-                          :sem {:obj shared}}})
-              (let [shared (atom :top)]
-                {:synsem {:subcat {:2 {:sem shared}}
-                          :sem {:obj shared}}})))))
+  (let [result
+        (try
+          (unify
+           (let [shared (atom :top)]
+             {:synsem {:subcat {:2 {:sem {:obj shared}}}
+                       :sem {:obj shared}}})
+           (let [shared (atom :top)]
+             {:synsem {:subcat {:2 {:sem shared}}
+                       :sem {:obj shared}}}))
+          (catch Exception e :an-exception-was-thrown))]
+    (is (= :an-exception-was-thrown result))))
 
 (deftest prevent-cyclic-graph-3
   (let [arg1
