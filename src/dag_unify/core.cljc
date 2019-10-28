@@ -171,6 +171,7 @@
                    (filter #(not (contains? dag_unify.serialization/*exclude-keys*
                                             %)) ;; TODO: rather than filter, simply get keys from dissoc'ed val1 (above)
                            (keys val1)))]
+       (log/info (str "got here: map/map."))
        (if (empty? rest-args)
          result
          (unify! result
@@ -202,6 +203,7 @@
       (ref? val1)
       (not (ref? val2)))
      (do
+       (log/info (str "case 1."))
        (cond
          (contains? (set (all-refs val2)) val1)
          (throw (Exception. (str "containment failure: "
@@ -217,15 +219,15 @@
       (ref? val2)
       (not (ref? val1)))
      (do
+       (log/info (str "case 2."))
        (cond
          (contains? (set (all-refs val1)) val2)
          (throw (Exception. (str "containment failure: "
                                  " val1: " val1 "'s references contain val2: " val2)))
          true
-         (do
-           (swap! val2
-                  (fn [x] (unify! val1 @val2)))
-           val2)))
+         (do (swap! val2
+                    (fn [x] (unify! val1 @val2)))
+             val2)))
      
      (= val1 '())
      :fail
