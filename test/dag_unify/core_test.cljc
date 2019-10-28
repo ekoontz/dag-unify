@@ -386,6 +386,23 @@ a given value in a given map."
                 {:synsem {:subcat {:2 {:sem shared}}
                           :sem {:obj shared}}})))))
 
+(deftest prevent-cyclic-graph-3
+  (let [arg1
+        (deserialize
+         [[nil {}]
+          ['((:sem :obj)
+             (:subcat :2 :sem))
+           :top]])
+        arg2
+        (deserialize
+         [[nil {}]
+          ['((:sem)
+             (:subcat :2 :sem)) :top]])
+        result
+        (try (unify! arg1 arg2)
+             (catch Exception e :an-exception-was-thrown))]
+    (is (= :an-exception-was-thrown result))))
+
 (deftest not-found-with-non-existent-path-with-nil
   (is (= ::notfound
          (get-in
@@ -435,25 +452,3 @@ a given value in a given map."
     (is (= true (ref? result2)))
     (is (empty? @result1))
     (is (empty? @result2))))
-
-(deftest entanglement
-  (let [arg1
-        (deserialize
-         [[nil {}]
-          ['((:subcat :2 :sem)
-             (:sem :obj))
-           :top]
-          ['((:subcat :2 :sem :subj)
-             (:sem :subj)) :top]])
-        arg2
-        (deserialize
-         [[nil {}]
-          ['((:sem)
-             (:subcat :2 :sem)) :top]])]
-    (is (map? (unify arg1 arg2)))))
-
-
-
-
-
-
