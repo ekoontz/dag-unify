@@ -158,7 +158,7 @@
    val1)
   
   ([val1 val2 & rest-args]
-   (log/info (str "val1: " (type val1) "; val2: " (type val2)))
+   (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
    (cond
      ;; This is the canonical unification case: unifying two DAGs
      ;; (maps with possible references within them).
@@ -171,7 +171,7 @@
                    (filter #(not (contains? dag_unify.serialization/*exclude-keys*
                                             %)) ;; TODO: rather than filter, simply get keys from dissoc'ed val1 (above)
                            (keys val1)))]
-       (log/info (str "got here: map/map."))
+       (log/debug (str "got here: map/map; result: " result))
        (if (empty? rest-args)
          result
          (unify! result
@@ -203,7 +203,7 @@
       (ref? val1)
       (not (ref? val2)))
      (do
-       (log/info (str "case 1."))
+       (log/debug (str "case 1."))
        (cond
          (contains? (set (all-refs val2)) val1)
          (throw (Exception. (str "containment failure: "
@@ -219,7 +219,7 @@
       (ref? val2)
       (not (ref? val1)))
      (do
-       (log/info (str "case 2."))
+       (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
        (cond
          (contains? (set (all-refs val1)) val2)
          (throw (Exception. (str "containment failure: "
@@ -238,25 +238,28 @@
      (and
       (ref? val1)
       (ref? val2))
-     (cond
-       (= (simplify-ref val1)
-          (simplify-ref val2))
-       val1
-       
-       (or (contains? (set (all-refs @val1)) val2)
-           (contains? (set (all-refs @val2)) val1))
-       :fail
-       
-       (= @val1 val2) ;; val1 -> val2
-       val2
-       
-       :else
-       (do
-         (swap! val1
-                (fn [x] (unify! @val1 @val2)))
-         (swap! val2
-                (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-         val1))
+     (do
+       (log/debug (str "case 3: both val1 and val2 are refs."))
+       (cond
+         (= (simplify-ref val1)
+            (simplify-ref val2))
+         val1
+         
+         (or (contains? (set (all-refs @val1)) val2)
+             (contains? (set (all-refs @val2)) val1))
+         (throw (Exception. (str "containment failure: "
+                                 " val1: " val1 "'s references contain val2: " val2)))
+         
+         (= @val1 val2) ;; val1 -> val2
+         val2
+         
+         :else
+         (do
+           (swap! val1
+                  (fn [x] (unify! @val1 @val2)))
+           (swap! val2
+                  (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+           val1)))
      
      ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
      (not (= :notfound (:not val1 :notfound)))
@@ -278,14 +281,19 @@
            :fail)))
      
      :else
-     :fail)))
+     (do
+       (log/debug (str "unify! else case."))
+       :fail))))
 
 (defn merge-with-keys [arg1 arg2 keys-of-arg1]
+  (log/debug (str "here we go into merge-with-keys.."))
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
     (let [key1 (first keys-of-arg1)
+          debug (log/debug (str "looking at key: " key1))
           result (if (not (empty? keys-of-arg1))
                    (unify! (key1 arg1 :top)
                            (key1 arg2 :top)))]
+      (log/debug (str "merge-with-keys: key1: " key1 "; result: " result))
       (cond
 
         ;; if keys-of-arg1 is empty, then arg2 contains only keys that
