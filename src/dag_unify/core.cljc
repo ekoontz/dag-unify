@@ -24,6 +24,15 @@
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 
+(defn vec-contains?
+  "return true if e is in v, otherwise return false."
+  [v e]
+  (if (empty? v)
+    false
+    (or
+     (= e (first v))
+     (vec-contains? (rest v) e))))
+
 (defn ref? [val]
   #?(:clj
      (= (type val) clojure.lang.Atom))
@@ -205,7 +214,7 @@
      (do
        (log/debug (str "case 1."))
        (cond
-         (contains? (set (all-refs val2)) val1)
+         (vec-contains? (vec (all-refs val2)) val1)
          (throw (Exception. (str "containment failure: "
                                  " val2: " val2 "'s references contain val1: " val1)))
          
@@ -221,7 +230,7 @@
      (do
        (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
        (cond
-         (contains? (set (all-refs val1)) val2)
+         (vec-contains? (vec (all-refs val1)) val2)
          (throw (Exception. (str "containment failure: "
                                  " val1: " val1 "'s references contain val2: " val2)))
          true
@@ -245,8 +254,8 @@
             (simplify-ref val2))
          val1
          
-         (or (contains? (set (all-refs @val1)) val2)
-             (contains? (set (all-refs @val2)) val1))
+         (or (vec-contains? (vec (all-refs @val1)) val2)
+             (vec-contains? (vec (all-refs @val2)) val1))
          (throw (Exception. (str "containment failure: "
                                  " val1: " val1 "'s references contain val2: " val2)))
          
