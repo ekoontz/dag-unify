@@ -15,8 +15,10 @@ that if v is small, it's less expensive just to search it than create a set and 
 ### Changed
 - unify! throws an exception if the references of val2 contain val1, or
 the references of val1 contain val2.
-
-beyond what unify! has.
+- unify! calls vec-contains? rather than (contains?): the latter requires constructing
+a set and does an efficient search on it. vec-contains? takes a vector and does an
+inefficient (linear) search on it, but seems to be faster in practice if the input vector 
+is small.
 
 ### Removed
 - Anything?
