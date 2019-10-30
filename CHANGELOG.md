@@ -8,11 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.0] - 2019-10-30
 ### Added
-- Anything?
+- vec-contains?: contains? implementation that only works on vectors. Intention is
+that if v is small, it's less expensive just to search it than create a set and then
+(presumably) binary-search the tree behind that set.
 
 ### Changed
 - unify! throws an exception if the references of val2 contain val1, or
 the references of val1 contain val2.
+
+beyond what unify! has.
 
 ### Removed
 - Anything?
