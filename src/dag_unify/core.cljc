@@ -151,17 +151,12 @@
           (assoc result :dag_unify.serialization/serialized (serialize result))
           true result)))
 
-(defn unifyc
-  "alias for (defn unify)"
-  [& args]
-  (apply unify args))
-
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, so that 
    sharing relationship in the arguments is preserved in the result"
   ([val1]
    val1)
-  
+
   ([val1 val2 & rest-args]
    (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
    (cond
