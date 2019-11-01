@@ -303,9 +303,6 @@
                        (dissoc arg2 key1))
                       (rest keys-of-arg1)))))))
 
-(defn deref-map [input]
-  input)
-
 (defn pathify
   "Transform a map into a map of paths/value pairs,
   where paths are lists of keywords, and values are atomic values.
