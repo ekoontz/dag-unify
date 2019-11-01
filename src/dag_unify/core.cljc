@@ -290,30 +290,26 @@
        :fail))))
 
 (defn merge-with-keys [arg1 arg2 keys-of-arg1]
-  (log/debug (str "here we go into merge-with-keys.."))
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
-    (let [key1 (first keys-of-arg1)
-          debug (log/debug (str "looking at key: " key1))
-          result (if (not (empty? keys-of-arg1))
-                   (unify! (key1 arg1 :top)
-                           (key1 arg2 :top)))]
-      (log/debug (str "merge-with-keys: key1: " key1 "; result: " result))
-      (cond
+    ;; if keys-of-arg1 is empty, then arg2 contains
+    ;; only keys that were *not* in arg1:
+    (if (empty? keys-of-arg1)
+      arg2
 
-        ;; if keys-of-arg1 is empty, then arg2 contains only keys that
-        ;; were *not* in arg1.
-        (empty? keys-of-arg1) arg2
-
-        (= :fail result) :fail
-
-        (and (ref? result)
-             (= :fail @result)) :fail
-
-        true (recur arg1
-                    (clojure.core/merge
-                     {key1 result}
-                     (dissoc arg2 key1))
-                    (rest keys-of-arg1))))))
+      (let [key1 (first keys-of-arg1)
+            result (unify! (key1 arg1 :top)
+                           (key1 arg2 :top))]
+        (cond
+          (= :fail result) :fail
+          
+          (and (ref? result)
+               (= :fail @result)) :fail
+          
+          true (recur arg1
+                      (clojure.core/merge
+                       {key1 result}
+                       (dissoc arg2 key1))
+                      (rest keys-of-arg1)))))))
 
 (defn deref-map [input]
   input)
