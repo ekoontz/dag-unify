@@ -24,104 +24,6 @@
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 
-(defn vec-contains?
-  "return true if e is in v, otherwise return false."
-  [v e]
-  (not (empty? (filter #(= e %) v))))
-
-(defn ref? [val]
-  #?(:clj
-     (= (type val) clojure.lang.Atom))
-  #?(:cljs
-     (= (type val) cljs.core.Atom)))
-
-(defn resolve
-  "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
-  [arg]
-  (if (ref? arg)
-    (resolve @arg)
-    arg))
-
-(defn simplify-ref
-  "if arg is a ref and @arg is not a ref, return arg. if @arg is also a ref, return (simplify-ref @arg). else, return arg."
-  [arg]
-  (if (ref? arg)
-    (if (not (ref? @arg))
-      arg
-      (simplify-ref @arg))
-    (exception (str "simplify-ref was passed a non-ref: " arg " of type: " (type arg)))))
-
-;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
-(defn get-in
-  "same as clojure.core (get-in), but references are resolved and followed."
-  [in-map path & [not-found]]
-  (let [result
-        (if (first path)
-          (let [result (get in-map (first path) not-found)]
-            (if (= result not-found) not-found
-                (get-in (resolve result) (rest path) not-found)))
-          in-map)]
-    (if (ref? val)
-      @result
-      result)))
-
-(defn exists? [the-map path]
-  (not (= :does-not-exist
-          (get-in the-map path :does-not-exist))))
-
-(declare fail?)
-
-(defn failr? [fs keys]
-  (and (not (empty? keys))
-       (or (fail? (get fs (first keys)))
-           (failr? fs (rest keys)))))
-
-;; TODO: use multi-methods.
-;; TODO: keep list of already-seen references to avoid
-;; cost of traversing substructures more than once.
-(defn fail?
-  "(fail? fs) <=> true if at least one of fs's path's value is :fail."
-  [fs]
-  (cond (= :fail fs) true
-        (seq? fs) false ;; a sequence is never fail.
-        (= fs :fail) true ;; :fail is always fail.
-
-        (and (map? fs) (fail? (get-in fs [:fail] :top))) true
-        (and (map? fs) (= true (get-in fs [:fail] :top))) true ;; note: :top != true, and (fail? {:fail :top}) => false.
-
-        (fn? fs) false ;; a function is never fail.
-
-        (ref? fs) (fail? @fs)
-
-        (not (map? fs)) false
-
-        :else
-        ;; otherwise, check recursively.
-        ;; TODO: rewrite using (recur)
-        (do
-          (cond
-            (= fs :fail) true
-            (map? fs)
-            (failr? fs (keys fs))
-            :else false))))
-
-(defn nonfail [maps]
-  (filter (fn [each-map]
-            (not (fail? each-map)))
-          maps))
-
-(defn fail-path-r
-  "find the first failing path in a fs."
-  [fs & [ fs-keys ] ]
-  (if (map? fs)
-    (let [fs-keys (if fs-keys fs-keys (keys fs))]
-      (if (not (empty? fs-keys))
-        (if (fail? (get-in fs (list (first fs-keys))))
-          (cons (first fs-keys) (fail-path-r (get-in fs (list (first fs-keys)))))
-          (fail-path-r fs (rest fs-keys)))))))
-
-(declare copy)
-
 ;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
 ;; either consider all args, or change signature of (unify) to take only val1 val2.
 ;; see also lexiconfn/unify (probably will change signature, but make lexiconfn/unify handle
@@ -134,8 +36,11 @@
 (declare copy)
 (declare merge)
 (declare merge-with-keys)
+(declare ref?)
 (declare simple-unify)
+(declare simplify-ref)
 (declare unify!)
+(declare vec-contains?)
 
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
@@ -283,6 +188,102 @@
      (do
        (log/debug (str "unify! else case."))
        :fail))))
+
+(defn vec-contains?
+  "return true if e is in v, otherwise return false."
+  [v e]
+  (not (empty? (filter #(= e %) v))))
+
+(defn ref? [val]
+  #?(:clj
+     (= (type val) clojure.lang.Atom))
+  #?(:cljs
+     (= (type val) cljs.core.Atom)))
+
+(defn resolve
+  "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
+  [arg]
+  (if (ref? arg)
+    (resolve @arg)
+    arg))
+
+(defn simplify-ref
+  "if arg is a ref and @arg is not a ref, return arg. if @arg is also a ref, return (simplify-ref @arg). else, return arg."
+  [arg]
+  (if (ref? arg)
+    (if (not (ref? @arg))
+      arg
+      (simplify-ref @arg))
+    (exception (str "simplify-ref was passed a non-ref: " arg " of type: " (type arg)))))
+
+;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
+(defn get-in
+  "same as clojure.core (get-in), but references are resolved and followed."
+  [in-map path & [not-found]]
+  (let [result
+        (if (first path)
+          (let [result (get in-map (first path) not-found)]
+            (if (= result not-found) not-found
+                (get-in (resolve result) (rest path) not-found)))
+          in-map)]
+    (if (ref? val)
+      @result
+      result)))
+
+(defn exists? [the-map path]
+  (not (= :does-not-exist
+          (get-in the-map path :does-not-exist))))
+
+(declare fail?)
+
+(defn failr? [fs keys]
+  (and (not (empty? keys))
+       (or (fail? (get fs (first keys)))
+           (failr? fs (rest keys)))))
+
+;; TODO: use multi-methods.
+;; TODO: keep list of already-seen references to avoid
+;; cost of traversing substructures more than once.
+(defn fail?
+  "(fail? fs) <=> true if at least one of fs's path's value is :fail."
+  [fs]
+  (cond (= :fail fs) true
+        (seq? fs) false ;; a sequence is never fail.
+        (= fs :fail) true ;; :fail is always fail.
+
+        (and (map? fs) (fail? (get-in fs [:fail] :top))) true
+        (and (map? fs) (= true (get-in fs [:fail] :top))) true ;; note: :top != true, and (fail? {:fail :top}) => false.
+
+        (fn? fs) false ;; a function is never fail.
+
+        (ref? fs) (fail? @fs)
+
+        (not (map? fs)) false
+
+        :else
+        ;; otherwise, check recursively.
+        ;; TODO: rewrite using (recur)
+        (do
+          (cond
+            (= fs :fail) true
+            (map? fs)
+            (failr? fs (keys fs))
+            :else false))))
+
+(defn nonfail [maps]
+  (filter (fn [each-map]
+            (not (fail? each-map)))
+          maps))
+
+(defn fail-path-r
+  "find the first failing path in a fs."
+  [fs & [ fs-keys ] ]
+  (if (map? fs)
+    (let [fs-keys (if fs-keys fs-keys (keys fs))]
+      (if (not (empty? fs-keys))
+        (if (fail? (get-in fs (list (first fs-keys))))
+          (cons (first fs-keys) (fail-path-r (get-in fs (list (first fs-keys)))))
+          (fail-path-r fs (rest fs-keys)))))))
 
 (defn merge-with-keys [arg1 arg2 keys-of-arg1]
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
