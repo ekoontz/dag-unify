@@ -27,11 +27,7 @@
 (defn vec-contains?
   "return true if e is in v, otherwise return false."
   [v e]
-  (if (empty? v)
-    false
-    (or
-     (= e (first v))
-     (vec-contains? (rest v) e))))
+  (not (empty? (filter #(= e %) v))))
 
 (defn ref? [val]
   #?(:clj
