@@ -230,10 +230,6 @@
       @result
       result)))
 
-(defn exists? [the-map path]
-  (not (= :does-not-exist
-          (get-in the-map path :does-not-exist))))
-
 (declare fail?)
 
 (defn failr? [fs keys]
