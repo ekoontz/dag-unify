@@ -364,17 +364,6 @@
 (defn label-of [parent]
   (if (:rule parent) (:rule parent) (:comment parent)))
 
-(defn ref= [map path1 path2]
-  "return true iff path1 and path2 point to the same object."
-  ;; TODO: add error checking.
-  (let [butlast-val1 (get-in map (butlast path1) :none)
-        butlast-val2 (get-in map (butlast path2) :none)]
-    (and
-     (not (= butlast-val1 :none))
-     (not (= butlast-val2 :none))
-     (= (get butlast-val1 (last path1) :none1)
-        (get butlast-val2 (last path2) :none2)))))
-
 (defn has-path [path paths]
   (if (first paths)
     (if (= (first paths) path)
