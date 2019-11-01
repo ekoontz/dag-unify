@@ -170,12 +170,11 @@
      ;;
      (and (map? val1)
           (map? val2))
-     (let [result (merge-with-keys
-                   (reduce dissoc val1 dag_unify.serialization/*exclude-keys*)
+     (let [val1 (reduce dissoc val1 dag_unify.serialization/*exclude-keys*)
+           result (merge-with-keys
+                   val1
                    (reduce dissoc val2 dag_unify.serialization/*exclude-keys*)
-                   (filter #(not (contains? dag_unify.serialization/*exclude-keys*
-                                            %)) ;; TODO: rather than filter, simply get keys from dissoc'ed val1 (above)
-                           (keys val1)))]
+                   (keys val1))]
        (log/debug (str "got here: map/map; result: " result))
        (if (empty? rest-args)
          result
