@@ -132,13 +132,6 @@
          (do (swap! val2
                     (fn [x] (unify! val1 @val2)))
              val2)))
-     
-     (= val1 '())
-     :fail
-     
-     (= val1 nil)
-     :fail
-     
      (and
       (ref? val1)
       (ref? val2))
