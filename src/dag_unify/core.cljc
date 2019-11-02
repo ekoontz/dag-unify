@@ -182,6 +182,28 @@
        (log/debug (str "unify! else case."))
        :fail))))
 
+(defn merge-with-keys [arg1 arg2 keys-of-arg1]
+  (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
+    ;; if keys-of-arg1 is empty, then arg2 contains
+    ;; only keys that were *not* in arg1:
+    (if (empty? keys-of-arg1)
+      arg2
+
+      (let [key1 (first keys-of-arg1)
+            result (unify! (key1 arg1 :top)
+                           (key1 arg2 :top))]
+        (cond
+          (= :fail result) :fail
+          
+          (and (ref? result)
+               (= :fail @result)) :fail
+          
+          true (recur arg1
+                      (clojure.core/merge
+                       {key1 result}
+                       (dissoc arg2 key1))
+                      (rest keys-of-arg1)))))))
+
 (defn vec-contains?
   "return true if e is in v, otherwise return false."
   [v e]
@@ -222,28 +244,6 @@
     (if (ref? val)
       @result
       result)))
-
-(defn merge-with-keys [arg1 arg2 keys-of-arg1]
-  (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
-    ;; if keys-of-arg1 is empty, then arg2 contains
-    ;; only keys that were *not* in arg1:
-    (if (empty? keys-of-arg1)
-      arg2
-
-      (let [key1 (first keys-of-arg1)
-            result (unify! (key1 arg1 :top)
-                           (key1 arg2 :top))]
-        (cond
-          (= :fail result) :fail
-          
-          (and (ref? result)
-               (= :fail @result)) :fail
-          
-          true (recur arg1
-                      (clojure.core/merge
-                       {key1 result}
-                       (dissoc arg2 key1))
-                      (rest keys-of-arg1)))))))
 
 (defn pathify
   "Transform a map into a map of paths/value pairs,
