@@ -9,7 +9,7 @@
   ;; e.g. {:fail :fail} rather than simply :fail,
   ;; and {:top :top} rather than simply :top.
 
-  (:refer-clojure :exclude [assoc-in exists? get-in merge resolve]) ;; TODO: don't override (merge)
+  (:refer-clojure :exclude [assoc-in get-in resolve]) ;; TODO: don't override (merge)
   (:require
    [clojure.pprint :as core-pprint]
    [clojure.repl :refer [doc]]
@@ -18,26 +18,12 @@
    [dag_unify.serialization :refer [all-refs create-path-in deserialize exception
                                     serialize]]))
 
-;; use map or pmap.
-#?(:clj (def ^:const mapfn map))
-#?(:cljs (def ^:const mapfn map))
-
 ;; TODO: consider making :fail and :top to be package-local keywords.
-
-;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
-;; either consider all args, or change signature of (unify) to take only val1 val2.
-;; see also lexiconfn/unify (probably will change signature, but make lexiconfn/unify handle
-;; have signature [& args] and pass to unify/unify with appropriate translation.
-;;
-;; TODO: support lazy sequences and vectors
-;;
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
 
 (declare copy)
-(declare merge)
 (declare merge-with-keys)
 (declare ref?)
-(declare simple-unify)
 (declare simplify-ref)
 (declare unify!)
 (declare vec-contains?)
@@ -56,6 +42,11 @@
           (assoc result :dag_unify.serialization/serialized (serialize result))
           true result)))
 
+;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
+;; either consider all args, or change signature of (unify) to take only val1 val2.
+;; see also lexiconfn/unify (probably will change signature, but make lexiconfn/unify handle
+;; have signature [& args] and pass to unify/unify with appropriate translation.
+;;
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, so that 
    sharing relationship in the arguments is preserved in the result"
@@ -65,17 +56,33 @@
   ([val1 val2 & rest-args]
    (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
    (cond
-     ;; This is the canonical unification case: unifying two DAGs
-     ;; (maps with possible references within them).
-     ;;
      (and (map? val1)
           (map? val2))
-     (let [val1 (reduce dissoc val1 dag_unify.serialization/*exclude-keys*)
-           result (merge-with-keys
-                   val1
-                   (reduce dissoc val2 dag_unify.serialization/*exclude-keys*)
-                   (keys val1))]
-       (log/debug (str "got here: map/map; result: " result))
+     ;; This is the canonical unification case: unifying two DAGs
+     ;; (maps with possible references within them).
+     (let [arg1 (reduce dissoc val1 dag_unify.serialization/*exclude-keys*)
+           arg2 (reduce dissoc val2 dag_unify.serialization/*exclude-keys*)
+           result
+           (loop [arg1 arg1 arg2 arg2 keys-of-arg1 (keys arg1)]
+             ;; if keys-of-arg1 is empty, then arg2 contains
+             ;; only keys that were *not* in arg1:
+             (if (empty? keys-of-arg1)
+               arg2
+
+               (let [key1 (first keys-of-arg1)
+                     result (unify! (key1 arg1 :top)
+                                    (key1 arg2 :top))]
+                 (cond
+                   (= :fail result) :fail
+                   
+                   (and (ref? result)
+                        (= :fail @result)) :fail
+                   
+                   true (recur arg1
+                               (merge
+                                {key1 result}
+                                (dissoc arg2 key1))
+                               (rest keys-of-arg1))))))]
        (if (empty? rest-args)
          result
          (unify! result
@@ -181,28 +188,6 @@
      (do
        (log/debug (str "unify! else case."))
        :fail))))
-
-(defn merge-with-keys [arg1 arg2 keys-of-arg1]
-  (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
-    ;; if keys-of-arg1 is empty, then arg2 contains
-    ;; only keys that were *not* in arg1:
-    (if (empty? keys-of-arg1)
-      arg2
-
-      (let [key1 (first keys-of-arg1)
-            result (unify! (key1 arg1 :top)
-                           (key1 arg2 :top))]
-        (cond
-          (= :fail result) :fail
-          
-          (and (ref? result)
-               (= :fail @result)) :fail
-          
-          true (recur arg1
-                      (clojure.core/merge
-                       {key1 result}
-                       (dissoc arg2 key1))
-                      (rest keys-of-arg1)))))))
 
 (defn vec-contains?
   "return true if e is in v, otherwise return false."
