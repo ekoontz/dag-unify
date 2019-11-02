@@ -223,9 +223,6 @@
       @result
       result)))
 
-(defn fail? [arg]
-  (= :fail arg))
-
 (defn merge-with-keys [arg1 arg2 keys-of-arg1]
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
     ;; if keys-of-arg1 is empty, then arg2 contains
@@ -333,30 +330,8 @@
     :else
     map-with-refs))
 
-(defn isomorphic? [a b]
-  (cond (and (map? a)
-             (map? b)
-             (empty? a)
-             (empty? b))
-        true  ;; two empty maps are equal
-        (and (map? a)
-             (map? b)
-             (or (empty? a)
-                 (empty? b)))
-        false ;; two maps whose key cardinality (different number of keys) is different are not equal.
-        (and (map? a)
-             (map? b))
-        (let [a (dissoc a :dag_unify.serialization/serialized)
-              b (dissoc b :dag_unify.serialization/serialized)]
-          (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
-                            (get b (first (keys a))))
-               (isomorphic? (dissoc a (first (keys a)))
-                            (dissoc b (first (keys a))))))
-        (and (ref? a)
-             (ref? b))
-        (isomorphic? @a @b)
-        true
-        (= a b)))
+(defn fail? [arg]
+  (= :fail arg))
 
 ;; TODO: use a reduce or recur here rather
 ;; than simply recursion
@@ -371,17 +346,12 @@
          :val2 (strip-refs val2)}
         (find-fail-in fs1 fs2 (rest paths))))))
 
-(defn fail-path-between
-  "If unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil. Not efficient: use only for diagnostics."
-  [fs1 fs2]
-  (let [paths-in-fs1 (map #(first (first %)) (pathify fs1))
-        paths-in-fs2 (map #(first (first %)) (pathify fs2))]
-    (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
-
 ;; shorter alternative to the above.
 (defn fail-path [fs1 fs2]
   "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
-  (fail-path-between fs1 fs2))
+  (let [paths-in-fs1 (map #(first (first %)) (pathify fs1))
+        paths-in-fs2 (map #(first (first %)) (pathify fs2))]
+    (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
 
 (defn pprint [input]
   (cond

@@ -3,15 +3,11 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [clojure.string :as string]
             [dag_unify.core :as u
-             :refer [assoc-in copy
-                     fail? get-in isomorphic?
-                     unify unify!]]
+             :refer [assoc-in copy fail? get-in unify unify!]]
             [dag_unify.serialization
              :refer [all-refs create-path-in deserialize find-paths-to-value serialize
                      skeletize ref? ref-skel-map skels]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
-
-;; TODO: add more tests for (dag_unify.core/isomorphic?)
 
 (deftest simple-unify-test
   (let [result (unify! {:foo 99} {:bar 42})]
@@ -256,18 +252,6 @@ a given value in a given map."
   ;; ...should return :fail.
   (is (fail?
        (unify! '() {:foo 42}))))
-
-(deftest isomorphic-true1
-  (is (= true (u/isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43 :c 44}))))
-
-(deftest isomorphic-false1
-  (is (= false (u/isomorphic? {:a 42 :b 43 :c 45} {:a 42 :b 43 :c 44}))))
-
-(deftest isomorphic-false2
-  (is (= false (u/isomorphic? {:a 42 :b 43} {:a 42 :b 43 :c 44}))))
-
-(deftest isomorphic-false3
-  (is (= false (u/isomorphic? {:a 42 :b 43 :c 44} {:a 42 :b 43}))))
 
 (deftest unify-with-string3
   (let [arg1 {:italiano "gatto"}

@@ -5,6 +5,31 @@
             [dag_unify.dissoc :as d]
             [dag_unify.serialization :as s]))
 
+(defn isomorphic? [a b]
+  (cond (and (map? a)
+             (map? b)
+             (empty? a)
+             (empty? b))
+        true  ;; two empty maps are equal
+        (and (map? a)
+             (map? b)
+             (or (empty? a)
+                 (empty? b)))
+        false ;; two maps whose key cardinality (different number of keys) is different are not equal.
+        (and (map? a)
+             (map? b))
+        (let [a (dissoc a :dag_unify.serialization/serialized)
+              b (dissoc b :dag_unify.serialization/serialized)]
+          (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
+                            (get b (first (keys a))))
+               (isomorphic? (dissoc a (first (keys a)))
+                            (dissoc b (first (keys a))))))
+        (and (u/ref? a)
+             (u/ref? b))
+        (isomorphic? @a @b)
+        true
+        (= a b)))
+
 (def truncate-this
   ;;
   ;; {:a {:c {:e [1] {:g 42}
@@ -27,13 +52,13 @@
                    :b shared})
         dissociated
         (d/dissoc-in test-fs [:a :c])]
-    (is (u/isomorphic? dissociated
+    (is (isomorphic? dissociated
                      (let [shared (atom :top)]
                        {:a shared
                         :b shared})))))
 
 (deftest dissoc-test-1
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [:a :c :e :g])
        (s/deserialize
         [[nil
@@ -42,23 +67,23 @@
                :d 44}}]
          [[[:a :c :e] [:b]]
           :top]])))
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [:a :c :e])
        (s/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [:a :c])
        (s/deserialize
         [[nil
           {:a {:d 44}}]])))
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [:a])
        (s/deserialize
         [[nil
           :top]])))
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [])
        (s/deserialize
         [[nil
@@ -92,7 +117,7 @@
      {:i 42}]]))
 
 (deftest dissoc-test-2
-  (is (u/isomorphic? 
+  (is (isomorphic? 
        (d/dissoc-in truncate-this-2 [:a :c :e :g])
        (s/deserialize
         [[nil
@@ -104,23 +129,23 @@
          [[[:a :c :e] [:b]]
           :top]])))
 
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [:a :c :e])
        (s/deserialize
         [[nil
           {:a {:c {:f 43}
                :d 44}}]])))
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [:a :c])
        (s/deserialize
         [[nil
           {:a {:d 44}}]])))
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [:a])
        (s/deserialize
         [[nil
           :top]])))
-  (is (u/isomorphic?
+  (is (isomorphic?
        (d/dissoc-in truncate-this [])
        (s/deserialize
         [[nil
@@ -172,7 +197,7 @@
       :n))))
 
 (deftest dissoc-test-3
-  (is (u/isomorphic?
+  (is (isomorphic?
        (binding [d/remove-path? (fn [path]
                                   (or
                                    (d/prefix? [:head] path)
