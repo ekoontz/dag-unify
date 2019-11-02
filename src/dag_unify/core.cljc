@@ -80,8 +80,8 @@
                    
                    true (recur arg1
                                (merge
-                                {key1 result}
-                                (dissoc arg2 key1))
+                                arg2
+                                {key1 result})
                                (rest keys-of-arg1))))))]
        (if (empty? rest-args)
          result
