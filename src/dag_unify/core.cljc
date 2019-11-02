@@ -48,8 +48,8 @@
 ;; have signature [& args] and pass to unify/unify with appropriate translation.
 ;;
 (defn unify!
-  "destructively merge arguments, where arguments are maps possibly containing references, so that 
-   sharing relationship in the arguments is preserved in the result"
+  "destructively merge arguments, where arguments are maps possibly containing references, 
+   so that sharing relationship in the arguments is preserved in the result"
   ([val1]
    val1)
 
@@ -92,18 +92,11 @@
          (= val2 :fail))
      :fail
      
-     (and (= val1 :top)
-          (empty? rest-args))
-     val2
-     
      (= val1 :top)
      (apply unify! (cons val2 rest-args))
      
-     (and (= val2 :top)
-          (not (empty? rest-args)))
+     (= val2 :top)
      (apply unify! (cons val1 rest-args))
-     
-     (= val2 :top) val1
      
      ;; expensive if val1 and val2 are not atomic values: the above
      ;; checks should ensure that by now val1 and val2 are atomic.
