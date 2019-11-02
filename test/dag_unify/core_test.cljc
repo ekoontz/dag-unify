@@ -3,7 +3,7 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [clojure.string :as string]
             [dag_unify.core :as u
-             :refer [assoc-in copy create-shared-values
+             :refer [assoc-in copy
                      fail? get-in isomorphic?
                      unify unify!]]
             [dag_unify.serialization
@@ -126,23 +126,6 @@
     (is (ref? (:b result)))
     (is (= (:a result) (:b result)))
     (is (= @(:a result) 42))))
-
-(deftest detect-unify-fail
-  "test that, (fail? fs) <=> true if at least one of fs's path's value is :fail."
-  (let [fs1 {:a 42}
-        fs2 {:a :fail}]
-    (is (= (fail? fs1) false))
-    (is (= (fail? fs2) true))
-    (is (= (fail? {:a (atom :fail)}) true))
-    (is (= (fail? {:a (atom 42)}) false)))
-  (is (= (fail? {:a (atom {:b :fail})}) true)))
-
-
-                                        ;(deftest pathify-no-references
-                                        ;  "a simple test of pathify with no structure-sharing."
-                                        ;  (let [mymap {:a {:c 42}, :b {:c 42}, :c 42}
-                                        ;        pathify (pathify mymap)]
-                                        ;    (is (= pathify '((:a :c) 42 (:b :c) 42 (:c) 42)))))
 
 (deftest find-paths-to-values-1
   "test path-to-value, which returns a list of all ways of reaching

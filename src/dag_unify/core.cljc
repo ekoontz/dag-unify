@@ -223,56 +223,8 @@
       @result
       result)))
 
-(declare fail?)
-
-(defn failr? [fs keys]
-  (and (not (empty? keys))
-       (or (fail? (get fs (first keys)))
-           (failr? fs (rest keys)))))
-
-;; TODO: use multi-methods.
-;; TODO: keep list of already-seen references to avoid
-;; cost of traversing substructures more than once.
-(defn fail?
-  "(fail? fs) <=> true if at least one of fs's path's value is :fail."
-  [fs]
-  (cond (= :fail fs) true
-        (seq? fs) false ;; a sequence is never fail.
-        (= fs :fail) true ;; :fail is always fail.
-
-        (and (map? fs) (fail? (get-in fs [:fail] :top))) true
-        (and (map? fs) (= true (get-in fs [:fail] :top))) true ;; note: :top != true, and (fail? {:fail :top}) => false.
-
-        (fn? fs) false ;; a function is never fail.
-
-        (ref? fs) (fail? @fs)
-
-        (not (map? fs)) false
-
-        :else
-        ;; otherwise, check recursively.
-        ;; TODO: rewrite using (recur)
-        (do
-          (cond
-            (= fs :fail) true
-            (map? fs)
-            (failr? fs (keys fs))
-            :else false))))
-
-(defn nonfail [maps]
-  (filter (fn [each-map]
-            (not (fail? each-map)))
-          maps))
-
-(defn fail-path-r
-  "find the first failing path in a fs."
-  [fs & [ fs-keys ] ]
-  (if (map? fs)
-    (let [fs-keys (if fs-keys fs-keys (keys fs))]
-      (if (not (empty? fs-keys))
-        (if (fail? (get-in fs (list (first fs-keys))))
-          (cons (first fs-keys) (fail-path-r (get-in fs (list (first fs-keys)))))
-          (fail-path-r fs (rest fs-keys)))))))
+(defn fail? [arg]
+  (= :fail arg))
 
 (defn merge-with-keys [arg1 arg2 keys-of-arg1]
   (loop [arg1 arg1 arg2 arg2 keys-of-arg1 keys-of-arg1]
@@ -317,13 +269,6 @@
                       (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
                           val)}])))))
           fs))
-
-(defn create-shared-values [serialized]
-  (mapfn (fn [paths-vals]
-           (let [val (second paths-vals)]
-             ;; TODO: why/why not do copy val rather than just val(?)
-             (atom val)))
-         serialized))
 
 (defn assoc-in
   "Similar to clojure.core/assoc-in, but uses unification so that existing values are unified rather than overwritten."

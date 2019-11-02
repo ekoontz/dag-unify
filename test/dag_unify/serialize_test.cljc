@@ -97,30 +97,6 @@
     (not (nil? serialized))
     (= (count serialized) 4)))
 
-(deftest create-shared-values-1
-  (let [ref2 (atom 42)
-        ref1 (atom {:c ref2})
-        mymap {:a ref1, :b ref1 :d ref2}
-        my-ser (s/serialize mymap)
-        create-shared-vals (u/create-shared-values my-ser)
-        are-refs? (map (fn [val]
-                         (s/ref? val))
-                       create-shared-vals)
-        derefs (map (fn [val]
-                      @val)
-                    create-shared-vals)]
-    (is (= (first derefs)
-           {:d :top
-            :b :top
-            :a :top}))
-    (is (= (second derefs)
-           {:c :top}))
-
-    (is (= (nth derefs 2)
-           42))
-    
-    (is (= are-refs? (list true true true)))))
-
 (deftest create-path-in-1
   (let [path '(:a :b :c :d :e)
         val 43
