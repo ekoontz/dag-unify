@@ -74,10 +74,10 @@
                                     (key1 arg2 :top))]
                  (cond
                    (= :fail result) :fail
-                   
+
                    (and (ref? result)
                         (= :fail @result)) :fail
-                   
+
                    true (recur arg1
                                (merge
                                 arg2
