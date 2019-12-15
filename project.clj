@@ -6,4 +6,4 @@
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [log4j/log4j "1.2.17"]
                  [org.clojure/tools.logging "0.5.0"]
-                 [cljslog "0.1.0-SNAPSHOT"]])
+                 [cljslog "0.1.0"]])
