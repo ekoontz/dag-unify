@@ -14,7 +14,8 @@
    [clojure.pprint :as core-pprint]
    [clojure.repl :refer [doc]]
    [clojure.string :refer [join]]
-   [clojure.tools.logging :as log]
+   #?(:clj [clojure.tools.logging :as log])
+   #?(:cljs [dag_unify.logjs :as log])
    [dag_unify.serialization :refer [all-refs create-path-in deserialize exception
                                     serialize]]))
 
@@ -191,7 +192,7 @@
   #?(:clj
      (= (type val) clojure.lang.Atom))
   #?(:cljs
-     (= (type val) cljs.core.Atom)))
+     (= (type val) cljs.core/Atom)))
 
 (defn resolve
   "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
