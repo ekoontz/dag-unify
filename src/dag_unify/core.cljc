@@ -15,7 +15,7 @@
    [clojure.repl :refer [doc]]
    [clojure.string :refer [join]]
    #?(:clj [clojure.tools.logging :as log])
-   #?(:cljs [dag_unify.logjs :as log])
+   #?(:cljs [cljslog.core :as log])
    [dag_unify.serialization :refer [all-refs create-path-in deserialize exception
                                     serialize]]))
 
