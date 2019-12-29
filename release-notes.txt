@@ -1,2 +1,3 @@
 1.5.3 +(defn dag_unify.core/pprint), +release-notes.txt
-1.7.3 clojure support
+1.7.3 Clojurescript support
+1.7.4 Use vectors rather than sequences in serialized representations to ease Clojurescript's use of Clojure macros.
