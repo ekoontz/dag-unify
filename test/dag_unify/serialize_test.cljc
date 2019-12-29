@@ -53,11 +53,7 @@
         mymap {:a ref1, :b ref1}
         ser (s/serialize mymap)]
     (is (= ser
-
-           '((nil {:b :top :a :top})
-
-             ;; TODO: could be '((:b)(:a))
-             (((:a)(:b)) 42))))))
+           [[[] {:a :top, :b :top}] [[[:a] [:b]] 42]]))))
 
 (deftest serialize-2
   (let [ref2 (atom 42)
@@ -65,14 +61,9 @@
         mymap {:a ref1, :b ref1 :d ref2}
         ser (s/serialize mymap)]
     (is (= ser
-
-           '((nil {:d :top, :b :top, :a :top})
-
-             ;; TODO: could be '((:b)(:a))
-             (((:a) (:b)) {:c :top})
-
-             ;; TODO: could be '((:b :c)(:a c)..etc
-             (((:a :c) (:b :c) (:d)) 42))))))
+           [[[] {:a :top, :b :top, :d :top}]
+            [[[:a] [:b]] {:c :top}]
+            [[[:a :c] [:b :c] [:d]] 42]]))))
 
 (deftest serialize-3
   (let [mymap {:a 42 :b (atom 43)}]

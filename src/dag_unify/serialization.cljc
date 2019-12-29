@@ -140,9 +140,9 @@
       ;; the entire input, which is why its pathset is nil.
       ;;
       ;; Turn resulting map into a sequence of key->value pairs:
-      (map (fn [[paths skel]]
-             [paths skel])
-           (ser-intermed input-map)))))
+      (vec (map (fn [[paths skel]]
+                  [(vec (map vec paths)) skel])
+                (ser-intermed input-map))))))
 
 (defn create-path-in
   "create a path starting at map through all keys in map:
