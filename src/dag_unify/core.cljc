@@ -111,8 +111,8 @@
        (log/debug (str "case 1."))
        (cond
          (vec-contains? (vec (all-refs val2)) val1)
-         (throw (Exception. (str "containment failure: "
-                                 " val2: " val2 "'s references contain val1: " val1)))
+         (exception (str "containment failure: "
+                         " val2: " val2 "'s references contain val1: " val1))
          
          true
          (do (swap! val1
@@ -127,8 +127,8 @@
        (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
        (cond
          (vec-contains? (vec (all-refs val1)) val2)
-         (throw (Exception. (str "containment failure: "
-                                 " val1: " val1 "'s references contain val2: " val2)))
+         (exception (str "containment failure: "
+                         " val1: " val1 "'s references contain val2: " val2))
          true
          (do (swap! val2
                     (fn [x] (unify! val1 @val2)))
@@ -145,8 +145,8 @@
          
          (or (vec-contains? (vec (all-refs @val1)) val2)
              (vec-contains? (vec (all-refs @val2)) val1))
-         (throw (Exception. (str "containment failure: "
-                                 " val1: " val1 "'s references contain val2: " val2)))
+         (exception (str "containment failure: "
+                         " val1: " val1 "'s references contain val2: " val2))
          
          (= @val1 val2) ;; val1 -> val2
          val2
