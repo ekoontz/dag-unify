@@ -3,7 +3,7 @@
 [![Build Status](https://secure.travis-ci.org/ekoontz/dag-unify.png?branch=master)](http://travis-ci.org/ekoontz/dag-unify)
 
 # dag-unify
-
+n
 A Clojure library for combining directed acyclic graphs
 ([DAGs](https://en.wikipedia.org/wiki/Directed_acyclic_graph)) via
 unification. Unification is similar to merge
@@ -243,3 +243,7 @@ your option) any later version.
 A similar library written in Python for the the Natural Language Toolkit (NLTK).
 
 - https://en.wikipedia.org/wiki/Feature_structure
+
+## See also:
+
+- [release-notes.txt](release-notes.txt)
