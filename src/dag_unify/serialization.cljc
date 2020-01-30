@@ -1,5 +1,8 @@
 (ns dag_unify.serialization
-  (:refer-clojure :exclude [merge])) ;; TODO: don't override (merge)
+  (:refer-clojure :exclude [merge]) ;; TODO: don't override (merge)
+  (:require
+   #?(:clj [clojure.tools.logging :as log])
+   #?(:cljs [cljslog.core :as log])))
 
 (def ^:dynamic *exclude-keys* (set #{::serialized}))
 
@@ -112,7 +115,14 @@
       (vals rsk)
       sk))))
 
-(defn serialize [input-map]
+(defn serialize
+  "Turns a DAG into a serialized representation, which can be again
+  deserialized by (deserialize) (below).  Returns a list of pairs that
+  look like: <pathset,value>. The first element of the list has an
+  empty pathset, and the value is the 'skeleton' of the entire tree.
+  For the rest of the elements in the list, each element contains
+  a list of paths, and a common value, which all paths share."
+  [input-map]
   (let [memoized (get input-map ::serialized :none)]
     (if (not (= memoized :none))
       memoized
@@ -128,20 +138,18 @@
       ;;
       ;;   pathset    |  value
       ;; -------------+---------
+      ;;   []         => skeleton
       ;;   pathset1   => value1
       ;;   pathset2   => value2
       ;;      ..         ..
-      ;;   nil        => outermost_map
       ;;
       ;; Each pathset is a set of paths to a shared value, the value
       ;; shared by all paths in that pathset.
       ;;
-      ;; The last row shown is for the outermost_map that represents
-      ;; the entire input, which is why its pathset is nil.
-      ;;
-      ;; Turn resulting map into a sequence of key->value pairs:
-      (vec (map (fn [[paths skel]]
-                  [(vec (map vec paths)) skel])
+      ;; Convert all the paths to vectors; might be possible to remove this
+      ;; conversion.
+      (vec (map (fn [[paths val]]
+                  [(vec (map vec paths)) val])
                 (ser-intermed input-map))))))
 
 (defn create-path-in
