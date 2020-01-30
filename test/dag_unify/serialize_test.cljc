@@ -96,7 +96,7 @@
 
 (deftest deser-with-ref
   (let [serialized [[nil {:a "PH"}] [[["a"]] 42]]
-        deserialized (s/deserialize serialized)]
+        deserialized (s/deserialize serialized true)]
     (is (not (nil? deserialized)))
     (is (= (s/ref? (:a deserialized))))
     (is (= @(:a deserialized) 42))))
