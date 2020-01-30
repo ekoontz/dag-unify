@@ -167,20 +167,34 @@
 ;;
 ;; Note that (deserialize) should be able to cope with
 ;; both lists and arrays (i.e. just assume a sequence).
-(defn deserialize [serialized]
-  (let [base (second (first serialized))]
+(defn deserialize
+  "Turns a serialized representation, as returned by (serialize),
+  above, back into a DAG. _serialized_ is a list of pairs that look
+  like: <pathset,value>. The first element of the list has an empty
+  pathset, and the value is the 'skeleton' of the entire tree.  For
+  the rest of the elements in the list, an atom is created for the
+  common value, and each path in the pathset points to that atom, and
+  this result is then merged with the skeleton.  If
+  always-create-atom? is true, (deserialize) will not create an atom
+  for a value where there is only path pointing to it, as an
+  optimization, since it saves time and space when copying or unifying."
+  [serialized & [always-create-atom?]]
+  (let [skeleton (second (first serialized))]
     (apply merge
-           (let [all
-                 (cons base
-                       (flatten
-                        (map (fn [paths-val]
-                               (let [paths (first paths-val)
-                                     val (atom (second paths-val))]
-                                 (map (fn [path]
-                                        (create-path-in path val))
-                                      paths)))
-                             (rest serialized))))]
-             all))))
+           (cons skeleton
+                 (flatten
+                  (map (fn [paths-val]
+                         (let [paths (first paths-val)
+                               val
+                               (if (or (> (count paths) 1) always-create-atom?)
+                                 (atom (second paths-val))
+                                 (do
+                                   (log/debug (str "no need to create an atom: only one path: " (first paths)))
+                                   (second paths-val)))]
+                           (map (fn [path]
+                                  (create-path-in path val))
+                                paths)))
+                       (rest serialized)))))))
 
 ;; TODO: get rid of this; too much redundancy with (dag_unify.core/unify!)
 (defn- merge
@@ -258,4 +272,3 @@
 
      :else ;override with remainder of arguments, like core/merge.
      (apply merge (rest args)))))
-
