@@ -115,6 +115,20 @@
       (vals rsk)
       sk))))
 
+(defn merge-skeleton
+  "For all shared values with only a single path leading to it, the corresponding
+   value is merged with the base 'skeleton', and that path-value pair is removed from the
+   serialized representation."
+  [si]
+  (let [skel (-> si first rest first)]
+    (clojure.core/merge
+     si
+     {nil
+      (reduce merge
+              (cons skel (->> (-> si rest)
+                              (filter (fn [[paths val]] (= (count paths) 1)))
+                              (map (fn [[paths val]] (assoc-in {} (first paths) val))))))})))
+
 (defn serialize
   "Turns a DAG into a serialized representation, which can be again
   deserialized by (deserialize) (below).  Returns a list of pairs that
@@ -148,9 +162,16 @@
       ;;
       ;; Convert all the paths to vectors; might be possible to remove this
       ;; conversion.
-      (vec (map (fn [[paths val]]
-                  [(vec (map vec paths)) val])
-                (ser-intermed input-map))))))
+      (->
+       (->> (-> (ser-intermed input-map)
+                (dissoc [nil])
+                merge-skeleton)
+            (filter (fn [[paths val]]
+                      (or (empty? paths) false
+                          (> (count paths) 1))))
+            (map (fn [[paths val]]
+                   [(vec (map vec paths)) val])))
+       vec))))
 
 (defn create-path-in
   "create a path starting at map through all keys in map:
