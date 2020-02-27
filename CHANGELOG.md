@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.7.7] - 2020-02-27
+
+### Added
+
+- (defn serialization/merge-skeleton): used during serialization to reduce size of serialized representation
+and number of atoms in unserialized representation.
+
 ## [1.7.1] - 2019-11-1
 
 ### Changed
