@@ -55,7 +55,7 @@
                        @val
                        ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
                        val))
-                 (vals input)))))
+                 (vec (set (vals input)))))))
 
 (defn find-paths-to-value
   "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
