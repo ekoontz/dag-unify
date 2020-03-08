@@ -101,8 +101,8 @@
           refs)
 
      ;; list of all paths that point to each ref in _input-map_.
-     (map (fn [eachref]
-            (find-paths-to-value input-map eachref nil))
+     (map (fn [ref]
+            (find-paths-to-value input-map ref nil))
           refs))))
 
 (defn ser-intermed [input-map]
