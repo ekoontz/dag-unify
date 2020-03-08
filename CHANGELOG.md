@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.7.9] - 2020-03-08
+
+### Changed
+
+- Improve performance of serialization functions by duduplicating the set of references of the input structure.
+
 ## [1.7.8] - 2020-03-08
 
 ### Changed
