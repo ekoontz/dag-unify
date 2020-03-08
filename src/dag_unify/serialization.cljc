@@ -1,6 +1,7 @@
 (ns dag_unify.serialization
   (:refer-clojure :exclude [merge]) ;; TODO: don't override (merge)
   (:require
+   [clojure.set :as set :refer [union]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])))
 
@@ -62,23 +63,62 @@
   [input value path]
   (cond
     (ref? input)
-    (cond (= input value) [path] ;; found the value that we were looking for.
-          true
-          ;; did not find the value, so keep looking within this value.
-          (find-paths-to-value @input value path))
+    (cond
+
+      ;; found the value that we were looking for.
+      (= input value)
+      [path]
+
+      true
+      ;; did not find the value, so keep looking within this value.
+      (find-paths-to-value @input value path))
+
     (map? input)
-    (apply concat
-           (map (fn [key]
-                  (find-paths-to-value
-                   (get input key)
-                   value
-                   (concat path [key])))
-                (keys input)))))
+    (reduce concat
+            (map (fn [key]
+                   (find-paths-to-value
+                    (get input key)
+                    value
+                    (concat path [key])))
+                 (keys input)))))
+
+(defn find-paths-to-refs
+  "find all paths in _map_ which point to any ref."
+  [input path retval]
+  (cond
+    (ref? input)
+    (find-paths-to-refs
+     @input
+     path
+     (assoc retval input (union (set [path])
+                                (get retval input #{}))))
+
+    (map? input)
+    (reduce (fn [a b] (merge-with union a b))
+            (map (fn [key]
+                   (find-paths-to-refs
+                    (get input key)
+                    (concat path [key])
+                    retval))
+                 (keys input)))
+
+    true
+    retval))
+
+(defn serialize2 [input]
+  (let [fptr (find-paths-to-refs input [] {})]
+    (cons
+     [[]
+      (skeletize input)]
+     (map (fn [ref]
+            [(vec (map vec (get fptr ref)))
+             (skeletize @ref)])
+          (keys fptr)))))
 
 (defn skels
   "create map from reference to their skeletons."
   [input-map refs]
-  (let [refs (all-refs input-map)]
+  (let [refs (keys (find-paths-to-refs input-map [] {}))]
     (zipmap
      refs
      (map (fn [ref]
