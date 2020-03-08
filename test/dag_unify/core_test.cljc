@@ -6,7 +6,7 @@
              :refer [assoc-in copy fail? get-in unify unify!]]
             [dag_unify.serialization
              :refer [all-refs create-path-in deserialize find-paths-to-value serialize
-                     skeletize ref? ref-skel-map skels]])
+                     skeletize ref?]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 (deftest simple-unify-test
@@ -419,7 +419,7 @@ a given value in a given map."
         result2 (unify b a)]
     (is (not (fail? result1)))
     (is (not (fail? result2)))
-    (is (= true (ref? result1)))
-    (is (= true (ref? result2)))
-    (is (empty? @result1))
-    (is (empty? @result2))))
+    (is (= false (ref? result1)))
+    (is (= false (ref? result2)))
+    (is (empty? result1))
+    (is (empty? result2))))

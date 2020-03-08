@@ -16,54 +16,23 @@
                          u/unify
                          (take 50 (repeatedly (fn [] (s/deserialize serialized)))))))))))
 
-(defn ser-db [input-map]
-  (let [refs (s/all-refs input-map)
-        skels (s/skels input-map refs)]
-    (s/ref-skel-map input-map)))
-
-(deftest ser-db-1
-  (let [ref1 (atom 42)
-        mymap {:a ref1, :b ref1}
-        ser (ser-db mymap)]
-    (is (= ser
-           {
-            {:ref ref1
-             :skel 42} '((:a)(:b))}))))
-
-;; TODO: this test is unnecessarily strict: see below for specifics
-(deftest ser-db-2
-  (let [ref2 (atom 42)
-        ref1 (atom {:c ref2})
-        mymap {:a ref1 :b ref1 :d ref2}
-        ser (ser-db mymap)]
-    (is (=
-         ser
-         {
-          {;; TODO: could also be '((:b)(:a)).
-           :ref ref1
-           :skel {:c :top}} '((:a)(:b))
-          {;; TODO: could also be '((:b :c)(:a :c)(:d))
-           ;; (or other possible orderings).
-           :ref ref2
-           :skel 42} '((:a :c)(:b :c)(:d))}))))
-          
-
 (deftest serialize-1
   (let [ref1 (atom 42)
         mymap {:a ref1, :b ref1}
         ser (s/serialize mymap)]
     (is (= ser
-           [[[] {:a :top, :b :top}] [[[:a] [:b]] 42]]))))
+           '([[] {:a :top, :b :top}] [[[:b] [:a]] 42])))))
 
 (deftest serialize-2
   (let [ref2 (atom 42)
         ref1 (atom {:c ref2})
         mymap {:a ref1, :b ref1 :d ref2}
         ser (s/serialize mymap)]
-    (is (= ser
-           [[[] {:a :top, :b :top, :d :top}]
-            [[[:a] [:b]] {:c :top}]
-            [[[:a :c] [:b :c] [:d]] 42]]))))
+    (is
+     (= ser
+        '([[] {:a :top, :b :top, :d :top}]
+          [[[:b] [:a]] {:c :top}]
+          [[[:a :c] [:d] [:b :c]] 42])))))
 
 (deftest serialize-3
   (let [mymap {:a 42 :b (atom 43)}]
@@ -93,13 +62,6 @@
         val 43
         result (s/create-path-in path val)]
     (is (= (u/get-in result path) val))))
-
-(deftest deser-with-ref
-  (let [serialized [[nil {:a "PH"}] [[["a"]] 42]]
-        deserialized (s/deserialize serialized true)]
-    (is (not (nil? deserialized)))
-    (is (= (s/ref? (:a deserialized))))
-    (is (= @(:a deserialized) 42))))
 
 ;; deserialize a map's serialized form
 (deftest deser-1
@@ -151,3 +113,15 @@
         
     (not (nil? vp))
     (not (nil? myser))))
+
+(def graph-with-ref-to-ref
+  (let [ref1 (atom 42)
+        ref2 (atom ref1)]
+    {:a ref1
+     :b ref2
+     :c ref2}))
+
+(deftest serialize-5
+  (is (= (count (s/serialize graph-with-ref-to-ref))
+         2)))
+

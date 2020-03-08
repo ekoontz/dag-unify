@@ -259,12 +259,31 @@
   (unify! m
           (create-path-in path v)))
 
+(declare isomorphic?)
+
+(def ^:dynamic use-new-serializer? true)
+(def ^:dynamic log-serializing? false)
+
+(defn normalize-serialized2 [s]
+  (cond (keyword? s) s
+        (not (empty? s))
+        (let [[paths skel] (first s)]
+          (cons
+           [(if (nil? paths) [] paths) skel]
+           (normalize-serialized2 (rest s))))))
+
 (defn copy [input]
-  (let [serialized (serialize input)
+  (let [serialized (if use-new-serializer? (serialize input) (serialize input))
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
           (deserialize serialized))]
+    (if log-serializing?
+      (log/info (str "copy(" use-new-serializer? ") serialized: "
+                      (if (seq? serialized)
+                        (vec serialized)
+                        serialized))))
+    (if use-new-serializer? (log/debug (str "USING NEW SERIALIZER!")))
     (cond
       (= serialized :dag_unify.serialization/no-sharing)
       deserialized
@@ -274,12 +293,15 @@
       deserialized
 
       (empty? (rest serialized))
-      (assoc deserialized :dag_unify.serialization/serialized :dag_unify.serialization/no-sharing)
+      (assoc deserialized
+             :dag_unify.serialization/serialized
+             :dag_unify.serialization/no-sharing)
 
       true
       ;; save the serialization so that future copies of this map
       ;; will be faster:
-      (assoc deserialized :dag_unify.serialization/serialized serialized))))
+      (assoc deserialized
+             :dag_unify.serialization/serialized serialized))))
 
 (defn label-of [parent]
   (if (:rule parent) (:rule parent) (:comment parent)))
@@ -361,3 +383,27 @@
     true
     (core-pprint/pprint input)))
 
+(defn isomorphic? [a b]
+  (cond (and (map? a)
+             (map? b)
+             (empty? a)
+             (empty? b))
+        true  ;; two empty maps are equal
+        (and (map? a)
+             (map? b)
+             (or (empty? a)
+                 (empty? b)))
+        false ;; two maps whose key cardinality (different number of keys) is different are not equal.
+        (and (map? a)
+             (map? b))
+        (let [a (dissoc a :dag_unify.serialization/serialized)
+              b (dissoc b :dag_unify.serialization/serialized)]
+          (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
+                            (get b (first (keys a))))
+               (isomorphic? (dissoc a (first (keys a)))
+                            (dissoc b (first (keys a))))))
+        (and (ref? a)
+             (ref? b))
+        (isomorphic? @a @b)
+        true
+        (= a b)))
