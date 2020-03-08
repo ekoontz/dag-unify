@@ -213,21 +213,21 @@
   optimization, since it saves time and space when copying or unifying."
   [serialized & [always-create-atom?]]
   (let [skeleton (second (first serialized))]
-    (apply merge
-           (cons skeleton
-                 (flatten
-                  (map (fn [paths-val]
-                         (let [paths (first paths-val)
-                               val
-                               (if (or (> (count paths) 1) always-create-atom?)
-                                 (atom (second paths-val))
-                                 (do
-                                   (log/debug (str "no need to create an atom: only one path: " (first paths)))
-                                   (second paths-val)))]
-                           (map (fn [path]
-                                  (create-path-in path val))
-                                paths)))
-                       (rest serialized)))))))
+    (reduce merge
+            (cons skeleton
+                  (flatten
+                   (map (fn [paths-val]
+                          (let [paths (first paths-val)
+                                val
+                                (if (or (> (count paths) 1) always-create-atom?)
+                                  (atom (second paths-val))
+                                  (do
+                                    (log/debug (str "no need to create an atom: only one path: " (first paths)))
+                                    (second paths-val)))]
+                            (map (fn [path]
+                                   (create-path-in path val))
+                                 paths)))
+                        (rest serialized)))))))
 
 ;; TODO: get rid of this; too much redundancy with (dag_unify.core/unify!)
 (defn- merge
