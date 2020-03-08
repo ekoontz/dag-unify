@@ -138,8 +138,11 @@
   a list of paths, and a common value, which all paths share."
   [input-map]
   (let [memoized (get input-map ::serialized :none)]
-    (if (not (= memoized :none))
+    (cond
+      (not (= memoized :none))
       memoized
+
+      true
       ;; ser-intermed returns an intermediate (but fully-serialized) representation
       ;; of the input map, as a map from pathsets to reference-free maps
       ;; (maps which have no references within them).
@@ -301,3 +304,8 @@
 
      :else ;override with remainder of arguments, like core/merge.
      (apply merge (rest args)))))
+
+(defn cache-serialization [structure serialized]
+  (if (or (= serialized ::no-sharing) (empty? (rest serialized)))
+    (assoc structure ::serialized ::no-sharing)
+    (assoc structure ::serialized serialized)))

@@ -16,8 +16,8 @@
    [clojure.string :refer [join]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
-   [dag_unify.serialization :refer [all-refs create-path-in deserialize exception
-                                    serialize]]))
+   [dag_unify.serialization :refer [all-refs cache-serialization create-path-in
+                                    deserialize exception serialize]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
@@ -40,7 +40,7 @@
     (cond (map? result)
           ;; save the serialization so that future copies of this map
           ;; will be faster
-          (assoc result :dag_unify.serialization/serialized (serialize result))
+          (cache-serialization result (serialize result))
           true result)))
 
 ;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
@@ -260,10 +260,22 @@
 
 (defn copy [input]
   (let [serialized (serialize input)
-        deserialized (deserialize serialized)]
-    (if (or (not (map? deserialized))
-            (not (= :none (:dag_unify.serialization/serialized deserialized :none))))
+        deserialized
+        (if (= serialized :dag_unify.serialization/no-sharing)
+          input
+          (deserialize serialized))]
+    (cond
+      (= serialized :dag_unify.serialization/no-sharing)
       deserialized
+
+      (or (not (map? deserialized))
+          (not (= :none (:dag_unify.serialization/serialized deserialized :none))))
+      deserialized
+
+      (empty? (rest serialized))
+      (assoc deserialized :dag_unify.serialization/serialized :dag_unify.serialization/no-sharing)
+
+      true
       ;; save the serialization so that future copies of this map
       ;; will be faster:
       (assoc deserialized :dag_unify.serialization/serialized serialized))))
