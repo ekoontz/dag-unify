@@ -106,14 +106,12 @@
           refs))))
 
 (defn ser-intermed [input-map]
-  (let [top-level (skeletize input-map)
-        rsk (ref-skel-map input-map)
-        sk (map :skel (keys rsk))]
+  (let [rsk (ref-skel-map input-map)]
     (clojure.core/merge
-     {nil top-level}
+     {nil (skeletize input-map)}
      (zipmap
       (vals rsk)
-      sk))))
+      (map :skel (keys rsk))))))
 
 (defn merge-skeleton
   "For all shared values with only a single path leading to it, the corresponding
