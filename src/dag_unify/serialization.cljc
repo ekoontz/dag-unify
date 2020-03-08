@@ -90,8 +90,11 @@
    1. its skeleton
    2. all paths to point to it."
   [^clojure.lang.PersistentHashMap input-map]
-  (let [refs (all-refs input-map)
+  (let [refs
+        ;; TODO: fix all-refs so that we don't need to dedup the output.
+        (vec (set (all-refs input-map)))
         ;; skels returns a map from a reference to its skeleton.
+
         skels (skels input-map refs)]
     (zipmap
      ;; associate each ref with its skeleton.
