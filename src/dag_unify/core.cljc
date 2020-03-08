@@ -31,17 +31,18 @@
 
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
-  [& args]
-  (let [result
-        (apply unify!
-               (map (fn [arg]
-                      (copy arg))
-                    args))]
-    (cond (map? result)
-          ;; save the serialization so that future copies of this map
-          ;; will be faster
-          (cache-serialization result (serialize result))
-          true result)))
+  ([val1]
+   val1)
+  ([val1 val2 & rest-args]
+   (let [result (unify! (copy val1) (copy val2))]
+     (if (empty? rest-args)
+       (if (map? result)
+         ;; save the serialization so that future copies of this map
+         ;; will be faster.
+         (cache-serialization result (serialize result))
+         result)
+       (unify result
+              (apply unify rest-args))))))
 
 ;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
 ;; either consider all args, or change signature of (unify) to take only val1 val2.
