@@ -168,7 +168,7 @@
         true
         (let [fptr (find-paths-to-refs input [] {})
               kvs (map (fn [ref]
-                         [(map vec (get fptr ref))
+                         [(vec (map vec (get fptr ref)))
                           (skeletize @ref)])
                        (keys fptr))]
           (cons
