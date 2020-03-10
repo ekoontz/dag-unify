@@ -17,7 +17,7 @@
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
    [dag_unify.serialization :refer [all-refs cache-serialization create-path-in
-                                    deserialize exception serialize]]))
+                                    deserialize exception serialize serialize2]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.

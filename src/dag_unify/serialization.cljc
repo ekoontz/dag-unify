@@ -100,20 +100,10 @@
                     (get input key)
                     (concat path [key])
                     retval))
-                 (keys input)))
+                 (keys (dissoc input *exclude-keys*))))
 
     true
     retval))
-
-(defn serialize2 [input]
-  (let [fptr (find-paths-to-refs input [] {})]
-    (cons
-     [[]
-      (skeletize input)]
-     (map (fn [ref]
-            [(vec (map vec (get fptr ref)))
-             (skeletize @ref)])
-          (keys fptr)))))
 
 (defn skels
   "create map from reference to their skeletons."
@@ -170,6 +160,34 @@
                               (filter (fn [[paths val]] (= (count paths) 1)))
                               (map (fn [[paths val]] (assoc-in {} (first paths) val))))))})))
 
+(defn serialize2 [input]
+  (cond (ref? input)
+        (serialize2 @input)
+        (keyword? input)
+        [[[] input]]
+        true
+        (let [fptr (find-paths-to-refs input [] {})
+              kvs (map (fn [ref]
+                         [(map vec (get fptr ref))
+                          (skeletize @ref)])
+                       (keys fptr))]
+          (cons
+           [[]
+            (reduce
+             clojure.core/merge
+             (->>
+              (cons
+               (skeletize input)
+               (->>
+                kvs
+                (filter (fn [[ps v]]
+                          (= 1 (count ps))))
+                (map (fn [[[p] v]]
+                       (assoc-in {} p v)))))))]
+           (->> kvs
+                (filter (fn [[ps v]]
+                          (< 1 (count ps)))))))))
+
 (defn serialize
   "Turns a DAG into a serialized representation, which can be again
   deserialized by (deserialize) (below).  Returns a list of pairs that
@@ -180,6 +198,8 @@
   [input-map]
   (let [memoized (get input-map ::serialized :none)]
     (cond
+      true (serialize2 input-map)
+
       (not (= memoized :none))
       memoized
 
