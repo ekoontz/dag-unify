@@ -183,6 +183,9 @@
       (not (= memoized :none))
       memoized
 
+      (ref? input-map)
+      (serialize @input-map)
+
       true
       ;; ser-intermed returns an intermediate (but fully-serialized) representation
       ;; of the input map, as a map from pathsets to reference-free maps

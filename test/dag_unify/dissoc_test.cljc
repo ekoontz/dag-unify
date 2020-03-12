@@ -120,14 +120,8 @@
   (is (isomorphic? 
        (d/dissoc-in truncate-this-2 [:a :c :e :g])
        (s/deserialize
-        [[nil
-          {:a {:c {:e :top
-                   :f 43}
-               :d 44}
-           :b :top}]
-
-         [[[:a :c :e] [:b]]
-          :top]])))
+        [[[] {:b :top, :a {:c {:e :top, :f 43}, :d 44}}]
+         [[[:b] [:a :c :e]] {:h :top}]])))
 
   (is (isomorphic?
        (d/dissoc-in truncate-this [:a :c :e])

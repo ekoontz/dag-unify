@@ -62,8 +62,8 @@
         ser (s/serialize mymap)]
     (is (= ser
            [[[] {:a :top, :b :top, :d :top}]
-            [[[:a] [:b]] {:c :top}]
-            [[[:a :c] [:b :c] [:d]] 42]]))))
+            [[[:a :c] [:b :c] [:d]] 42]
+            [[[:a] [:b]] {:c :top}]]))))
 
 (deftest serialize-3
   (let [mymap {:a 42 :b (atom 43)}]
