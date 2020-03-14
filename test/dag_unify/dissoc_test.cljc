@@ -123,11 +123,42 @@
   (let [arg1 (d/dissoc-in truncate-this-2 [:a :c :e :g])
         arg2 (s/deserialize
               [[[] {:b :top, :a {:c {:e :top, :f 43}, :d 44}}]
-               [[[:b] [:a :c :e]] {:h :top}]])]
+               [[[:b] [:a :c :e]] :top]])]
     (log/debug (str "arg1 (s): " (s/serialize arg1)))
     (log/debug (str "arg2 (s): " (s/serialize arg2)))
     (is (isomorphic? arg1 arg2))
     (log/debug (str "DISSOC TEST 2 END."))))
+
+(deftest dissoc-test-2-1
+  (log/debug (str "<DISSOC TEST 2-1."))
+  (let [serialized
+        [[[] {:a {:c {:e :top
+                      :f 43}
+                  :d 44}
+              :b :top}]
+         [[[:a :c :e] [:b]]
+          {:g :top
+           :h :top}]
+         [[[:a :c :e :g]
+           [:a :c :e :h]
+           [:b :g]
+           [:b :h]]
+          {:i 42}]]
+        reentrance-set []
+        value {:a {:c {:e :top, :f 43}, :d 44}, :b :top}
+        path-to-remove [:a :c :e :g]
+        retval (d/dissoc-path serialized path-to-remove)
+        arg1 (s/deserialize retval)
+        arg2 (s/deserialize
+              [[[] {:b :top
+                    :a {:c {:e :top
+                            :f 43}
+                        :d 44}}]
+               [[[:b] [:a :c :e]] :top]])]
+    (log/debug (str "arg1s: " (s/serialize arg1)))
+    (log/debug (str "arg2s: " (s/serialize arg2)))
+    (is (isomorphic? arg1 arg2))))
+    (log/debug (str "</DISSOC TEST 2-1."))
 
 (deftest dissoc-test-3
   (log/debug (str "DISSOC TEST 3 START."))
