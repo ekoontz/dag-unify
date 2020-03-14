@@ -106,14 +106,23 @@
     retval))
 
 (defn serialize2 [input]
-  (let [fptr (find-paths-to-refs input [] {})]
-    (cons
-     [[]
-      (skeletize input)]
-     (map (fn [ref]
-            [(vec (map vec (get fptr ref)))
-             (skeletize @ref)])
-          (keys fptr)))))
+  (let [memoized (get input ::serialized ::none)]
+    (cond
+      (not (= memoized ::none))
+      memoized
+
+      (ref? input)
+      (serialize2 @input)
+
+      true
+      (cons
+       [[]
+        (skeletize input)]
+       (let [fptr (find-paths-to-refs input [] {})]
+         (map (fn [ref]
+                [(vec (map vec (get fptr ref)))
+                 (skeletize @ref)])
+              (keys fptr)))))))
 
 (defn skels
   "create map from reference to their skeletons."
