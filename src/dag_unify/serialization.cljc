@@ -105,6 +105,8 @@
     true
     retval))
 
+(declare merge-skeleton-2)
+
 (defn serialize2 [input]
   (let [memoized (get input ::serialized ::none)]
     (cond
