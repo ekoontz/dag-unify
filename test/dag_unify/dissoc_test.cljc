@@ -119,9 +119,9 @@
      {:i 42}]]))
 
 (deftest dissoc-test-2
-  (log/info (str "DISSOC TEST 2 START."))
+  (log/debug (str "DISSOC TEST 2 START."))
   (let [arg1 (d/dissoc-in truncate-this-2 [:a :c :e :g])
-        debug (log/info (str "ARG1: " arg1))
+        debug (log/debug (str "ARG1: " arg1))
         arg2 (s/deserialize
               [[[]
                 {:b :top
@@ -129,10 +129,10 @@
                          :f 43}
                      :d 44}}]
                [[[:b] [:a :c :e]] :top]])]
-    (log/info (str "arg1 (s): " (s/serialize arg1)))
-    (log/info (str "arg2 (s): " (s/serialize arg2)))
+    (log/debug (str "arg1 (s): " (s/serialize arg1)))
+    (log/debug (str "arg2 (s): " (s/serialize arg2)))
     (is (isomorphic? arg1 arg2))
-    (log/info (str "DISSOC TEST 2 END."))))
+    (log/debug (str "DISSOC TEST 2 END."))))
 
 (deftest dissoc-test-2-1
   (log/debug (str "<DISSOC TEST 2-1."))
