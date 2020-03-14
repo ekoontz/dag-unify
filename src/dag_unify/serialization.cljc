@@ -115,14 +115,20 @@
       (serialize2 @input)
 
       true
-      (cons
-       [[]
-        (skeletize input)]
-       (let [fptr (find-paths-to-refs input [] {})]
-         (map (fn [ref]
-                [(vec (map vec (get fptr ref)))
-                 (skeletize @ref)])
-              (keys fptr)))))))
+      (->>
+       (->
+        (cons
+         [nil
+          (skeletize input)]
+         (let [fptr (find-paths-to-refs input [] {})]
+           (map (fn [ref]
+                  [(vec (map vec (get fptr ref)))
+                   (skeletize @ref)])
+                (keys fptr))))
+        merge-skeleton-2)
+       (filter (fn [[paths val]]
+                 (or (empty? paths)
+                     (> (count paths) 1))))))))
 
 (defn skels
   "create map from reference to their skeletons."
@@ -178,6 +184,21 @@
               (cons skel (->> (-> si rest)
                               (filter (fn [[paths val]] (= (count paths) 1)))
                               (map (fn [[paths val]] (assoc-in {} (first paths) val))))))})))
+
+(defn merge-skeleton-2
+  "For all shared values with only a single path leading to it, the corresponding
+   value is merged with the base 'skeleton', and that path-value pair is removed from the
+   serialized representation."
+  [si]
+  (let [skel (-> si first rest first)]
+    (clojure.core/merge
+     (rest si)
+     [nil
+      (reduce merge
+              (cons skel (->> (-> si rest)
+                              (filter (fn [[paths val]] (= (count paths) 1)))
+                              (map (fn [[paths val]] (assoc-in {} (first paths) val))))))])))
+
 
 (defn serialize
   "Turns a DAG into a serialized representation, which can be again
