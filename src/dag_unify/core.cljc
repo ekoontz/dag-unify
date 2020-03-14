@@ -259,12 +259,19 @@
   (unify! m
           (create-path-in path v)))
 
+(declare isomorphic?)
+
 (defn copy [input]
   (let [serialized (serialize input)
+        serialized2 (serialize2 input)
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
           (deserialize serialized))]
+    (when (not (isomorphic? input (deserialize serialized2)))
+      (log/warn (str "THE S1!=S2! : " serialized " != " serialized2))
+      (log/warn (str "            : " input " != " (deserialize serialized2))))
+
     (cond
       (= serialized :dag_unify.serialization/no-sharing)
       deserialized
@@ -361,3 +368,27 @@
     true
     (core-pprint/pprint input)))
 
+(defn isomorphic? [a b]
+  (cond (and (map? a)
+             (map? b)
+             (empty? a)
+             (empty? b))
+        true  ;; two empty maps are equal
+        (and (map? a)
+             (map? b)
+             (or (empty? a)
+                 (empty? b)))
+        false ;; two maps whose key cardinality (different number of keys) is different are not equal.
+        (and (map? a)
+             (map? b))
+        (let [a (dissoc a :dag_unify.serialization/serialized)
+              b (dissoc b :dag_unify.serialization/serialized)]
+          (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
+                            (get b (first (keys a))))
+               (isomorphic? (dissoc a (first (keys a)))
+                            (dissoc b (first (keys a))))))
+        (and (ref? a)
+             (ref? b))
+        (isomorphic? @a @b)
+        true
+        (= a b)))
