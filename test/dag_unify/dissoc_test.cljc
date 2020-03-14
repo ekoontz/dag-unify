@@ -119,15 +119,20 @@
      {:i 42}]]))
 
 (deftest dissoc-test-2
-  (log/debug (str "DISSOC TEST 2 START."))
+  (log/info (str "DISSOC TEST 2 START."))
   (let [arg1 (d/dissoc-in truncate-this-2 [:a :c :e :g])
+        debug (log/info (str "ARG1: " arg1))
         arg2 (s/deserialize
-              [[[] {:b :top, :a {:c {:e :top, :f 43}, :d 44}}]
+              [[[]
+                {:b :top
+                 :a {:c {:e :top
+                         :f 43}
+                     :d 44}}]
                [[[:b] [:a :c :e]] :top]])]
-    (log/debug (str "arg1 (s): " (s/serialize arg1)))
-    (log/debug (str "arg2 (s): " (s/serialize arg2)))
+    (log/info (str "arg1 (s): " (s/serialize arg1)))
+    (log/info (str "arg2 (s): " (s/serialize arg2)))
     (is (isomorphic? arg1 arg2))
-    (log/debug (str "DISSOC TEST 2 END."))))
+    (log/info (str "DISSOC TEST 2 END."))))
 
 (deftest dissoc-test-2-1
   (log/debug (str "<DISSOC TEST 2-1."))
@@ -147,7 +152,7 @@
         reentrance-set []
         value {:a {:c {:e :top, :f 43}, :d 44}, :b :top}
         path-to-remove [:a :c :e :g]
-        retval (d/dissoc-path serialized path-to-remove)
+        retval (d/dissoc-path serialized (map first serialized) path-to-remove)
         arg1 (s/deserialize retval)
         arg2 (s/deserialize
               [[[] {:b :top
