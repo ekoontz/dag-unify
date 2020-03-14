@@ -3,7 +3,9 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [dag_unify.core :as u]
             [dag_unify.dissoc :as d]
-            [dag_unify.serialization :as s]))
+            [dag_unify.serialization :as s]
+            #?(:clj [clojure.tools.logging :as log])
+            #?(:cljs [cljslog.core :as log])))
 
 (defn isomorphic? [a b]
   (cond (and (map? a)
@@ -117,38 +119,51 @@
      {:i 42}]]))
 
 (deftest dissoc-test-2
-  (is (isomorphic? 
-       (d/dissoc-in truncate-this-2 [:a :c :e :g])
-       (s/deserialize
-        [[[] {:b :top, :a {:c {:e :top, :f 43}, :d 44}}]
-         [[[:b] [:a :c :e]] {:h :top}]])))
+  (log/debug (str "DISSOC TEST 2 START."))
+  (let [arg1 (d/dissoc-in truncate-this-2 [:a :c :e :g])
+        arg2 (s/deserialize
+              [[[] {:b :top, :a {:c {:e :top, :f 43}, :d 44}}]
+               [[[:b] [:a :c :e]] {:h :top}]])]
+    (log/debug (str "arg1 (s): " (s/serialize arg1)))
+    (log/debug (str "arg2 (s): " (s/serialize arg2)))
+    (is (isomorphic? arg1 arg2))
+    (log/debug (str "DISSOC TEST 2 END."))))
 
-  (is (isomorphic?
-       (d/dissoc-in truncate-this [:a :c :e])
-       (s/deserialize
-        [[nil
-          {:a {:c {:f 43}
-               :d 44}}]])))
-  (is (isomorphic?
-       (d/dissoc-in truncate-this [:a :c])
-       (s/deserialize
-        [[nil
-          {:a {:d 44}}]])))
-  (is (isomorphic?
-       (d/dissoc-in truncate-this [:a])
-       (s/deserialize
-        [[nil
-          :top]])))
-  (is (isomorphic?
-       (d/dissoc-in truncate-this [])
-       (s/deserialize
-        [[nil
-          {:a {:c {:e :top
-                   :f 43}
-               :d 44}
-           :b :top}]
-         [[[:a :c :e] [:b]]
-          {:g 42}]]))))
+(deftest dissoc-test-3
+  (log/debug (str "DISSOC TEST 3 START."))
+  (let [arg1 (d/dissoc-in truncate-this-2 [:a :c :e :g])
+        arg2 (s/deserialize
+              [[[] {:b :top, :a {:c {:e :top, :f 43}, :d 44}}]
+               [[[:b] [:a :c :e]] {:h :top}]])]
+    (log/debug (str "arg1 (s): " (s/serialize arg1)))
+    (log/debug (str "arg2 (s): " (s/serialize arg2)))
+    (is (isomorphic?
+         (d/dissoc-in truncate-this [:a :c :e])
+         (s/deserialize
+          [[nil
+            {:a {:c {:f 43}
+                 :d 44}}]])))
+    (is (isomorphic?
+         (d/dissoc-in truncate-this [:a :c])
+         (s/deserialize
+          [[nil
+            {:a {:d 44}}]])))
+    (is (isomorphic?
+         (d/dissoc-in truncate-this [:a])
+         (s/deserialize
+          [[nil
+            :top]])))
+    (is (isomorphic?
+         (d/dissoc-in truncate-this [])
+         (s/deserialize
+          [[nil
+            {:a {:c {:e :top
+                     :f 43}
+                 :d 44}
+             :b :top}]
+           [[[:a :c :e] [:b]]
+            {:g 42}]]))))
+  (log/debug (str "DISSOC TEST 3 END.")))
 
 (def truncate-this-3
   (s/deserialize
@@ -190,7 +205,7 @@
        (:2 :2 :cat))
       :n))))
 
-(deftest dissoc-test-3
+(deftest dissoc-test-4
   (is (isomorphic?
        (binding [d/remove-path? (fn [path]
                                   (or

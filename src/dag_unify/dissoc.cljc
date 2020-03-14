@@ -1,7 +1,9 @@
 (ns dag_unify.dissoc
   (:require
    [dag_unify.core :as u]
-   [dag_unify.serialization :as s]))
+   [dag_unify.serialization :as s]
+   #?(:clj [clojure.tools.logging :as log])
+   #?(:cljs [cljslog.core :as log])))
 
 ;; 'dissoc-in' function defined here along with
 ;; its supporting functions. 
@@ -12,7 +14,7 @@
 
 ;; can be overridden to only dissoc
 ;; certain paths and not others:
-;; see dissoc-test/dissoc-test-3.
+;; see dissoc-test/dissoc-test-4.
 (def ^:dynamic remove-path? (fn [path] true))
 
 (declare dissoc-path)
@@ -36,50 +38,50 @@
 (defn dissoc-path [serialized path]
   (if (not (empty? serialized))
     (let [[reentrance-set value] (first serialized)
-          filtered-reentrance-set (remove #(remove-path? %) reentrance-set)]
+          filtered-reentrance-set (remove #(remove-path? %) reentrance-set)
+          debug (if (not (= reentrance-set filtered-reentrance-set))
+                  (log/debug (str "RE!=FRE: "
+                                  (vec reentrance-set) "; "
+                                  (vec filtered-reentrance-set))))]
+      (log/debug (str "dissoc-path: serialized: " serialized
+                      "; reentrance-set: " reentrance-set
+                      "; value at set: " value
+                      "; path to remove: " path))
       (cond
         ;; remove the reentrance-set and the value if
-        ;; path matches a path in this reentrance-set.
+        ;; path matches a path in this reentrance-set:
         (and (some #(prefix? path %) reentrance-set)
              (empty? filtered-reentrance-set))
-        (dissoc-path (rest serialized) path)
-        
-        ;; TODO: add comment about what's going on here.
-        (some #(prefix? path %) reentrance-set)
-        (cons [filtered-reentrance-set
-               (reduce (fn [value path]
-                         (dissoc-in-map value path))
-                       value
-                       (get-remainders-for
-                        (set (cons path
-                                   (aliases-of path (map first serialized))))
-                        reentrance-set))]
-              (dissoc-path (rest serialized) path))
+        (do
+          (log/debug (str "dissoc-path: CASE 1."))
+          (dissoc-path (rest serialized) path))
         
         true
-        ;; the reentrance-set stays, but _value_ will be
+        ;; the reentrance-set (filtered by remove-path?) stays, but _value_ will be
         ;; modified as necessary.
-        (cons [reentrance-set
-               (reduce (fn [value path]
-                         (dissoc-in-map value path))
-                       value
-                       (get-remainders-for
-                        (set (cons path
-                                   (aliases-of path (map first serialized))))
-                        reentrance-set))]
-              (dissoc-path (rest serialized) path))))))
+        (do
+          (log/debug (str "dissoc-path: CASE 2."))
+          (let [new-reentrance-set (if (some #(prefix? path %) reentrance-set)
+                                     filtered-reentrance-set
+                                     reentrance-set)
+                new-value
+                (reduce (fn [value path]
+                          (dissoc-in-map value path))
+                        value
+                        (get-remainders-for
+                         (set (cons path
+                                    (aliases-of path (map first serialized))))
+                         reentrance-set))]
+            (cons [new-reentrance-set new-value]
+                  (dissoc-path (rest serialized) path))))))))
 
 (defn dissoc-in-map
   "dissoc a nested path from the-map; e.g.:
   (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
   [the-map path]
-  (cond (empty? path)
-        the-map
-
-        (= :top the-map)
-        the-map
-        
-        (= ::none (get the-map (first path) ::none))
+  (cond (or (empty? path)
+            (= :top the-map)
+            (= ::none (get the-map (first path) ::none)))
         the-map
 
         (and (empty? (rest path))
