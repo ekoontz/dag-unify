@@ -270,32 +270,11 @@
            (normalize-serialized2 (rest s))))))
 
 (defn copy [input]
-  (let [serialized (serialize input)
-        serialized2 (serialize2 input)
-        debug (log/debug (str "serialized2: " (if (seq? serialized2)
-                                                (vec serialized2)
-                                                serialized2)))
+  (let [serialized (serialize2 input)
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
-          (deserialize serialized))
-        deserialized2
-        (if (= serialized :dag_unify.serialization/no-sharing)
-          input
-          (deserialize serialized2))
-        debug (log/debug (str "TRYING TO NORMALIZE: " serialized2 " of type: " (type serialized2)))
-        normalized-s2 (cond
-                        (keyword? serialized2) serialized2
-                        true
-                        (vec (normalize-serialized2 serialized2)))]
-    (log/debug (str "deserializing: " serialized2))
-    (when (not (isomorphic? deserialized deserialized2))
-      (log/warn (str "THE S1!=S2!"))
-      (log/warn (str "   " serialized " != "))
-      (log/warn (str "   " normalized-s2))
-      (log/debug (str "   " (deserialize serialized) " != " (deserialize serialized2)))
-      (throw (Exception. (str "got here."))))
-
+          (deserialize serialized))]
     (cond
       (= serialized :dag_unify.serialization/no-sharing)
       deserialized
