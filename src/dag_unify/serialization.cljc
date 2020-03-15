@@ -22,7 +22,9 @@
      (throw (js/Error. error-string))))
 
 (defn skeletize [input-val]
-  (if (map? input-val)
+  (cond
+    (ref? input-val) (skeletize @input-val)
+    (map? input-val)
     (let [sans-serialized (apply dissoc input-val *exclude-keys*)]
       (zipmap (keys sans-serialized)
               (map
@@ -33,6 +35,7 @@
                        (skeletize val)
                        val)))
                (vals sans-serialized))))
+    true
     input-val))
 
 (defn all-refs [input]
