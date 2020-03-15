@@ -256,7 +256,6 @@
 (defn assoc-in!
   "Similar to assoc-in, but m's references (if any) are modified."
   [m path v]
-  (log/info (str "DOING ASSOC-IN! WITH VALUE: " v))
   (unify! m
           (create-path-in path v)))
 
@@ -273,9 +272,9 @@
 (defn copy [input]
   (let [serialized (serialize input)
         serialized2 (serialize2 input)
-        debug (log/info (str "serialized2: " (if (seq? serialized2)
-                                               (vec serialized2)
-                                               serialized2)))
+        debug (log/debug (str "serialized2: " (if (seq? serialized2)
+                                                (vec serialized2)
+                                                serialized2)))
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
