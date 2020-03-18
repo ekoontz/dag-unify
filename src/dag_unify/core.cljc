@@ -286,38 +286,13 @@
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
           (deserialize serialized2))
-        debug (log/debug (str "TRYING TO NORMALIZE: " serialized2 " of type: " (type serialized2)))
         deserialized (if use-new-serializer? deserialized2 deserialized)
         debug (if log-serializing?
                 (log/info (str "copy(" use-new-serializer? ") serialized: "
-                               (vec (if use-new-serializer? serialized serialized2)))))
-        normalized-s2 (cond
-                        (keyword? serialized2) serialized2
-                        true
-                        (vec (normalize-serialized2 serialized2)))]
+                               (vec (if use-new-serializer? serialized serialized2)))))]
     (log/debug (str "deserializing: " serialized2))
     (log/debug (str "copying.."))
     (if use-new-serializer? (log/debug (str "USING NEW SERIALIZER!")))
-    (comment
-      (if (not (isomorphic? deserialized deserialized2))
-        (do
-          (log/warn (str "THE S1!=S2!"))
-          (log/warn (str "   " serialized " != "))
-          (log/warn (str "   " normalized-s2))
-          (log/debug (str "   " (deserialize serialized) " != " (deserialize serialized2)))
-          (throw (Exception. (str "got here."))))
-        (log/debug (str "S1==S2."))))
-
-    (comment
-      (if (not (= serialized serialized2))
-        (do
-          (log/warn (str "THE SS1!=SS2!"))
-          (log/warn (str "   " serialized " != "))
-          (log/warn (str "   " normalized-s2))
-          (log/debug (str "   " (deserialize serialized) " != " (deserialize serialized2)))
-          (throw (Exception. (str "got here."))))
-        (log/info (str "SS1==SS2."))))
-    
     (cond
       (= serialized :dag_unify.serialization/no-sharing)
       deserialized
