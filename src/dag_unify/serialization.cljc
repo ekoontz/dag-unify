@@ -198,7 +198,7 @@
   (let [skel (-> si first rest first)]
     (clojure.core/merge
      (rest si)
-     [nil
+     [[]
       (reduce merge
               (cons skel (->> (-> si rest)
                               (filter (fn [[paths val]] (= (count paths) 1)))
