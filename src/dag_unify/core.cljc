@@ -273,7 +273,7 @@
            (normalize-serialized2 (rest s))))))
 
 (defn copy [input]
-  (let [serialized (if use-new-serializer? (serialize input) (serialize2 input))
+  (let [serialized (if use-new-serializer? (serialize2 input) (serialize input))
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
