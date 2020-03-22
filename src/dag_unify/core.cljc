@@ -261,7 +261,7 @@
 
 (declare isomorphic?)
 
-(def ^:dynamic use-new-serializer? false)
+(def ^:dynamic use-new-serializer? true)
 (def ^:dynamic log-serializing? false)
 
 (defn normalize-serialized2 [s]
