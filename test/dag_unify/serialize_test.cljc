@@ -164,10 +164,9 @@
         ref2 (atom ref1)
         ref3 (atom ref1)]
     {:a ref1
-     :b {:e ref3}
-     :c {:f ref1
-         :g {:h {:i ref3}}}
-     :d {:j {:k ref2}}}))
+     :b ref3
+     :c ref3
+     :d ref2}))
 
 (deftest serialize-5
   (is (= (count (s/serialize original-tree))
