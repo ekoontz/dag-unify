@@ -162,20 +162,17 @@
 (def original-tree
   (let [ref8 (atom {:number :sing})
         ref9 (atom ref8)
-        ref16 (atom :top)
         ref17 (atom false)
         ref18 (atom :top)
         ref19 (atom ref8)
         ref20 (atom {:agr ref19})
         ref22 (atom {:agr ref8
-                     :exceptions ref16
                      :subcat {:1 {:agr ref19}}})
         ]
     {:agr ref8
      :comp ref20
      :head ref22
-     :syntax-tree {:2 {:agr ref9
-                       :exceptions ref16}}
+     :syntax-tree {:2 {:agr ref9}}
      :1 ref20
      :2 ref22}))
 
