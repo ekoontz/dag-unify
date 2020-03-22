@@ -163,11 +163,11 @@
   (let [ref1 (atom 42)
         ref2 (atom ref1)
         ref3 (atom ref1)]
-    {:agr ref1
-     :comp {:agr ref3}
-     :head {:agr ref1
-            :subcat {:1 {:agr ref3}}}
-     :syntax-tree {:2 {:agr ref2}}}))
+    {:a ref1
+     :b {:e ref3}
+     :c {:f ref1
+         :g {:h {:i ref3}}}
+     :d {:j {:k ref2}}}))
 
 (deftest serialize-5
   (is (= (count (s/serialize original-tree))
