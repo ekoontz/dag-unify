@@ -161,12 +161,10 @@
 
 (def original-tree
   (let [ref1 (atom 42)
-        ref2 (atom ref1)
-        ref3 (atom ref1)]
+        ref2 (atom ref1)]
     {:a ref1
-     :b ref3
-     :c ref3
-     :d ref2}))
+     :b ref2
+     :c ref2}))
 
 (deftest serialize-5
   (is (= (count (s/serialize original-tree))
