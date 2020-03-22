@@ -151,8 +151,6 @@
                (keys fptr)))
 
         ((fn [rest-serialized]
-           (log/info (str "REST-SERIALIZED: "
-                          (vec rest-serialized)))
            (cons
             [nil
              (skeletize input)]
