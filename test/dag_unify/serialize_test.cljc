@@ -162,8 +162,6 @@
 (def original-tree
   (let [ref8 (atom {:number :sing})
         ref9 (atom ref8)
-        ref17 (atom false)
-        ref18 (atom :top)
         ref19 (atom ref8)
         ref20 (atom {:agr ref19})
         ref22 (atom {:agr ref8
