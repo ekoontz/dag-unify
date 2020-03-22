@@ -160,47 +160,28 @@
 
 
 (def original-tree
-  (let [ref2 (atom :verb)
-        ref4 (atom ref2)
-        ref5 (atom :top)
-        ref8 (atom {:number :sing})
+  (let [ref8 (atom {:number :sing})
         ref9 (atom ref8)
-        ref10 (atom :top)
-        ref11 (atom {:tense :present
-                     :aspect :simple
-                     :obj :unspec
-                     :subj ref10
-                     :pred :try})
-        ref12 (atom ref11)
         ref16 (atom :top)
         ref17 (atom false)
         ref18 (atom :top)
         ref19 (atom ref8)
-        ref20 (atom {:agr ref19
-                     :sem ref10})
+        ref20 (atom {:agr ref19})
         ref22 (atom {:agr ref8
-                     :cat ref2
                      :exceptions ref16
-                     :reflexive ref17
-                     :sem ref11
                      :subcat {:1 {:agr ref19}}})
         ]
     {:agr ref8
-     :cat ref2
      :comp ref20
      :head ref22
-     :reflexive ref17
-     :sem ref11
      :syntax-tree {:2 {:agr ref9
-                       :cat ref4
-                       :exceptions ref16
-                       :sem ref12}}
+                       :exceptions ref16}}
      :1 ref20
      :2 ref22}))
 
 (deftest serialize-5
   (is (= (count (s/serialize original-tree))
-         9))
+         5))
   (is (= (count (s/serialize2 original-tree))
-         9)))
+         5)))
 
