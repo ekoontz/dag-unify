@@ -85,16 +85,22 @@
                     (concat path [key])))
                  (keys input)))))
 
+(defn final-reference-of [input]
+  (cond (ref? @input)
+        (final-reference-of @input)
+        true input))
+
 (defn find-paths-to-refs
   "find all paths in _map_ which point to any ref."
   [input path retval]
   (cond
     (ref? input)
     (find-paths-to-refs
-     @input
+     @(final-reference-of input)
      path
-     (assoc retval input (union (set [path])
-                                (get retval input #{}))))
+     (assoc retval (final-reference-of input)
+            (union (set [path])
+                   (get retval input #{}))))
 
     (map? input)
     (reduce (fn [a b] (merge-with union a b))
