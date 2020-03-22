@@ -158,8 +158,7 @@
     (not (nil? vp))
     (not (nil? myser))))
 
-
-(def original-tree
+(def graph-with-ref-to-ref
   (let [ref1 (atom 42)
         ref2 (atom ref1)]
     {:a ref1
@@ -167,8 +166,8 @@
      :c ref2}))
 
 (deftest serialize-5
-  (is (= (count (s/serialize original-tree))
+  (is (= (count (s/serialize graph-with-ref-to-ref))
          2))
-  (is (= (count (s/serialize2 original-tree))
+  (is (= (count (s/serialize2 graph-with-ref-to-ref))
          2)))
 
