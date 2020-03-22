@@ -108,7 +108,21 @@
     true
     retval))
 
-(declare merge-skeleton-2)
+(defn merge-skeleton-2
+  "For all shared values with only a single path leading to it, the corresponding
+   value is merged with the base 'skeleton', and that path-value pair is removed from the
+   serialized representation."
+  [si]
+  (let [skel (-> si first rest first)]
+    (clojure.core/merge
+     (rest si)
+     [[]
+      (reduce merge
+              (cons skel (->> (-> si rest)
+                              (filter (fn [[paths val]]
+                                        (= (count paths) 1)))
+                              (map (fn [[paths val]]
+                                     (assoc-in {} (first paths) val))))))])))
 
 (defn serialize2 [input]
   (let [memoized (get input ::serialized ::none)]
@@ -121,6 +135,7 @@
 
       true
       (->>
+
        (->
 
         (let [fptr (find-paths-to-refs input [] {})]
@@ -130,6 +145,8 @@
                (keys fptr)))
 
         ((fn [rest-serialized]
+           (log/info (str "REST-SERIALIZED: "
+                          (vec rest-serialized)))
            (cons
             [nil
              (skeletize input)]
@@ -193,23 +210,10 @@
      {nil
       (reduce merge
               (cons skel (->> (-> si rest)
-                              (filter (fn [[paths val]] (= (count paths) 1)))
-                              (map (fn [[paths val]] (assoc-in {} (first paths) val))))))})))
-
-(defn merge-skeleton-2
-  "For all shared values with only a single path leading to it, the corresponding
-   value is merged with the base 'skeleton', and that path-value pair is removed from the
-   serialized representation."
-  [si]
-  (let [skel (-> si first rest first)]
-    (clojure.core/merge
-     (rest si)
-     [[]
-      (reduce merge
-              (cons skel (->> (-> si rest)
-                              (filter (fn [[paths val]] (= (count paths) 1)))
-                              (map (fn [[paths val]] (assoc-in {} (first paths) val))))))])))
-
+                              (filter (fn [[paths val]]
+                                        (= (count paths) 1)))
+                              (map (fn [[paths val]]
+                                     (assoc-in {} (first paths) val))))))})))
 
 (defn serialize
   "Turns a DAG into a serialized representation, which can be again
