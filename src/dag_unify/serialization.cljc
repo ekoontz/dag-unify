@@ -122,15 +122,21 @@
       true
       (->>
        (->
-        (cons
-         [nil
-          (skeletize input)]
-         (let [fptr (find-paths-to-refs input [] {})]
-           (map (fn [ref]
-                  [(vec (map vec (get fptr ref)))
-                   (skeletize @ref)])
-                (keys fptr))))
+
+        (let [fptr (find-paths-to-refs input [] {})]
+          (map (fn [ref]
+                 [(vec (map vec (get fptr ref)))
+                  (skeletize @ref)])
+               (keys fptr)))
+
+        ((fn [rest-serialized]
+           (cons
+            [nil
+             (skeletize input)]
+            rest-serialized)))
+
         merge-skeleton-2)
+
        (filter (fn [[paths val]]
                  (or (empty? paths)
                      (> (count paths) 1))))))))
