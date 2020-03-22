@@ -293,12 +293,15 @@
       deserialized
 
       (empty? (rest serialized))
-      (assoc deserialized :dag_unify.serialization/serialized :dag_unify.serialization/no-sharing)
+      (assoc deserialized
+             :dag_unify.serialization/serialized
+             :dag_unify.serialization/no-sharing)
 
       true
       ;; save the serialization so that future copies of this map
       ;; will be faster:
-      (assoc deserialized :dag_unify.serialization/serialized serialized))))
+      (assoc deserialized
+             :dag_unify.serialization/serialized serialized))))
 
 (defn label-of [parent]
   (if (:rule parent) (:rule parent) (:comment parent)))
