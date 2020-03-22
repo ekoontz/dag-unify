@@ -160,23 +160,18 @@
 
 
 (def original-tree
-  (let [ref8 (atom {:number :sing})
-        ref9 (atom ref8)
-        ref19 (atom ref8)
-        ref20 (atom {:agr ref19})
-        ref22 (atom {:agr ref8
-                     :subcat {:1 {:agr ref19}}})
-        ]
-    {:agr ref8
-     :comp ref20
-     :head ref22
-     :syntax-tree {:2 {:agr ref9}}
-     :1 ref20
-     :2 ref22}))
+  (let [ref1 (atom 42)
+        ref2 (atom ref1)
+        ref3 (atom ref1)]
+    {:agr ref1
+     :comp {:agr ref3}
+     :head {:agr ref1
+            :subcat {:1 {:agr ref3}}}
+     :syntax-tree {:2 {:agr ref2}}}))
 
 (deftest serialize-5
   (is (= (count (s/serialize original-tree))
-         5))
+         2))
   (is (= (count (s/serialize2 original-tree))
-         5)))
+         2)))
 
