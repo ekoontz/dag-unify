@@ -277,13 +277,12 @@
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
-          (deserialize serialized))
-        debug (if log-serializing?
-                (log/info (str "copy(" use-new-serializer? ") serialized: "
-                               (vec serialized))))
-        serialized (if use-new-serializer? (serialize input)
-                       (serialize2 input))]
-    (log/debug (str "copying.."))
+          (deserialize serialized))]
+    (if log-serializing?
+      (log/info (str "copy(" use-new-serializer? ") serialized: "
+                      (if (seq? serialized)
+                        (vec serialized)
+                        serialized))))
     (if use-new-serializer? (log/debug (str "USING NEW SERIALIZER!")))
     (cond
       (= serialized :dag_unify.serialization/no-sharing)
