@@ -247,16 +247,6 @@
                 (fn [x] (merge @val1 @val2)))
          val1)
 
-     (and (= val2 :top)
-          (not (= :notfound (:not val1 :notfound))))
-     val1
-
-     (not (= :notfound (:not val1 :notfound)))
-     (let [result (merge (:not val1) val2)]
-       (if (= result :fail)
-         val2
-         :fail))
-
      (and (= val1 :top)
           (not (= :notfound (:not val2 :notfound))))
      val2
@@ -274,14 +264,6 @@
      (= val1 :top) val2
      (= val2 :top) val1
      (= val1 nil) val2
-
-     ;; note difference in behavior between nil and :nil!:
-     ;; (nil is ignored, while :nil! is not).
-     ;; (merge 42 nil) => 42
-     ;; (merge 42 :nil!) => :nil!
-     (= val2 nil) val1
-     (= val2 :nil!) val2
-     (= val2 "nil!") val2 ;; TODO: remove this if not needed.
 
      (= val1 val2) val1
 
