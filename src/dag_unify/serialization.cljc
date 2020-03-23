@@ -211,9 +211,7 @@
                                  paths)))
                         (rest serialized)))))))
 
-;; TODO: get rid of this; too much redundancy with (dag_unify.core/unify!)
 (defn- merge
-  "warning: {} is the identity value, not nil; that is: (merge X {}) => X, but (merge X nil) => nil, (not X)."
   [val1 val2]
   (cond
     (and (map? val1)
@@ -241,8 +239,6 @@
                (fn [x] (merge @val1 @val2)))
         val1)
     
-    (= val1 :fail) :fail
-    (= val2 :fail) :fail
     (= val1 :top) val2
     (= val2 :top) val1
     (= val1 val2) val1))
