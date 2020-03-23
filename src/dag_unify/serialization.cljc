@@ -164,14 +164,11 @@
 
 (defn create-path-in
   "create a path starting at map through all keys in map:
-   (create-path-in '(a b c d e) value) => {:a {:b {:c {:d {:e value}}}}})"  
+   (create-path-in '(a b c d e) value) => {:a {:b {:c {:d {:e value}}}}});
+   the same as clojure.core/assoc-in, except when input path is empty."
   [path value]
-  (if (first path)
-    (if (rest path)
-      (let [assigned (create-path-in (rest path) value)]
-        {(keyword (first path)) assigned})
-      {(first path) value})
-    value))
+  (if (empty? path) value
+      (clojure.core/assoc-in {} path value)))
 
 ;; Serialization format is a sequence:
 ;; (
