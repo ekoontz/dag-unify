@@ -53,7 +53,7 @@
         mymap {:a ref1, :b ref1}
         ser (s/serialize mymap)]
     (is (= ser
-           [[[] {:a :top, :b :top}] [[[:a] [:b]] 42]]))))
+           '([[] {:a :top, :b :top}] [[[:b] [:a]] 42])))))
 
 (deftest serialize-2
   (let [ref2 (atom 42)
@@ -61,15 +61,10 @@
         mymap {:a ref1, :b ref1 :d ref2}
         ser (s/serialize mymap)]
     (is
-     (or
-      (= ser
-         [[[] {:a :top, :b :top, :d :top}]
-          [[[:a :c] [:b :c] [:d]] 42]
-          [[[:a] [:b]] {:c :top}]])
-      (= ser
-         [[[] {:a :top, :b :top, :d :top}]
-          [[[:a] [:b]] {:c :top}]
-          [[[:a :c] [:b :c] [:d]] 42]])))))
+     (= ser
+        '([[] {:a :top, :b :top, :d :top}]
+          [[[:b] [:a]] {:c :top}]
+          [[[:a :c] [:d] [:b :c]] 42])))))
 
 (deftest serialize-3
   (let [mymap {:a 42 :b (atom 43)}]
@@ -167,7 +162,5 @@
 
 (deftest serialize-5
   (is (= (count (s/serialize graph-with-ref-to-ref))
-         2))
-  (is (= (count (s/serialize2 graph-with-ref-to-ref))
          2)))
 

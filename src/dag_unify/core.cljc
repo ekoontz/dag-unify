@@ -17,7 +17,7 @@
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
    [dag_unify.serialization :refer [all-refs cache-serialization create-path-in
-                                    deserialize exception serialize serialize2]]))
+                                    deserialize exception serialize]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
@@ -273,7 +273,7 @@
            (normalize-serialized2 (rest s))))))
 
 (defn copy [input]
-  (let [serialized (if use-new-serializer? (serialize2 input) (serialize input))
+  (let [serialized (if use-new-serializer? (serialize input) (serialize input))
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input

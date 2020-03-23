@@ -130,14 +130,14 @@
                               (map (fn [[paths val]]
                                      (assoc-in {} (first paths) val))))))])))
 
-(defn serialize2 [input]
+(defn serialize [input]
   (let [memoized (get input ::serialized ::none)]
     (cond
       (not (= memoized ::none))
       memoized
 
       (ref? input)
-      (serialize2 @input)
+      (serialize @input)
 
       true
       (->>
@@ -218,56 +218,6 @@
                                         (= (count paths) 1)))
                               (map (fn [[paths val]]
                                      (assoc-in {} (first paths) val))))))})))
-
-(defn serialize
-  "Turns a DAG into a serialized representation, which can be again
-  deserialized by (deserialize) (below).  Returns a list of pairs that
-  look like: <pathset,value>. The first element of the list has an
-  empty pathset, and the value is the 'skeleton' of the entire tree.
-  For the rest of the elements in the list, each element contains
-  a list of paths, and a common value, which all paths share."
-  [input-map]
-  (let [memoized (get input-map ::serialized :none)]
-    (cond
-      (not (= memoized :none))
-      memoized
-
-      (ref? input-map)
-      (serialize @input-map)
-
-      true
-      ;; ser-intermed returns an intermediate (but fully-serialized) representation
-      ;; of the input map, as a map from pathsets to reference-free maps
-      ;; (maps which have no references within them).
-      
-      ;; In place of the references in the original map, the reference-free
-      ;; maps have simply a dummy value (the value :top) stored where the
-      ;; the reference is in the input-map.
-      ;;
-      ;; ser:
-      ;;
-      ;;   pathset    |  value
-      ;; -------------+---------
-      ;;   []         => skeleton
-      ;;   pathset1   => value1
-      ;;   pathset2   => value2
-      ;;      ..         ..
-      ;;
-      ;; Each pathset is a set of paths to a shared value, the value
-      ;; shared by all paths in that pathset.
-      ;;
-      ;; Convert all the paths to vectors; might be possible to remove this
-      ;; conversion.
-      (->
-       (->> (-> (ser-intermed input-map)
-                (dissoc [nil])
-                merge-skeleton)
-            (filter (fn [[paths val]]
-                      (or (empty? paths) false
-                          (> (count paths) 1))))
-            (map (fn [[paths val]]
-                   [(vec (map vec paths)) val])))
-       vec))))
 
 (defn create-path-in
   "create a path starting at map through all keys in map:
