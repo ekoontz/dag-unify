@@ -162,47 +162,6 @@
                  (or (empty? paths)
                      (> (count paths) 1))))))))
 
-(defn skels
-  "create map from reference to their skeletons."
-  [input-map refs]
-  (let [refs (keys (find-paths-to-refs input-map [] {}))]
-    (zipmap
-     refs
-     (map (fn [ref]
-            (skeletize @ref))
-          refs))))
-
-(defn ref-skel-map
-  "associate each reference in _input-map_ with:
-   1. its skeleton
-   2. all paths to point to it."
-  [^clojure.lang.PersistentHashMap input-map]
-  (let [refs
-        ;; TODO: fix all-refs so that we don't need to dedup the output.
-        (vec (set (all-refs input-map)))
-        ;; skels returns a map from a reference to its skeleton.
-
-        skels (skels input-map refs)]
-    (zipmap
-     ;; associate each ref with its skeleton.
-     (map (fn [ref]
-            {:ref ref
-             :skel (get skels ref)})
-          refs)
-
-     ;; list of all paths that point to each ref in _input-map_.
-     (map (fn [ref]
-            (find-paths-to-value input-map ref nil))
-          refs))))
-
-(defn ser-intermed [input-map]
-  (let [rsk (ref-skel-map input-map)]
-    (clojure.core/merge
-     {nil (skeletize input-map)}
-     (zipmap
-      (vals rsk)
-      (map :skel (keys rsk))))))
-
 ;; Serialization format is a sequence:
 ;; (
 ;;  paths1 => map1 <= 'base'

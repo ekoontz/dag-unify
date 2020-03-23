@@ -6,7 +6,7 @@
              :refer [assoc-in copy fail? get-in unify unify!]]
             [dag_unify.serialization
              :refer [all-refs deserialize find-paths-to-value serialize
-                     skeletize ref? ref-skel-map skels]])
+                     skeletize ref?]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
 (deftest simple-unify-test

@@ -16,37 +16,6 @@
                          u/unify
                          (take 50 (repeatedly (fn [] (s/deserialize serialized)))))))))))
 
-(defn ser-db [input-map]
-  (let [refs (s/all-refs input-map)
-        skels (s/skels input-map refs)]
-    (s/ref-skel-map input-map)))
-
-(deftest ser-db-1
-  (let [ref1 (atom 42)
-        mymap {:a ref1, :b ref1}
-        ser (ser-db mymap)]
-    (is (= ser
-           {
-            {:ref ref1
-             :skel 42} '((:a)(:b))}))))
-
-;; TODO: this test is unnecessarily strict: see below for specifics
-(deftest ser-db-2
-  (let [ref2 (atom 42)
-        ref1 (atom {:c ref2})
-        mymap {:a ref1 :b ref1 :d ref2}
-        ser (ser-db mymap)]
-    (is (=
-         ser
-         {
-          {;; TODO: could also be '((:b)(:a)).
-           :ref ref1
-           :skel {:c :top}} '((:a)(:b))
-          {;; TODO: could also be '((:b :c)(:a :c)(:d))
-           ;; (or other possible orderings).
-           :ref ref2
-           :skel 42} '((:a :c)(:b :c)(:d))}))))
-
 (deftest serialize-1
   (let [ref1 (atom 42)
         mymap {:a ref1, :b ref1}
