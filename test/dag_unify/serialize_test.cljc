@@ -63,13 +63,6 @@
         result (s/create-path-in path val)]
     (is (= (u/get-in result path) val))))
 
-(deftest deser-with-ref
-  (let [serialized [[nil {:a "PH"}] [[["a"]] 42]]
-        deserialized (s/deserialize serialized true)]
-    (is (not (nil? deserialized)))
-    (is (= (s/ref? (:a deserialized))))
-    (is (= @(:a deserialized) 42))))
-
 ;; deserialize a map's serialized form
 (deftest deser-1
   (let [ref2 (atom 42)
