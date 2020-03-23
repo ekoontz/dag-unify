@@ -219,9 +219,6 @@
   (let [val1 (first args)
         val2 (second args)]
     (cond
-     (= (count args) 1)
-     (first args)
-
      (and (map? val1)
           (map? val2))
      (reduce #(merge-with merge %1 %2) args)
