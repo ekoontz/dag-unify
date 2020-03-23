@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.7.10] - 2020-03-23
+
+- ~serialize: rewrite to improve performance
+- ~merge: cleanup
+
 ## [1.7.9] - 2020-03-08
 
 ### Changed
