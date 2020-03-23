@@ -247,10 +247,6 @@
                 (fn [x] (merge @val1 @val2)))
          val1)
 
-     (and (= val1 :top)
-          (not (= :notfound (:not val2 :notfound))))
-     val2
-
      (not (= :notfound (:not val2 :notfound)))
      (let [result (merge val1 (:not val2))]
         (if (= result :fail)
