@@ -114,7 +114,7 @@
     true
     retval))
 
-(defn merge-skeleton-2
+(defn merge-skeleton
   "For all shared values with only a single path leading to it, the corresponding
    value is merged with the base 'skeleton', and that path-value pair is removed from the
    serialized representation."
@@ -156,7 +156,7 @@
              (skeletize input)]
             rest-serialized)))
 
-        merge-skeleton-2)
+        merge-skeleton)
 
        (filter (fn [[paths val]]
                  (or (empty? paths)
