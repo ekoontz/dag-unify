@@ -214,48 +214,43 @@
 ;; TODO: get rid of this; too much redundancy with (dag_unify.core/unify!)
 (defn- merge
   "warning: {} is the identity value, not nil; that is: (merge X {}) => X, but (merge X nil) => nil, (not X)."
-  [& args]
-  (if (empty? (rest args)) (first args))
-  (let [val1 (first args)
-        val2 (second args)]
-    (cond
-     (and (map? val1)
-          (map? val2))
-     (reduce #(merge-with merge %1 %2) args)
-
-     (and
-      (ref? val1)
-      (not (ref? val2)))
-     (do (swap! val1
-                (fn [x] (merge @val1 val2)))
-         val1)
-
-     (and
-      (ref? val2)
-      (not (ref? val1)))
-     (do (swap! val2
-                (fn [x] (merge val1 @val2)))
-         val2)
-
-     (and
-      (ref? val1)
-      (ref? val2))
-     (do (swap! val1
-                (fn [x] (merge @val1 @val2)))
-         val1)
-
-     (or (= val1 :fail)
-         (= val2 :fail))
-     :fail
-
-     (= val1 :top) val2
-     (= val2 :top) val1
-     (= val1 nil) val2
-
-     (= val1 val2) val1
-
-     :else ;override with remainder of arguments, like core/merge.
-     (apply merge (rest args)))))
+  [val1 val2]
+  (cond
+    (and (map? val1)
+         (map? val2))
+    (merge-with merge val1 val2)
+    
+    (and
+     (ref? val1)
+     (not (ref? val2)))
+    (do (swap! val1
+               (fn [x] (merge @val1 val2)))
+        val1)
+    
+    (and
+     (ref? val2)
+     (not (ref? val1)))
+    (do (swap! val2
+               (fn [x] (merge val1 @val2)))
+        val2)
+    
+    (and
+     (ref? val1)
+     (ref? val2))
+    (do (swap! val1
+               (fn [x] (merge @val1 @val2)))
+        val1)
+    
+    (or (= val1 :fail)
+        (= val2 :fail))
+    :fail
+    
+    (= val1 :top) val2
+    (= val2 :top) val1
+    (= val1 nil) val2
+    
+    (= val1 val2) val1))
+    
 
 (defn cache-serialization [structure serialized]
   (if (or (= serialized ::no-sharing) (empty? (rest serialized)))
