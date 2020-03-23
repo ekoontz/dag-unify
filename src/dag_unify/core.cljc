@@ -16,7 +16,7 @@
    [clojure.string :refer [join]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
-   [dag_unify.serialization :refer [all-refs cache-serialization
+   [dag_unify.serialization :refer [all-refs cache-serialization create-path-in
                                     deserialize exception serialize]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
@@ -251,13 +251,13 @@
   "Similar to clojure.core/assoc-in, but uses unification so that existing values are unified rather than overwritten."
   [m path v]
   (unify m
-         (clojure.core/assoc-in {} path v)))
+         (create-path-in path v)))
 
 (defn assoc-in!
   "Similar to assoc-in, but m's references (if any) are modified."
   [m path v]
   (unify! m
-          (clojure.core/assoc-in {} path v)))
+          (create-path-in path v)))
 
 (declare isomorphic?)
 
