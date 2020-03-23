@@ -241,16 +241,11 @@
                (fn [x] (merge @val1 @val2)))
         val1)
     
-    (or (= val1 :fail)
-        (= val2 :fail))
-    :fail
-    
+    (= val1 :fail) :fail
+    (= val2 :fail) :fail
     (= val1 :top) val2
     (= val2 :top) val1
-    (= val1 nil) val2
-    
     (= val1 val2) val1))
-    
 
 (defn cache-serialization [structure serialized]
   (if (or (= serialized ::no-sharing) (empty? (rest serialized)))
