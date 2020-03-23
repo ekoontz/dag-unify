@@ -46,7 +46,6 @@
            ;; (or other possible orderings).
            :ref ref2
            :skel 42} '((:a :c)(:b :c)(:d))}))))
-          
 
 (deftest serialize-1
   (let [ref1 (atom 42)
@@ -92,15 +91,8 @@
 (deftest create-path-in-1
   (let [path '(:a :b :c :d :e)
         val 43
-        result (s/create-path-in path val)]
+        result (assoc-in {} path val)]
     (is (= (u/get-in result path) val))))
-
-(deftest deser-with-ref
-  (let [serialized [[nil {:a "PH"}] [[["a"]] 42]]
-        deserialized (s/deserialize serialized true)]
-    (is (not (nil? deserialized)))
-    (is (= (s/ref? (:a deserialized))))
-    (is (= @(:a deserialized) 42))))
 
 ;; deserialize a map's serialized form
 (deftest deser-1

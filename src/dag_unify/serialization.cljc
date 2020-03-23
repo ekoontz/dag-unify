@@ -203,33 +203,6 @@
       (vals rsk)
       (map :skel (keys rsk))))))
 
-(defn merge-skeleton
-  "For all shared values with only a single path leading to it, the corresponding
-   value is merged with the base 'skeleton', and that path-value pair is removed from the
-   serialized representation."
-  [si]
-  (let [skel (-> si first rest first)]
-    (clojure.core/merge
-     si
-     {nil
-      (reduce merge
-              (cons skel (->> (-> si rest)
-                              (filter (fn [[paths val]]
-                                        (= (count paths) 1)))
-                              (map (fn [[paths val]]
-                                     (assoc-in {} (first paths) val))))))})))
-
-(defn create-path-in
-  "create a path starting at map through all keys in map:
-   (create-path-in '(a b c d e) value) => {:a {:b {:c {:d {:e value}}}}})"  
-  [path value]
-  (if (first path)
-    (if (rest path)
-      (let [assigned (create-path-in (rest path) value)]
-        {(keyword (first path)) assigned})
-      {(first path) value})
-    value))
-
 ;; Serialization format is a sequence:
 ;; (
 ;;  paths1 => map1 <= 'base'
@@ -267,7 +240,7 @@
                                     (log/debug (str "no need to create an atom: only one path: " (first paths)))
                                     (second paths-val)))]
                             (map (fn [path]
-                                   (create-path-in path val))
+                                   (assoc-in {} path val))
                                  paths)))
                         (rest serialized)))))))
 
