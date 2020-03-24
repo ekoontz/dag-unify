@@ -331,14 +331,11 @@
     (= map-with-refs {})
     {}
     (map? map-with-refs)
-    (let [map-keys (sort (keys map-with-refs))]
-      (let [first-key (first (keys map-with-refs))
-            val (get map-with-refs first-key)]
-        (dissoc
-         (conj
-          {first-key (strip-refs val)}
-          (strip-refs (dissoc map-with-refs first-key)))
-         :dag_unify.serialization/serialized)))
+    (let [map-keys (remove #(= % :dag_unify.serialization/serialized)
+                           (keys map-with-refs))]
+      (zipmap map-keys
+              (map #(strip-refs (get map-with-refs %))
+                   map-keys)))
     (ref? map-with-refs)
     (strip-refs (deref map-with-refs))
     :else

@@ -99,8 +99,8 @@
      @(final-reference-of input)
      path
      (assoc retval (final-reference-of input)
-            (union (set [path])
-                   (get retval input #{}))))
+            (cons path
+                  (get retval input []))))
 
     (map? input)
     (reduce (fn [a b] (merge-with union a b))
@@ -110,7 +110,6 @@
                     (concat path [key])
                     retval))
                  (keys input)))
-
     true
     retval))
 
@@ -146,7 +145,7 @@
 
         (let [fptr (find-paths-to-refs input [] {})]
           (map (fn [ref]
-                 [(vec (map vec (get fptr ref)))
+                 [(vec (map vec (set (get fptr ref))))
                   (skeletize @ref)])
                (keys fptr)))
 
