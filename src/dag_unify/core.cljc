@@ -17,7 +17,7 @@
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
    [dag_unify.serialization :refer [all-refs cache-serialization create-path-in
-                                    deserialize exception serialize]]))
+                                    deserialize exception final-reference-of serialize]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
@@ -281,25 +281,24 @@
 
 (defn copy2 [input]
   (cond
-    ;; input is a ref that we have seen _input_ before, so return the new
-    ;; already-created copy of _input_:
-    (and (ref? input)
-         (get @old2new input))
-    (get @old2new input)
-
-
     (ref? input)
-    ;; input is a ref that we have *not* seen before, so:
-    ;; 1. create a new ref:
-    (let [new-input (atom nil)]
-      ;; 2. update the old-to-new map with this new ref:
-      (swap! old2new
-             (fn [x] (assoc x input new-input)))
-      ;; set the value of the new ref, based on the existing _input_:
-      (swap! new-input
-             (fn [x] (copy2 @input)))
-      ;; and return the new ref:
-      new-input)
+    (let [entry-if-any
+          (get @old2new (final-reference-of input))]
+      ;; input is a ref that we have seen _input_ before, so return the new
+      ;; already-created copy of _input_:
+      (or entry-if-any
+          ;; input is a ref that we have *not* seen before, so:
+          ;; 1. create a new ref:
+          (let [input (final-reference-of input)
+                new-input (atom nil)]
+            ;; 2. update the old-to-new map with this new ref:
+            (swap! old2new
+                   (fn [x] (assoc x input new-input)))
+            ;; set the value of the new ref, based on the existing _input_:
+            (swap! new-input
+                   (fn [x] (copy2 @input)))
+            ;; and return the new ref:
+            new-input)))
 
     (map? input)
     (into {}
