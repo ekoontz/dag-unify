@@ -203,6 +203,7 @@
     (resolve @arg)
     arg))
 
+;; cf dag_unify.serialization/final-reference-of
 (defn simplify-ref
   "if arg is a ref and @arg is not a ref, return arg. if @arg is also a ref, return (simplify-ref @arg). else, return arg."
   [arg]
@@ -273,13 +274,13 @@
            [(if (nil? paths) [] paths) skel]
            (normalize-serialized2 (rest s))))))
 
-(def ^:dynamic old2new 42)
-(declare copy2)
+(def ^:dynamic old2new)
+(declare copy-with-binding)
 (defn copy [input]
   (binding [old2new (atom {})]
-    (copy2 input)))
+    (copy-with-binding input)))
 
-(defn copy2 [input]
+(defn copy-with-binding [input]
   (cond
     (ref? input)
     (let [entry-if-any
@@ -296,49 +297,19 @@
                    (fn [x] (assoc x input new-input)))
             ;; set the value of the new ref, based on the existing _input_:
             (swap! new-input
-                   (fn [x] (copy2 @input)))
+                   (fn [x] (copy-with-binding @input)))
             ;; and return the new ref:
             new-input)))
 
     (map? input)
     (into {}
           (map (fn [[k v]]
-                 [k (copy2 v)])
+                 [k (copy-with-binding v)])
               input))
 
     ;; simply an atomic value.
     ;; return a pair: the existing input (no copying needed), and the old2new map:
     true input))
-
-(defn copy-old [input]
-  (let [serialized (serialize input)
-        deserialized
-        (if (= serialized :dag_unify.serialization/no-sharing)
-          input
-          (deserialize serialized))]
-    (if log-serializing?
-      (log/info (str "copy serialized: "
-                      (if (seq? serialized)
-                        (vec serialized)
-                        serialized))))
-    (cond
-      (= serialized :dag_unify.serialization/no-sharing)
-      deserialized
-
-      (or (not (map? deserialized))
-          (not (= :none (:dag_unify.serialization/serialized deserialized :none))))
-      deserialized
-
-      (empty? (rest serialized))
-      (assoc deserialized
-             :dag_unify.serialization/serialized
-             :dag_unify.serialization/no-sharing)
-
-      true
-      ;; save the serialization so that future copies of this map
-      ;; will be faster:
-      (assoc deserialized
-             :dag_unify.serialization/serialized serialized))))
 
 (defn label-of [parent]
   (if (:rule parent) (:rule parent) (:comment parent)))
