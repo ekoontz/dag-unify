@@ -35,28 +35,39 @@
     true
     input-val))
 
+(declare final-reference-of)
+
+(def ^:dynamic found-refs nil)
+
+(declare all-refs-with-binding)
+
 (defn all-refs [input]
+  (binding [found-refs (atom (set nil))]
+    (all-refs-with-binding input)))
+
+(defn- all-refs-with-binding [input]
   (cond
+    (and (ref? input)
+         (contains? @found-refs input))
+    []
+
     (ref? input)
-    (cons
-     (if (ref? @input)
-       ;; dereference double-references (references to another reference) :
-       @input
-       ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
-       input)
-     (all-refs @input))
+    (let [input (final-reference-of input)]
+      (swap! found-refs
+             (fn [x]
+               (conj @found-refs input)))
+      (cons input (all-refs-with-binding @input)))
+
+    (and (map? input) (empty? input))
+    []
+
     (map? input)
-    ;; TODO: fix bug here: vals resolves @'s
-    (mapcat all-refs
-            (map (fn [val]
-                     ;; dereference double-references (references to another reference) :
-                     ;; note the implicit assumption that the level of indirection is not greater than this.
-                     (if (and (ref? val)
-                              (ref? @val))
-                       @val
-                       ;; a simple reference: reference to a non-reference (e.g. a map, boolean, etc):
-                       val))
-                 (vec (set (vals input)))))))
+    ;; get refs for the first key's value:
+    (concat (all-refs-with-binding (second (first input)))
+            ;; ..and refs for the remaining keys' values:
+            (all-refs-with-binding (dissoc input (first (first input)))))
+    true
+    []))
 
 (defn final-reference-of [input]
   (cond (ref? @input)
