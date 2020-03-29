@@ -219,28 +219,31 @@
     
     (and
      (ref? val1)
-     (not (ref? val2)))
-    (do (swap! val1
-               (fn [x] (merge @val1 val2)))
-        val1)
-    
-    (and
-     (ref? val2)
-     (not (ref? val1)))
-    (do (swap! val2
-               (fn [x] (merge val1 @val2)))
-        val2)
-    
-    (and
-     (ref? val1)
      (ref? val2))
     (do (swap! val1
                (fn [x] (merge @val1 @val2)))
         val1)
+
+    (ref? val1)
+    (do (swap! val1
+               (fn [x] (merge @val1 val2)))
+        val1)
     
-    (= val1 :top) val2
-    (= val2 :top) val1
-    (= val1 val2) val1))
+    (ref? val2)
+    (do (swap! val2
+               (fn [x] (merge val1 @val2)))
+        val2)
+
+    (= val1 :top)
+    val2
+
+    (= val2 :top)
+    val1
+
+    (= val1 val2) val1
+    
+    :else (exception (str "merge: unhandled case: val1: " val1 "; val1: " val2))))
+
 
 (defn cache-serialization [structure serialized]
   (if (or (= serialized ::no-sharing) (empty? (rest serialized)))
