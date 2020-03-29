@@ -77,10 +77,10 @@
        path
        (assoc retval final
               (cons path
-                    (get retval input [])))))
+                    (get retval input nil)))))
 
     (map? input)
-    (reduce (fn [a b] (merge-with union a b))
+    (reduce (fn [a b] (merge-with concat a b))
             (map (fn [key]
                    (find-paths-to-refs
                     (get input key)
