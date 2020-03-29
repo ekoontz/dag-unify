@@ -389,7 +389,7 @@
         result2 (unify b a)]
     (is (not (fail? result1)))
     (is (not (fail? result2)))
-    (is (= false (ref? result1)))
-    (is (= false (ref? result2)))
-    (is (empty? result1))
-    (is (empty? result2))))
+    (is (= true (ref? result1)))
+    (is (= true (ref? result2)))
+    (is (empty? @result1))
+    (is (empty? @result2))))
