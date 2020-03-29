@@ -5,7 +5,7 @@
             [dag_unify.core :as u
              :refer [assoc-in copy fail? get-in unify unify!]]
             [dag_unify.serialization
-             :refer [all-refs create-path-in deserialize find-paths-to-value serialize
+             :refer [all-refs create-path-in deserialize serialize
                      skeletize ref?]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
@@ -122,36 +122,6 @@
     (is (ref? (:b result)))
     (is (= (:a result) (:b result)))
     (is (= @(:a result) 42))))
-
-(deftest find-paths-to-values-1
-  "test path-to-value, which returns a list of all ways of reaching
-a given value in a given map."
-  (let [ref1 (atom 42)
-        mymap {:a ref1 :b ref1}
-        ptf (find-paths-to-value mymap ref1 nil)]
-    (is (= ptf '((:a)(:b))))))
-
-(deftest find-paths-to-values-2
-  "test path-to-value, which returns a list of all ways of reaching
-a given value in a given map."
-  (let [ref2 (atom 42)
-        ref1 (atom {:c ref2})
-        mymap {:a ref1
-               :b ref1
-               :d ref2}
-        paths-to-ref1 (find-paths-to-value mymap ref1 nil)]
-    (is (= paths-to-ref1 '((:a)(:b))))))
-
-(deftest find-paths-to-values-3
-  "test path-to-value, which returns a list of all ways of reaching
-a given value in a given map."
-  (let [ref2 (atom 42)
-        ref1 (atom {:c ref2})
-        mymap {:a ref1
-               :b ref1
-               :d ref2}
-        paths-to-ref2 (find-paths-to-value mymap ref2 nil)]
-    (is (= paths-to-ref2 '((:a :c)(:b :c)(:d))))))
 
 (deftest all-refs1
   (let [ref1 (atom 42)

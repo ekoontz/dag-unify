@@ -61,30 +61,6 @@
                        val))
                  (vec (set (vals input)))))))
 
-(defn find-paths-to-value
-  "find all paths in _map_ which are equal to _value_, where _value_ is (ref?)=true."
-  [input value path]
-  (cond
-    (ref? input)
-    (cond
-
-      ;; found the value that we were looking for.
-      (= input value)
-      [path]
-
-      true
-      ;; did not find the value, so keep looking within this value.
-      (find-paths-to-value @input value path))
-
-    (map? input)
-    (reduce concat
-            (map (fn [key]
-                   (find-paths-to-value
-                    (get input key)
-                    value
-                    (concat path [key])))
-                 (keys input)))))
-
 (defn final-reference-of [input]
   (cond (ref? @input)
         (final-reference-of @input)
