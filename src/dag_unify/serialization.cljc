@@ -71,12 +71,13 @@
   [input path retval]
   (cond
     (ref? input)
-    (find-paths-to-refs
-     @(final-reference-of input)
-     path
-     (assoc retval (final-reference-of input)
-            (cons path
-                  (get retval input []))))
+    (let [final (final-reference-of input)]
+      (find-paths-to-refs
+       @final
+       path
+       (assoc retval final
+              (cons path
+                    (get retval input [])))))
 
     (map? input)
     (reduce (fn [a b] (merge-with union a b))
