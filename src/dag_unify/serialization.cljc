@@ -122,7 +122,7 @@
 
         (let [fptr (find-paths-to-refs input [] {})]
           (map (fn [ref]
-                 [(set (get fptr ref))
+                 [(vec (map vec (set (get fptr ref))))
                   (skeletize @ref)])
                (keys fptr)))
 
