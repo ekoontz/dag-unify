@@ -23,6 +23,7 @@
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
 
 (declare copy)
+(declare copy-old)
 (declare merge-with-keys)
 (declare ref?)
 (declare simplify-ref)
@@ -36,7 +37,7 @@
   ([val1 val2 & rest-args]
    (let [result (unify! (copy val1) (copy val2))]
      (if (empty? rest-args)
-       (if (map? result)
+       (if (and false (map? result))
          ;; save the serialization so that future copies of this map
          ;; will be faster.
          (cache-serialization result (serialize result))
@@ -272,7 +273,45 @@
            [(if (nil? paths) [] paths) skel]
            (normalize-serialized2 (rest s))))))
 
+(def ^:dynamic old2new 42)
+(declare copy2)
 (defn copy [input]
+  (binding [old2new (atom {})]
+    (copy2 input)))
+
+(defn copy2 [input]
+  (cond
+    ;; input is a ref that we have seen _input_ before, so return the new
+    ;; already-created copy of _input_:
+    (and (ref? input)
+         (get @old2new input))
+    (get @old2new input)
+
+
+    (ref? input)
+    ;; input is a ref that we have *not* seen before, so:
+    ;; 1. create a new ref:
+    (let [new-input (atom nil)]
+      ;; 2. update the old-to-new map with this new ref:
+      (swap! old2new
+             (fn [x] (assoc x input new-input)))
+      ;; set the value of the new ref, based on the existing _input_:
+      (swap! new-input
+             (fn [x] (copy2 @input)))
+      ;; and return the new ref:
+      new-input)
+
+    (map? input)
+    (into {}
+          (map (fn [[k v]]
+                 [k (copy2 v)])
+              input))
+
+    ;; simply an atomic value.
+    ;; return a pair: the existing input (no copying needed), and the old2new map:
+    true input))
+
+(defn copy-old [input]
   (let [serialized (serialize input)
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
