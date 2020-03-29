@@ -273,17 +273,16 @@
            (normalize-serialized2 (rest s))))))
 
 (defn copy [input]
-  (let [serialized (if use-new-serializer? (serialize input) (serialize input))
+  (let [serialized (serialize input)
         deserialized
         (if (= serialized :dag_unify.serialization/no-sharing)
           input
           (deserialize serialized))]
     (if log-serializing?
-      (log/info (str "copy(" use-new-serializer? ") serialized: "
+      (log/info (str "copy serialized: "
                       (if (seq? serialized)
                         (vec serialized)
                         serialized))))
-    (if use-new-serializer? (log/debug (str "USING NEW SERIALIZER!")))
     (cond
       (= serialized :dag_unify.serialization/no-sharing)
       deserialized
