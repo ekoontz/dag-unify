@@ -16,7 +16,7 @@
    [clojure.string :refer [join]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
-   [dag_unify.serialization :refer [all-refs cache-serialization create-path-in
+   [dag_unify.serialization :refer [all-refs create-path-in
                                     deserialize exception final-reference-of serialize]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
@@ -37,11 +37,7 @@
   ([val1 val2 & rest-args]
    (let [result (unify! (copy val1) (copy val2))]
      (if (empty? rest-args)
-       (if (and false (map? result))
-         ;; save the serialization so that future copies of this map
-         ;; will be faster.
-         (cache-serialization result (serialize result))
-         result)
+       result
        (unify result
               (apply unify rest-args))))))
 
@@ -63,8 +59,8 @@
           (map? val2))
      ;; This is the canonical unification case: unifying two DAGs
      ;; (maps with possible references within them).
-     (let [arg1 (reduce dissoc val1 dag_unify.serialization/*exclude-keys*)
-           arg2 (reduce dissoc val2 dag_unify.serialization/*exclude-keys*)
+     (let [arg1 val1
+           arg2 val2
            result
            (loop [arg1 arg1 arg2 arg2 keys-of-arg1 (keys arg1)]
              ;; if keys-of-arg1 is empty, then arg2 contains
@@ -237,7 +233,7 @@
   (mapcat (fn [kv]
             (let [key (first kv)
                   val (second kv)]
-              (if (not (contains? dag_unify.serialization/*exclude-keys* key))
+              (if true
                 (if (map? val)
                   (pathify val (concat prefix (list key)))
                   (if (and (ref? val)

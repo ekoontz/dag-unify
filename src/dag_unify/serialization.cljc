@@ -5,8 +5,6 @@
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])))
 
-(def ^:dynamic *exclude-keys* (set #{::serialized}))
-
 (declare merge)
 
 (defn ref? [val]
@@ -25,16 +23,15 @@
   (cond
     (ref? input-val) (skeletize @input-val)
     (map? input-val)
-    (let [sans-serialized (apply dissoc input-val *exclude-keys*)]
-      (zipmap (keys sans-serialized)
-              (map
-               (fn [val]
-                 (if (ref? val)
-                     :top
-                     (if (map? val)
-                       (skeletize val)
-                       val)))
-               (vals sans-serialized))))
+    (zipmap (keys input-val)
+            (map
+             (fn [val]
+               (if (ref? val)
+                 :top
+                 (if (map? val)
+                   (skeletize val)
+                   val)))
+             (vals input-val)))
     true
     input-val))
 
@@ -107,36 +104,32 @@
                                      (assoc-in {} (first paths) val))))))])))
 
 (defn serialize [input]
-  (let [memoized (get input ::serialized ::none)]
-    (cond
-      (not (= memoized ::none))
-      memoized
-
-      (ref? input)
-      (serialize @input)
-
-      true
-      (->>
-
-       (->
-
-        (let [fptr (find-paths-to-refs input [] {})]
-          (map (fn [ref]
-                 [(vec (map vec (set (get fptr ref))))
-                  (skeletize @ref)])
-               (keys fptr)))
-
-        ((fn [rest-serialized]
-           (cons
-            [nil
-             (skeletize input)]
-            rest-serialized)))
-
-        merge-skeleton)
-
-       (filter (fn [[paths val]]
-                 (or (empty? paths)
-                     (> (count paths) 1))))))))
+  (cond
+    (ref? input)
+    (serialize @input)
+    
+    true
+    (->>
+     
+     (->
+      
+      (let [fptr (find-paths-to-refs input [] {})]
+        (map (fn [ref]
+               [(vec (map vec (set (get fptr ref))))
+                (skeletize @ref)])
+             (keys fptr)))
+      
+      ((fn [rest-serialized]
+         (cons
+          [nil
+           (skeletize input)]
+          rest-serialized)))
+      
+      merge-skeleton)
+     
+     (filter (fn [[paths val]]
+               (or (empty? paths)
+                   (> (count paths) 1)))))))
 
 (defn create-path-in
   "create a path starting at map through all keys in map:
@@ -220,9 +213,3 @@
     (= val1 val2) val1
     
     :else (exception (str "merge: unhandled case: val1: " val1 "; val1: " val2))))
-
-
-(defn cache-serialization [structure serialized]
-  (if (or (= serialized ::no-sharing) (empty? (rest serialized)))
-    (assoc structure ::serialized ::no-sharing)
-    (assoc structure ::serialized serialized)))
