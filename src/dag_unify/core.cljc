@@ -9,7 +9,7 @@
   ;; e.g. {:fail :fail} rather than simply :fail,
   ;; and {:top :top} rather than simply :top.
 
-  (:refer-clojure :exclude [assoc-in get-in resolve]) ;; TODO: don't override (merge)
+  (:refer-clojure :exclude [assoc-in get-in])
   (:require
    [clojure.pprint :as core-pprint]
    [clojure.repl :refer [doc]]
@@ -23,10 +23,7 @@
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
 
 (declare copy)
-(declare copy-old)
-(declare merge-with-keys)
 (declare ref?)
-(declare simplify-ref)
 (declare unify!)
 (declare vec-contains?)
 
@@ -137,8 +134,8 @@
      (do
        (log/debug (str "case 3: both val1 and val2 are refs."))
        (cond
-         (= (simplify-ref val1)
-            (simplify-ref val2))
+         (= (final-reference-of val1)
+            (final-reference-of val2))
          val1
          
          (or (vec-contains? (vec (all-refs @val1)) val2)
@@ -192,22 +189,12 @@
   #?(:cljs
      (= (type val) cljs.core/Atom)))
 
-(defn resolve
+(defn resolve-ref
   "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
   [arg]
   (if (ref? arg)
-    (resolve @arg)
+    (resolve-ref @arg)
     arg))
-
-;; cf dag_unify.serialization/final-reference-of
-(defn simplify-ref
-  "if arg is a ref and @arg is not a ref, return arg. if @arg is also a ref, return (simplify-ref @arg). else, return arg."
-  [arg]
-  (if (ref? arg)
-    (if (not (ref? @arg))
-      arg
-      (simplify-ref @arg))
-    (exception (str "simplify-ref was passed a non-ref: " arg " of type: " (type arg)))))
 
 ;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
 (defn get-in
@@ -217,33 +204,9 @@
         (if (first path)
           (let [result (get in-map (first path) not-found)]
             (if (= result not-found) not-found
-                (get-in (resolve result) (rest path) not-found)))
+                (get-in (resolve-ref result) (rest path) not-found)))
           in-map)]
-    (if (ref? val)
-      @result
-      result)))
-
-(defn pathify
-  "Transform a map into a map of paths/value pairs,
-  where paths are lists of keywords, and values are atomic values.
-  e.g.:
-  {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
-  The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
-  [fs & [prefix]]
-  (mapcat (fn [kv]
-            (let [key (first kv)
-                  val (second kv)]
-              (if true
-                (if (map? val)
-                  (pathify val (concat prefix (list key)))
-                  (if (and (ref? val)
-                           (let [val @val]
-                             (map? val)))
-                    (pathify @val (concat prefix (list key)))
-                    [{(concat prefix (list key))
-                      (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
-                          val)}])))))
-          fs))
+    (resolve-ref result)))
 
 (defn assoc-in
   "Similar to clojure.core/assoc-in, but uses unification so that existing values are unified rather than overwritten."
@@ -256,19 +219,6 @@
   [m path v]
   (unify! m
           (create-path-in path v)))
-
-(declare isomorphic?)
-
-(def ^:dynamic use-new-serializer? true)
-(def ^:dynamic log-serializing? false)
-
-(defn normalize-serialized2 [s]
-  (cond (keyword? s) s
-        (not (empty? s))
-        (let [[paths skel] (first s)]
-          (cons
-           [(if (nil? paths) [] paths) skel]
-           (normalize-serialized2 (rest s))))))
 
 (def ^:dynamic old2new)
 (declare copy-with-binding)
@@ -303,28 +253,9 @@
                  [k (copy-with-binding v)])
               input))
 
-    ;; simply an atomic value.
-    ;; return a pair: the existing input (no copying needed), and the old2new map:
+    ;; simply an atomic value; nothing needed but to return the original atomic value:
     true input))
 
-(defn label-of [parent]
-  (if (:rule parent) (:rule parent) (:comment parent)))
-
-(defn has-path [path paths]
-  (if (first paths)
-    (if (= (first paths) path)
-      true
-      (has-path path (rest paths)))))
-
-(defn path-to-ref-index [serialized path n]
-  "given serialized form of a map, find the index for _path_. Start with 0."
-  ;; TODO: n should be optional and default to 0
-  (if (first serialized)
-    (let [paths (butlast (first serialized))
-          has-path (has-path path (first paths))]
-      (if (not (nil? has-path))
-        n
-        (path-to-ref-index (rest serialized) path (+ n 1))))))
 
 (defn strip-refs [map-with-refs]
   "return a map like map-with-refs, but without refs - (e.g. {:foo (atom 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
@@ -347,6 +278,28 @@
 
 (defn fail? [arg]
   (= :fail arg))
+
+(defn pathify
+  "Transform a map into a map of paths/value pairs,
+  where paths are lists of keywords, and values are atomic values.
+  e.g.:
+  {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
+  The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
+  [fs & [prefix]]
+  (mapcat (fn [kv]
+            (let [key (first kv)
+                  val (second kv)]
+              (if true
+                (if (map? val)
+                  (pathify val (concat prefix (list key)))
+                  (if (and (ref? val)
+                           (let [val @val]
+                             (map? val)))
+                    (pathify @val (concat prefix (list key)))
+                    [{(concat prefix (list key))
+                      (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
+                          val)}])))))
+          fs))
 
 ;; TODO: use a reduce or recur here rather
 ;; than simply recursion

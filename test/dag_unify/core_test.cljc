@@ -5,7 +5,7 @@
             [dag_unify.core :as u
              :refer [assoc-in copy fail? get-in unify unify!]]
             [dag_unify.serialization
-             :refer [all-refs create-path-in deserialize serialize
+             :refer [all-refs create-path-in deserialize final-reference-of serialize
                      skeletize ref?]])
   (:refer-clojure :exclude [assoc-in get-in resolve]))
 
