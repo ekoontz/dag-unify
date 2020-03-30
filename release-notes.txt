@@ -1,5 +1,0 @@
-1.5.3 +(defn dag_unify.core/pprint), +release-notes.txt
-1.7.3 Clojurescript support
-1.7.4 Use vectors rather than sequences in serialized representations to ease Clojurescript's use of Clojure macros.
-1.7.5 Use dag_unify.serialization/exception rather than java.lang.Exception for Clojurescript compatibility.
-1.7.6 Optimize dag_unify.serialization by not creating Atoms when only one path points to a certain value.
