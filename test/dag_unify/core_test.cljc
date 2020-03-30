@@ -15,7 +15,7 @@
     (is (= (:bar result) 42))))
 
 (deftest unify-with-top
-  (let [result (unify! :top {:foo 99} :top {:bar 42})]
+  (let [result (reduce unify! [:top {:foo 99} :top {:bar 42}])]
     (is (= (:foo result) 99))
     (is (= (:bar result) 42))))
 
@@ -271,31 +271,33 @@
                     infl (atom :top)
                     the-real-subj (atom :top)
                     the-obj (atom :top)]
-                (unify! common
-                        subject-verb-agreement
-                        {:intransitivize false
-                         :transitivize false
-                         :synsem {:agr subj-agr
-                                  :sem {:aspect :progressive
-                                        :pred :be-called
-                                        :tense :present
-                                        :subj the-real-subj
-                                        :obj the-obj}
-                                  :subcat {:1 {:cat :noun
-                                               :agr subj-agr
-                                               :sem {:pred :name
-                                                     :subj the-real-subj}
-                                               
-                                               }
-                                           :2 {:cat :noun
-                                               :agr subj-agr
-                                               :sem the-obj
-                                               :propernoun true ;; "I am John"
-                                               }
-                                           } ;; subcat {
-                                  } ;; synsem {
-                         } ;; end of map
-                        ))])]
+                (reduce
+                 unify!
+                 [common
+                  subject-verb-agreement
+                  {:intransitivize false
+                   :transitivize false
+                   :synsem {:agr subj-agr
+                            :sem {:aspect :progressive
+                                  :pred :be-called
+                                  :tense :present
+                                  :subj the-real-subj
+                                  :obj the-obj}
+                            :subcat {:1 {:cat :noun
+                                         :agr subj-agr
+                                         :sem {:pred :name
+                                               :subj the-real-subj}
+                                         
+                                         }
+                                     :2 {:cat :noun
+                                         :agr subj-agr
+                                         :sem the-obj
+                                         :propernoun true ;; "I am John"
+                                         }
+                                     } ;; subcat {
+                            } ;; synsem {
+                   } ;; end of map
+                  ]))])]
     (is (= (count be) 2))
     (is (not (fail? (nth be 0))))
     (is (not (fail? (nth be 1))))))

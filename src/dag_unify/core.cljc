@@ -29,154 +29,136 @@
 
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
-  ([val1]
-   val1)
-  ([val1 val2 & rest-args]
-   (let [result (unify! (copy val1) (copy val2))]
-     (if (empty? rest-args)
-       result
-       (unify result
-              (apply unify rest-args))))))
+  [val1 val2]
+  (unify! (copy val1) (copy val2)))
 
-;; TODO: many code paths below only look at val1 and val2, and ignore rest of args beyond that.
-;; either consider all args, or change signature of (unify) to take only val1 val2.
-;; see also lexiconfn/unify (probably will change signature, but make lexiconfn/unify handle
-;; have signature [& args] and pass to unify/unify with appropriate translation.
-;;
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
    so that sharing relationship in the arguments is preserved in the result"
-  ([val1]
-   val1)
-
-  ([val1 val2 & rest-args]
-   (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
-   (cond
-     (and (map? val1)
-          (map? val2))
-     ;; This is the canonical unification case: unifying two DAGs
-     ;; (maps with possible references within them).
-     (let [arg1 val1
-           arg2 val2
-           result
-           (loop [arg1 arg1 arg2 arg2 keys-of-arg1 (keys arg1)]
-             ;; if keys-of-arg1 is empty, then arg2 contains
-             ;; only keys that were *not* in arg1:
-             (if (empty? keys-of-arg1)
-               arg2
-
-               (let [key1 (first keys-of-arg1)
-                     result (unify! (key1 arg1 :top)
-                                    (key1 arg2 :top))]
-                 (cond
-                   (= :fail result) :fail
-
-                   (and (ref? result)
-                        (= :fail @result)) :fail
-
-                   true (recur arg1
-                               (merge
-                                arg2
-                                {key1 result})
-                               (rest keys-of-arg1))))))]
-       (if (empty? rest-args)
-         result
-         (unify! result
-                 (apply unify! rest-args))))
-     
-     (or (= val1 :fail)
-         (= val2 :fail))
-     :fail
-     
-     (= val1 :top)
-     (apply unify! (cons val2 rest-args))
-     
-     (= val2 :top)
-     (apply unify! (cons val1 rest-args))
-     
-     ;; expensive if val1 and val2 are not atomic values: the above
-     ;; checks should ensure that by now val1 and val2 are atomic.
-     (= val1 val2) val1
-     
-     ;; val1 is a ref, val2 is not a ref.
-     (and
-      (ref? val1)
-      (not (ref? val2)))
-     (do
-       (log/debug (str "case 1."))
-       (cond
-         (vec-contains? (vec (all-refs val2)) val1)
-         (exception (str "containment failure: "
-                         " val2: " val2 "'s references contain val1: " val1))
-         
-         true
-         (do (swap! val1
-                    (fn [x] (unify! @val1 val2)))
-             val1)))
-     
-     ;; val2 is a ref, val1 is not a ref.
-     (and
-      (ref? val2)
-      (not (ref? val1)))
-     (do
-       (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
-       (cond
-         (vec-contains? (vec (all-refs val1)) val2)
-         (exception (str "containment failure: "
-                         " val1: " val1 "'s references contain val2: " val2))
-         true
-         (do (swap! val2
-                    (fn [x] (unify! val1 @val2)))
-             val2)))
-     (and
-      (ref? val1)
-      (ref? val2))
-     (do
-       (log/debug (str "case 3: both val1 and val2 are refs."))
-       (cond
-         (= (final-reference-of val1)
-            (final-reference-of val2))
-         val1
-         
-         (or (vec-contains? (vec (all-refs @val1)) val2)
-             (vec-contains? (vec (all-refs @val2)) val1))
-         (exception (str "containment failure: "
-                         " val1: " val1 "'s references contain val2: " val2))
-         
-         (= @val1 val2) ;; val1 -> val2
-         val2
-         
-         :else
-         (do
-           (swap! val1
-                  (fn [x] (unify! @val1 @val2)))
-           (swap! val2
-                  (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-           val1)))
-     
-     ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
-     (not (= :notfound (:not val1 :notfound)))
-     (if (= val2 :top)
-       val1
-       ;; else
-       (let [result (unify! (:not val1) val2)]
-         (if (= result :fail)
-           val2
-           :fail)))
-     
-     ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
-     (not (= :notfound (:not val2 :notfound)))
-     (if (= val1 :top)
-       val2
-       (let [result (unify! val1 (:not val2))]
-         (if (= result :fail)
-           val1
-           :fail)))
-     
-     :else
-     (do
-       (log/debug (str "unify! else case."))
-       :fail))))
+  [val1 val2]
+  (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
+  (cond
+    (and (map? val1)
+         (map? val2))
+    ;; This is the canonical unification case: unifying two DAGs
+    ;; (maps with possible references within them).
+    (let [arg1 val1
+          arg2 val2
+          result
+          (loop [arg1 arg1 arg2 arg2 keys-of-arg1 (keys arg1)]
+            ;; if keys-of-arg1 is empty, then arg2 contains
+            ;; only keys that were *not* in arg1:
+            (if (empty? keys-of-arg1)
+              arg2
+              
+              (let [key1 (first keys-of-arg1)
+                    result (unify! (key1 arg1 :top)
+                                   (key1 arg2 :top))]
+                (cond
+                  (= :fail result) :fail
+                  
+                  (and (ref? result)
+                       (= :fail @result)) :fail
+                  
+                  true (recur arg1
+                              (merge
+                               arg2
+                               {key1 result})
+                              (rest keys-of-arg1))))))]
+      result)
+    (or (= val1 :fail)
+        (= val2 :fail))
+    :fail
+    
+    (= val1 :top)
+    val2
+    
+    (= val2 :top)
+    val1
+    
+    ;; expensive if val1 and val2 are not atomic values: the above
+    ;; checks should ensure that by now val1 and val2 are atomic.
+    (= val1 val2) val1
+    
+    ;; val1 is a ref, val2 is not a ref.
+    (and
+     (ref? val1)
+     (not (ref? val2)))
+    (do
+      (log/debug (str "case 1."))
+      (cond
+        (vec-contains? (vec (all-refs val2)) val1)
+        (exception (str "containment failure: "
+                        " val2: " val2 "'s references contain val1: " val1))
+        
+        true
+        (do (swap! val1
+                   (fn [x] (unify! @val1 val2)))
+            val1)))
+    
+    ;; val2 is a ref, val1 is not a ref.
+    (and
+     (ref? val2)
+     (not (ref? val1)))
+    (do
+      (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
+      (cond
+        (vec-contains? (vec (all-refs val1)) val2)
+        (exception (str "containment failure: "
+                        " val1: " val1 "'s references contain val2: " val2))
+        true
+        (do (swap! val2
+                   (fn [x] (unify! val1 @val2)))
+            val2)))
+    (and
+     (ref? val1)
+     (ref? val2))
+    (do
+      (log/debug (str "case 3: both val1 and val2 are refs."))
+      (cond
+        (= (final-reference-of val1)
+           (final-reference-of val2))
+        val1
+        
+        (or (vec-contains? (vec (all-refs @val1)) val2)
+            (vec-contains? (vec (all-refs @val2)) val1))
+        (exception (str "containment failure: "
+                        " val1: " val1 "'s references contain val2: " val2))
+        
+        (= @val1 val2) ;; val1 -> val2
+        val2
+        
+        :else
+        (do
+          (swap! val1
+                 (fn [x] (unify! @val1 @val2)))
+          (swap! val2
+                 (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+          val1)))
+    
+    ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
+    (not (= :notfound (:not val1 :notfound)))
+    (if (= val2 :top)
+      val1
+      ;; else
+      (let [result (unify! (:not val1) val2)]
+        (if (= result :fail)
+          val2
+          :fail)))
+    
+    ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
+    (not (= :notfound (:not val2 :notfound)))
+    (if (= val1 :top)
+      val2
+      (let [result (unify! val1 (:not val2))]
+        (if (= result :fail)
+          val1
+          :fail)))
+    
+    :else
+    (do
+      (log/debug (str "unify! else case."))
+      :fail)))
 
 (defn vec-contains?
   "return true if e is in v, otherwise return false."
@@ -256,6 +238,8 @@
     ;; simply an atomic value; nothing needed but to return the original atomic value:
     true input))
 
+
+;; TODO: move everything below to dag_unify.diagnostics:
 
 (defn strip-refs [map-with-refs]
   "return a map like map-with-refs, but without refs - (e.g. {:foo (atom 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
