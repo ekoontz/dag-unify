@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.0] - 2020-03-30
+
+- move diagnostic functions (fail-path, pprint, strip-refs, isomorphic?) to a new namespace: dag_unify.diagnostics
+- unify! and unify both only take exactly 2 arguments (not 1 or more than 2); clojure.core/reduce can be used to
+  instead to achieve the same effect.
+
 ## [1.8.0] - 2020-03-29
 
 - rewrite (copy): instead of serializing and then deserializing, traverse the input map
