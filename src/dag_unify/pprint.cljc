@@ -2,7 +2,10 @@
   (:require
    [clojure.string :refer [join]]
    [dag_unify.core :as u :refer [unify]]
-   [dag_unify.serialization :as s :refer [ref? serialize]]))
+   [dag_unify.diagnostics :refer [ref?]]
+   [dag_unify.serialization :refer [serialize]]))
+
+;; The code is not tested and doesn't work yet - someday it will!
 
 (def ^:dynamic *local-keys* (set #{:dag_unify.core/serialized ::annotate}))
 
