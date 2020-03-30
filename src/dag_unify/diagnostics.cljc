@@ -25,7 +25,7 @@
     :else
     map-with-refs))
 
-(defn pathify
+(defn- pathify
   "Transform a map into a map of paths/value pairs,
   where paths are lists of keywords, and values are atomic values.
   e.g.:
@@ -49,7 +49,7 @@
 
 ;; TODO: use a reduce or recur here rather
 ;; than simply recursion
-(defn find-fail-in [fs1 fs2 paths]
+(defn- find-fail-in [fs1 fs2 paths]
   (if (not (empty? paths))
     (let [path (first paths)
           val1 (get-in fs1 path :top)
