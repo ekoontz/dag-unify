@@ -107,40 +107,37 @@
     (clojure.core/merge
      (rest si)
      [[]
-      (reduce merge
-              (cons skel (->> (-> si rest)
-                              (filter (fn [[paths val]]
-                                        (= (count paths) 1)))
-                              (map (fn [[paths val]]
-                                     (assoc-in {} (first paths) val))))))])))
+      (vec
+       (reduce merge
+               (cons skel (->> (-> si rest)
+                               (filter (fn [[paths val]]
+                                         (= (count paths) 1)))
+                               (map (fn [[paths val]]
+                                      (assoc-in {} (first paths) val)))))))])))
 
 (defn serialize [input]
   (cond
-    (ref? input)
-    (serialize @input)
-    
+    (ref? input) (serialize @input)
     true
-    (->>
-     
-     (->
-      
-      (let [fptr (find-paths-to-refs input [] {})]
-        (map (fn [ref]
-               [(vec (map vec (set (get fptr ref))))
-                (skeletize @ref)])
-             (keys fptr)))
-      
-      ((fn [rest-serialized]
-         (cons
-          [nil
-           (skeletize input)]
-          rest-serialized)))
-      
-      merge-skeleton)
-     
-     (filter (fn [[paths val]]
-               (or (empty? paths)
-                   (> (count paths) 1)))))))
+    (vec
+     (->>
+      (->
+       (let [fptr (find-paths-to-refs input [] {})]
+         (map (fn [ref]
+                [(vec (map vec (set (get fptr ref))))
+                 (skeletize @ref)])
+              (keys fptr)))
+
+       ((fn [rest-serialized]
+          (cons
+           [nil
+            (skeletize input)]
+           rest-serialized)))
+       merge-skeleton)
+      (filter (fn [[paths val]]
+                (or (empty? paths)
+                    (> (count paths) 1))))
+      (map vec)))))
 
 (defn create-path-in
   "create a path starting at map through all keys in map:
