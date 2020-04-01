@@ -114,10 +114,6 @@
             (vec-contains? (vec (all-refs @val2)) val1))
         (exception (str "containment failure: "
                         " val1: " val1 "'s references contain val2: " val2))
-        
-        (= @val1 val2) ;; val1 -> val2
-        val2
-        
         :else
         (do
           (swap! val1
