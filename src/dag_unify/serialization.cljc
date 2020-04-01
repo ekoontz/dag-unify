@@ -75,13 +75,12 @@
     (clojure.core/merge
      (rest si)
      [[]
-      (vec
-       (reduce merge
-               (cons skel (->> (-> si rest)
-                               (filter (fn [[paths val]]
-                                         (= (count paths) 1)))
-                               (map (fn [[paths val]]
-                                      (assoc-in {} (first paths) val)))))))])))
+      (reduce merge
+              (cons skel (->> (-> si rest)
+                              (filter (fn [[paths val]]
+                                        (= (count paths) 1)))
+                              (map (fn [[paths val]]
+                                     (assoc-in {} (first paths) val))))))])))
 
 (defn serialize [input]
   (cond
