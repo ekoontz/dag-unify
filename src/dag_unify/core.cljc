@@ -1,14 +1,4 @@
 (ns dag_unify.core
-  ;; TODO: define a dissoc that works with special values 
-  ;; which are not maps but keywords, like :fail; 
-  ;; e.g.:
-  ;; (dissoc :fail :anykey) => :fail
-  ;; (dissoc :top :anykey) => :top
-  ;; Another approach would be to not modify dissoc to handle non-maps, and instead
-  ;; use special values that *are* maps.
-  ;; e.g. {:fail :fail} rather than simply :fail,
-  ;; and {:top :top} rather than simply :top.
-
   (:refer-clojure :exclude [assoc-in get-in])
   (:require
    [clojure.pprint :as core-pprint]
