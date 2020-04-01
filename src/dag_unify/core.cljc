@@ -6,12 +6,13 @@
    [clojure.string :refer [join]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
-   [dag_unify.serialization :refer [all-refs create-path-in
-                                    deserialize exception final-reference-of serialize]]))
+   [dag_unify.serialization :refer [create-path-in deserialize exception
+                                    final-reference-of serialize]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
 
+(declare all-refs)
 (declare copy)
 (declare ref?)
 (declare unify!)
@@ -80,7 +81,6 @@
         (vec-contains? (vec (all-refs val2)) val1)
         (exception (str "containment failure: "
                         " val2: " val2 "'s references contain val1: " val1))
-        
         true
         (do (swap! val1
                    (fn [x] (unify! @val1 val2)))
@@ -230,3 +230,34 @@
 
 (defn fail? [arg]
   (= :fail arg))
+
+(def ^:dynamic found-refs nil)
+(declare all-refs-with-binding)
+
+(defn all-refs [input]
+  (binding [found-refs (atom (set nil))]
+    (all-refs-with-binding input)))
+
+(defn- all-refs-with-binding [input]
+  (cond
+    (and (ref? input)
+         (contains? @found-refs input))
+    []
+
+    (ref? input)
+    (let [input (final-reference-of input)]
+      (swap! found-refs
+             (fn [x]
+               (conj @found-refs input)))
+      (cons input (all-refs-with-binding @input)))
+
+    (and (map? input) (empty? input))
+    []
+
+    (map? input)
+    ;; get refs for the first key's value:
+    (concat (all-refs-with-binding (second (first input)))
+            ;; ..and refs for the remaining keys' values:
+            (all-refs-with-binding (dissoc input (first (first input)))))
+    true
+    []))
