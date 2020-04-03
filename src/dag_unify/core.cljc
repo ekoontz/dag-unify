@@ -35,24 +35,41 @@
     ;; (maps with possible references within them).
     (let [arg1 val1
           arg2 val2
+          parent-refs nil
           result
-          (loop [arg1 arg1 arg2 arg2 keys-of-arg1 (keys arg1)]
-            ;; if keys-of-arg1 is empty, then arg2 contains
+          (loop [arg1 arg1
+                 arg2 arg2
+                 keys-of-arg1 (keys arg1)
+                 parent-refs nil]
+            ;; if keys-of-arg1 is empty, then arg2 is a map containing
             ;; only keys that were *not* in arg1:
             (if (empty? keys-of-arg1)
               arg2
               
               (let [key1 (first keys-of-arg1)
-                    result (unify! (key1 arg1 :top)
-                                   (key1 arg2 :top))]
+                    result
+                    (unify! (key1 arg1 :top)
+                            (key1 arg2 :top))]
                 (cond
                   (= :fail result) :fail
+
+                  (ref? result)
+                  (recur arg1
+                         (merge
+                          arg2
+                          {key1 result})
+                         (rest keys-of-arg1)
+                         parent-refs)
+
                   true (recur arg1
                               (merge
                                arg2
                                {key1 result})
-                              (rest keys-of-arg1))))))]
+                              (rest keys-of-arg1)
+                              parent-refs)))))]
       result)
+
+
     (or (= val1 :fail)
         (= val2 :fail))
     :fail
@@ -71,16 +88,16 @@
     (and
      (ref? val1)
      (not (ref? val2)))
-    (do
-      (log/debug (str "case 1."))
-      (cond
-        (vec-contains? (vec (all-refs val2)) val1)
+    (cond
+      (vec-contains? (vec (all-refs val2)) val1)
+      (do
         (exception (str "containment failure: "
-                        " val2: " val2 "'s references contain val1: " val1))
-        true
-        (do (swap! val1
-                   (fn [x] (unify! @val1 val2)))
-            val1)))
+                        " val2: " val2 "'s references contain val1: " val1)))
+      true
+      (do (swap! val1
+                 (fn [x]
+                   (unify! @val1 val2)))
+          val1))
     
     ;; val2 is a ref, val1 is not a ref.
     (and
@@ -89,12 +106,14 @@
     (do
       (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
       (cond
+
         (vec-contains? (vec (all-refs val1)) val2)
         (exception (str "containment failure: "
                         " val1: " val1 "'s references contain val2: " val2))
         true
         (do (swap! val2
-                   (fn [x] (unify! val1 @val2)))
+                   (fn [x]
+                     (unify! val1 @val2)))
             val2)))
     (and
      (ref? val1)
@@ -112,10 +131,16 @@
                         " val1: " val1 "'s references contain val2: " val2))
         :else
         (do
+
+          ;; set val1 to point to a unification of the values of val1 and val2:
           (swap! val1
-                 (fn [x] (unify! @val1 @val2)))
+                 (fn [x]
+                   (unify! @val1 @val2)))
+
+          ;; set val2 to point to val1, (which is itself a ref):
           (swap! val2
-                 (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+                 (fn [x] val1))
+
           val1)))
     
     ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
