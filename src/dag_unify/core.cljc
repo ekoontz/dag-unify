@@ -16,7 +16,6 @@
 (declare copy)
 (declare ref?)
 (declare unify!)
-(declare contains?)
 
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
@@ -74,7 +73,7 @@
      (ref? val1)
      (not (ref? val2)))
     (cond
-      (contains? (all-refs val2) val1)
+      (some #(= val1 %) (all-refs val2))
       (exception (str "containment failure (OLD): "
                       " val2: " val2 "'s references contain val1: " val1))
       true
@@ -88,7 +87,7 @@
      (ref? val2)
      (not (ref? val1)))
     (cond
-      (contains? (all-refs val1) val2)
+      (some #(= val2 %) (all-refs val1))
       (exception (str "containment failure: "
                       " val1: " val1 "'s references contain val2: " val2))
       true
@@ -106,8 +105,8 @@
          (final-reference-of val2))
       val1
       
-      (or (contains? (all-refs @val1) val2)
-          (contains? (all-refs @val2) val1))
+      (or (some #(= val2 %) (all-refs @val1))
+          (some #(= val1 %) (all-refs @val2)))
       (exception (str "containment failure: "
                       " val1: " val1 "'s references contain val2: " val2))
       :else
@@ -126,11 +125,6 @@
   
   :else
   :fail))
-
-(defn contains?
-  "return true if e is in v, otherwise return false."
-  [v e]
-  (not (empty? (filter #(= e %) v))))
 
 (defn ref? [val]
   #?(:clj
