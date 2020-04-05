@@ -67,7 +67,7 @@
     val1
     
     ;; expensive if val1 and val2 are not atomic values: the above
-    ;; checks should ensure that by now val1 and val2 are atomic.
+    ;; checks should ensure that by now, val1 and val2 are atomic.
     (= val1 val2) val1
 
     ;; val1 is a ref, val2 is not a ref:
@@ -84,7 +84,7 @@
                    (unify! @val1 val2)))
           val1))
     
-    ;; val2 is a ref, val1 is not a ref.
+    ;; val2 is a ref, val1 is not a ref:
     (and
      (ref? val2)
      (not (ref? val1)))
@@ -100,6 +100,7 @@
                    (fn [x]
                      (unify! val1 @val2)))
             val2)))
+    ;; both val1 and val2 are refs:
     (and
      (ref? val1)
      (ref? val2))
@@ -127,30 +128,9 @@
                  (fn [x] val1))
 
           val1)))
-    
-    ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
-    (not (= :notfound (:not val1 :notfound)))
-    (if (= val2 :top)
-      val1
-      ;; else
-      (let [result (unify! (:not val1) val2)]
-        (if (= result :fail)
-          val2
-          :fail)))
-    
-    ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
-    (not (= :notfound (:not val2 :notfound)))
-    (if (= val1 :top)
-      val2
-      (let [result (unify! val1 (:not val2))]
-        (if (= result :fail)
-          val1
-          :fail)))
-    
+
     :else
-    (do
-      (log/debug (str "unify! else case."))
-      :fail)))
+    :fail))
 
 (defn vec-contains?
   "return true if e is in v, otherwise return false."
