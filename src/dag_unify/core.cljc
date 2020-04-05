@@ -23,6 +23,29 @@
   [val1 val2]
   (unify! (copy val1) (copy val2)))
 
+(defn unify-dags [dag1 dag2]
+  ;; This is the canonical unification case: unifying two DAGs
+  ;; (dags with references possibly within them).
+  (loop [dag1 dag1
+         dag2 dag2
+         keys-of-dag1 (keys dag1)]
+    ;; if keys-of-dag1 is empty, then dag2 is a dag containing
+    ;; only keys that were *not* in dag1:
+    (if (empty? keys-of-dag1)
+      dag2
+      
+      (let [key1 (first keys-of-dag1)
+            result
+            (unify! (key1 dag1 :top)
+                    (key1 dag2 :top))]
+        (cond
+          (= :fail result) :fail
+          true (recur dag1
+                      (merge
+                       dag2
+                       {key1 result})
+                      (rest keys-of-dag1)))))))
+
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
    so that sharing relationship in the arguments is preserved in the result"
@@ -31,44 +54,7 @@
   (cond
     (and (map? val1)
          (map? val2))
-    ;; This is the canonical unification case: unifying two DAGs
-    ;; (maps with possible references within them).
-    (let [arg1 val1
-          arg2 val2
-          parent-refs nil
-          result
-          (loop [arg1 arg1
-                 arg2 arg2
-                 keys-of-arg1 (keys arg1)
-                 parent-refs nil]
-            ;; if keys-of-arg1 is empty, then arg2 is a map containing
-            ;; only keys that were *not* in arg1:
-            (if (empty? keys-of-arg1)
-              arg2
-              
-              (let [key1 (first keys-of-arg1)
-                    result
-                    (unify! (key1 arg1 :top)
-                            (key1 arg2 :top))]
-                (cond
-                  (= :fail result) :fail
-
-                  (ref? result)
-                  (recur arg1
-                         (merge
-                          arg2
-                          {key1 result})
-                         (rest keys-of-arg1)
-                         parent-refs)
-
-                  true (recur arg1
-                              (merge
-                               arg2
-                               {key1 result})
-                              (rest keys-of-arg1)
-                              parent-refs)))))]
-      result)
-
+    (unify-dags val1 val2)
 
     (or (= val1 :fail)
         (= val2 :fail))
@@ -83,16 +69,15 @@
     ;; expensive if val1 and val2 are not atomic values: the above
     ;; checks should ensure that by now val1 and val2 are atomic.
     (= val1 val2) val1
-    
-    ;; val1 is a ref, val2 is not a ref.
+
+    ;; val1 is a ref, val2 is not a ref:
     (and
      (ref? val1)
      (not (ref? val2)))
     (cond
       (vec-contains? (vec (all-refs val2)) val1)
-      (do
-        (exception (str "containment failure: "
-                        " val2: " val2 "'s references contain val1: " val1)))
+      (exception (str "containment failure (OLD): "
+                      " val2: " val2 "'s references contain val1: " val1))
       true
       (do (swap! val1
                  (fn [x]
@@ -238,10 +223,11 @@
 
     (map? input)
     (into {}
-          (map (fn [[k v]]
-                 [k (copy-with-binding v)])
-              input))
-
+          (->> input
+               (map (fn [[k v]]
+                      (if (not (= k ::refs))
+                        [k (copy-with-binding v)])))))
+               
     ;; simply an atomic value; nothing needed but to return the original atomic value:
     true input))
 
@@ -252,8 +238,14 @@
 (declare all-refs-with-binding)
 
 (defn all-refs [input]
-  (binding [found-refs (atom (set nil))]
-    (all-refs-with-binding input)))
+  (cond
+    (and (map? input) (::refs input))
+    (do
+      (log/info (str "returning saved refs: " (::refs input)))
+      (::refs input))
+    true
+    (binding [found-refs (atom (set nil))]
+      (all-refs-with-binding input))))
 
 (defn- all-refs-with-binding [input]
   (cond
