@@ -38,7 +38,7 @@
             value (unify! (key dag1 :top)
                           (key dag2 :top))]
         (if (= :fail value)
-          :fail
+          [:fail []]
           (recur (dissoc dag1 key)
                  (merge
                   (dissoc dag2 key)
