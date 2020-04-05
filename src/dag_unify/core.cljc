@@ -27,18 +27,19 @@
   ;; (dags with references possibly within them).
   (loop [dag1 dag1
          dag2 dag2
-         keys-of-dag1 (keys dag1)
+         keys-of-dag1 (->> (keys dag1) (remove #(= % ::refs)))
          all-the-refs []]
     ;; if keys-of-dag1 is empty, then dag2 is a dag containing
     ;; only keys that were *not* in dag1:
     (if (empty? keys-of-dag1)
-      [dag2 all-the-refs]
+      (assoc dag2
+             ::refs all-the-refs)
       
       (let [key (first keys-of-dag1)
             value (unify! (key dag1 :top)
                           (key dag2 :top))]
         (if (= :fail value)
-          [:fail []]
+          :fail
           (recur (dissoc dag1 key)
                  (merge
                   (dissoc dag2 key)
@@ -56,8 +57,9 @@
   (cond
     (and (map? val1)
          (map? val2))
-    (let [[result all-the-refs]
-          (unify-dags val1 val2)]
+    (let [result
+          (unify-dags val1 val2)
+          all-the-refs (if (map? result) (::refs result))]
       (log/info (str "all-the-refs: " (vec all-the-refs)))
       result)
 
