@@ -16,7 +16,7 @@
 (declare copy)
 (declare ref?)
 (declare unify!)
-(declare vec-contains?)
+(declare contains?)
 
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
@@ -39,7 +39,7 @@
                           (key dag2 :top))]
         (if (= :fail value)
           :fail
-          (recur dag1
+          (recur (dissoc dag1 key)
                  (merge
                   (dissoc dag2 key)
                   {key value})
@@ -74,7 +74,7 @@
      (ref? val1)
      (not (ref? val2)))
     (cond
-      (vec-contains? (vec (all-refs val2)) val1)
+      (contains? (all-refs val2) val1)
       (exception (str "containment failure (OLD): "
                       " val2: " val2 "'s references contain val1: " val1))
       true
@@ -88,7 +88,7 @@
      (ref? val2)
      (not (ref? val1)))
     (cond
-      (vec-contains? (vec (all-refs val1)) val2)
+      (contains? (all-refs val1) val2)
       (exception (str "containment failure: "
                       " val1: " val1 "'s references contain val2: " val2))
       true
@@ -106,8 +106,8 @@
          (final-reference-of val2))
       val1
       
-      (or (vec-contains? (vec (all-refs @val1)) val2)
-          (vec-contains? (vec (all-refs @val2)) val1))
+      (or (contains? (all-refs @val1) val2)
+          (contains? (all-refs @val2) val1))
       (exception (str "containment failure: "
                       " val1: " val1 "'s references contain val2: " val2))
       :else
@@ -127,7 +127,7 @@
   :else
   :fail))
 
-(defn vec-contains?
+(defn contains?
   "return true if e is in v, otherwise return false."
   [v e]
   (not (empty? (filter #(= e %) v))))
