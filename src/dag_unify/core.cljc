@@ -34,16 +34,15 @@
     (if (empty? keys-of-dag1)
       dag2
       
-      (let [key1 (first keys-of-dag1)
-            result
-            (unify! (key1 dag1 :top)
-                    (key1 dag2 :top))]
-        (if (= :fail result)
+      (let [key (first keys-of-dag1)
+            value (unify! (key dag1 :top)
+                          (key dag2 :top))]
+        (if (= :fail value)
           :fail
           (recur dag1
                  (merge
-                  dag2
-                  {key1 result})
+                  (dissoc dag2 key)
+                  {key value})
                  (rest keys-of-dag1)))))))
 
 (defn unify!
