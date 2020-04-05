@@ -38,13 +38,12 @@
             result
             (unify! (key1 dag1 :top)
                     (key1 dag2 :top))]
-        (cond
-          (= :fail result) :fail
-          true (recur dag1
-                      (merge
-                       dag2
-                       {key1 result})
-                      (rest keys-of-dag1)))))))
+        (if (= :fail result) :fail
+            (recur dag1
+                   (merge
+                    dag2
+                    {key1 result})
+                   (rest keys-of-dag1)))))))
 
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
@@ -87,50 +86,46 @@
     ;; val2 is a ref, val1 is not a ref:
     (and
      (ref? val2)
-     (not (ref? val1)))
-    (do
-      (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
-      (cond
-
-        (vec-contains? (vec (all-refs val1)) val2)
-        (exception (str "containment failure: "
-                        " val1: " val1 "'s references contain val2: " val2))
-        true
-        (do (swap! val2
-                   (fn [x]
-                     (unify! val1 @val2)))
-            val2)))
+     (not (ref? val1)))f
+    (cond
+      (vec-contains? (vec (all-refs val1)) val2)
+      (exception (str "containment failure: "
+                      " val1: " val1 "'s references contain val2: " val2))
+      true
+      (do (swap! val2
+                 (fn [x]
+                   (unify! val1 @val2)))
+          val2))
+    
     ;; both val1 and val2 are refs:
     (and
      (ref? val1)
      (ref? val2))
-    (do
-      (log/debug (str "case 3: both val1 and val2 are refs."))
-      (cond
-        (= (final-reference-of val1)
-           (final-reference-of val2))
-        val1
+    (cond
+      (= (final-reference-of val1)
+         (final-reference-of val2))
+      val1
+      
+      (or (vec-contains? (vec (all-refs @val1)) val2)
+          (vec-contains? (vec (all-refs @val2)) val1))
+      (exception (str "containment failure: "
+                      " val1: " val1 "'s references contain val2: " val2))
+      :else
+      (do
         
-        (or (vec-contains? (vec (all-refs @val1)) val2)
-            (vec-contains? (vec (all-refs @val2)) val1))
-        (exception (str "containment failure: "
-                        " val1: " val1 "'s references contain val2: " val2))
-        :else
-        (do
-
-          ;; set val1 to point to a unification of the values of val1 and val2:
-          (swap! val1
-                 (fn [x]
-                   (unify! @val1 @val2)))
-
-          ;; set val2 to point to val1, (which is itself a ref):
-          (swap! val2
-                 (fn [x] val1))
-
-          val1)))
-
-    :else
-    :fail))
+        ;; set val1 to point to a unification of the values of val1 and val2:
+        (swap! val1
+               (fn [x]
+                 (unify! @val1 @val2)))
+        
+        ;; set val2 to point to val1, (which is itself a ref):
+        (swap! val2
+               (fn [x] val1))
+        
+        val1))
+  
+  :else
+  :fail))
 
 (defn vec-contains?
   "return true if e is in v, otherwise return false."
