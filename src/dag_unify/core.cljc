@@ -38,12 +38,13 @@
             result
             (unify! (key1 dag1 :top)
                     (key1 dag2 :top))]
-        (if (= :fail result) :fail
-            (recur dag1
-                   (merge
-                    dag2
-                    {key1 result})
-                   (rest keys-of-dag1)))))))
+        (if (= :fail result)
+          :fail
+          (recur dag1
+                 (merge
+                  dag2
+                  {key1 result})
+                 (rest keys-of-dag1)))))))
 
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
@@ -86,7 +87,7 @@
     ;; val2 is a ref, val1 is not a ref:
     (and
      (ref? val2)
-     (not (ref? val1)))f
+     (not (ref? val1)))
     (cond
       (vec-contains? (vec (all-refs val1)) val2)
       (exception (str "containment failure: "
