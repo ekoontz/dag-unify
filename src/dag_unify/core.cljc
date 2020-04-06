@@ -46,7 +46,12 @@
                           containing-refs)]
         (log/info (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
         (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
-          (log/info (str "UHOH!!! containing-refs: " containing-refs " contains the value: " @value))
+          (let [error-message
+                (str "containment failure (NEW): "
+                     "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
+            (do
+              (log/error error-message)
+              (exception error-message)))
           (log/info (str "IT IS OK: containing-refs: " containing-refs " does not include value: " (if (ref? value) @value value))))
                        
         (if (= :fail value)
@@ -66,14 +71,6 @@
   (if (not (nil? containing-refs))
     (log/info (str "       containing-refs: " containing-refs)))
   (cond
-    (and (not (nil? val2))
-         (= containing-refs val2))
-    (do
-      (log/info (str "containment failure (NEW): "
-                     "val2 contains itself: " val2))
-      (exception (str "containment failure (NEW): "
-                      "val2 would contain itself: " val2)))
-    
     (and (map? val1)
          (map? val2))
     (let [result (unify-dags val1 val2 containing-refs)]
