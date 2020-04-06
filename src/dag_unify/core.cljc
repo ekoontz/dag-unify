@@ -11,8 +11,6 @@
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
-
-(declare all-refs)
 (declare copy)
 (declare ref?)
 (declare unify!)
@@ -219,40 +217,3 @@
 
 (defn fail? [arg]
   (= :fail arg))
-
-(def ^:dynamic found-refs nil)
-(declare all-refs-with-binding)
-
-(defn all-refs [input]
-  (cond
-    (and (map? input) (::refs input))
-    (do
-      (log/info (str "returning saved refs: " (::refs input)))
-      (::refs input))
-    true
-    (binding [found-refs (atom (set nil))]
-      (all-refs-with-binding input))))
-
-(defn- all-refs-with-binding [input]
-  (cond
-    (and (ref? input)
-         (contains? @found-refs input))
-    []
-
-    (ref? input)
-    (let [input (final-reference-of input)]
-      (swap! found-refs
-             (fn [x]
-               (conj @found-refs input)))
-      (cons input (all-refs-with-binding @input)))
-
-    (and (map? input) (empty? input))
-    []
-
-    (map? input)
-    ;; get refs for the first key's value:
-    (concat (all-refs-with-binding (second (first input)))
-            ;; ..and refs for the remaining keys' values:
-            (all-refs-with-binding (dissoc input (first (first input)))))
-    true
-    []))
