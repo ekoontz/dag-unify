@@ -108,18 +108,10 @@
      (not (ref? val2)))
     (let [new-containing-refs (cons val1 containing-refs)
           proposed (unify! @val1 val2 new-containing-refs)]
-      (cond
-        (and false (some #(= val1 %) (all-refs val2)))
-        (do
-          (log/info (str "containment failure (OLD): "
-                         "val2: " val2 "'s references contain val1: " val1))
-          (exception (str "containment failure (OLD): "
-                          "val2: " val2 "'s references contain val1: " val1)))
-        true
-        (do (swap! val1
-                   (fn [x]
-                     proposed))
-            val1)))
+      (do (swap! val1
+                 (fn [x]
+                   proposed))
+          val1))
     
     ;; val2 is a ref, val1 is not a ref:
     (and
