@@ -106,11 +106,10 @@
     (and
      (ref? val1)
      (not (ref? val2)))
-    (let [new-containing-refs (cons val1 containing-refs)
-          proposed (unify! @val1 val2 new-containing-refs)]
+    (let [unified (unify! @val1 val2 (cons val1 containing-refs))]
       (do (swap! val1
                  (fn [x]
-                   proposed))
+                   unified))
           val1))
     
     ;; val2 is a ref, val1 is not a ref:
