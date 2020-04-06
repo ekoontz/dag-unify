@@ -46,13 +46,12 @@
                           containing-refs)]
         (log/info (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
         (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
-          (let [error-message
+          (let [cycle-detection-message
                 (str "containment failure (NEW): "
                      "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
             (do
-              (log/error error-message)
-              (exception error-message)))
-          (log/info (str "IT IS OK: containing-refs: " containing-refs " does not include value: " (if (ref? value) @value value))))
+              (log/info cycle-detection-message)
+              (exception cycle-detection-message))))
                        
         (if (= :fail value)
           :fail
@@ -109,10 +108,8 @@
      (not (ref? val2)))
     (let [new-containing-refs (cons val1 containing-refs)
           proposed (unify! @val1 val2 new-containing-refs)]
-      (log/info (str "PROPOSED UNIFY: " proposed))
-      (log/info (str "</propose>"))
       (cond
-        (some #(= val1 %) (all-refs val2))
+        (and false (some #(= val1 %) (all-refs val2)))
         (do
           (log/info (str "containment failure (OLD): "
                          "val2: " val2 "'s references contain val1: " val1))
