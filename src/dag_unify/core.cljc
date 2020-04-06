@@ -124,24 +124,27 @@
                    proposed))
           val2))
     
+    ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
+    (and
+     (ref? val1)
+     (ref? val2)
+     (= (final-reference-of val1)
+        (final-reference-of val2)))
+    val1
+
     ;; both val1 and val2 are refs:
     (and
      (ref? val1)
      (ref? val2))
-    (let [unified (unify! @val1 @val2 (cons val2 containing-refs))]
+    (let [unified (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)))]
       (log/info (str "will try to set val1 to unified: " unified "; and set val2 to val1."))
       (cond
-        (= (final-reference-of val1)
-           (final-reference-of val2))
-        val1
-        
         (or (some #(= val2 %) (all-refs @val1))
             (some #(= val1 %) (all-refs @val2)))
         (exception (str "containment failure: "
                         " val1: " val1 "'s references contain val2: " val2))
         :else
         (do
-          
           ;; set val1 to point to a unification of the values of val1 and val2:
           (swap! val1 (fn [x] unified))
           
