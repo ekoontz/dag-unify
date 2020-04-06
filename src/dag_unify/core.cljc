@@ -115,12 +115,10 @@
     (and
      (ref? val2)
      (not (ref? val1)))
-    (let [new-containing-refs (cons val2 containing-refs)
-          proposed (unify! val1 @val2 new-containing-refs)]
-      (do (swap! val2
-                 (fn [x]
-                   proposed))
-          val2))
+    (do (swap! val2
+               (fn [x]
+                 (unify! val1 @val2 (cons val2 containing-refs))))
+        val2)
     
     ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
     (and
