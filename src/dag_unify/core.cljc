@@ -107,19 +107,9 @@
     (and
      (ref? val1)
      (not (ref? val2)))
-    (do
-      (log/info (str "UNIFY! CASE 10."))
-      (log/info (str "val1 is a ref: " val1))
-      (log/info (str "val2 is not a ref: " val2))
-      (if containing-refs (log/info (str "unify! (6): containing-refs: " containing-refs)))
-      (log/info (str "all-the-refs of val2 (old): " (vec (all-refs val2))))
-      (log/info (str "<propose (case 10 where val1 is a ref and val2 is not a ref)>"))
-      (log/info (str "val1: " val1))
-      (log/info (str "val2: " val2))
-      (log/info (str "containing-refs: " (vec containing-refs)))
-      (let [new-containing-refs (cons val1 containing-refs)
-            proposed (unify! @val1 val2 new-containing-refs)]
-        (log/info (str "PROPOSED UNIFY: " proposed)))
+    (let [new-containing-refs (cons val1 containing-refs)
+          proposed (unify! @val1 val2 new-containing-refs)]
+      (log/info (str "PROPOSED UNIFY: " proposed))
       (log/info (str "</propose>"))
       (cond
         (some #(= val1 %) (all-refs val2))
@@ -131,7 +121,7 @@
         true
         (do (swap! val1
                    (fn [x]
-                     (unify! @val1 val2 containing-refs)))
+                     proposed))
             val1)))
     
     ;; val2 is a ref, val1 is not a ref:
