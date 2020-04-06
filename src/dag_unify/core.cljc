@@ -22,15 +22,13 @@
   [val1 val2]
   (unify! (copy val1) (copy val2)))
 
-(defn unify-dags [dag1 dag2 dag1-containing-refs dag2-containing-refs]
+(defn unify-dags [dag1 dag2 containing-refs]
   ;; This is the canonical unification case: unifying two DAGs
   ;; (dags with references possibly within them).
   (log/info (str "unify-dags dag1: " dag1))
   (log/info (str "           dag2: " dag2))
-  (if (not (nil? dag1-containing-refs))
-    (log/info (str "          dag1-containing-refs: " dag1-containing-refs)))
-  (if (not (nil? dag2-containing-refs))
-    (log/info (str "          dag2-containing-refs: " dag2-containing-refs)))
+  (if (not (nil? containing-refs))
+    (log/info (str "          containing-refs: " containing-refs)))
   (loop [dag1 dag1
          dag2 dag2
          keys-of-dag1 (->> (keys dag1) (remove #(= % ::refs)))]
@@ -45,12 +43,11 @@
             debug (log/info (str "unify-dags: working on key: " key))
             value (unify! (key dag1 :top)
                           (key dag2 :top)
-                          dag1-containing-refs
-                          dag2-containing-refs)]
+                          containing-refs)]
         (log/info (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
-        (if (and (ref? value) (some #(= (final-reference-of value) %) dag2-containing-refs))
-          (log/info (str "UHOH!!! dag2-containing-refs: " dag2-containing-refs " contains the value: " @value))
-          (log/info (str "IT IS OK: dag2-containing-refs: " dag2-containing-refs " does not include value: " (if (ref? value) @value value))))
+        (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
+          (log/info (str "UHOH!!! containing-refs: " containing-refs " contains the value: " @value))
+          (log/info (str "IT IS OK: containing-refs: " containing-refs " does not include value: " (if (ref? value) @value value))))
                        
         (if (= :fail value)
           :fail
@@ -63,23 +60,14 @@
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
    so that sharing relationship in the arguments is preserved in the result"
-  [val1 val2 & [val1-containing-refs val2-containing-refs]]
+  [val1 val2 & [containing-refs]]
   (log/info (str "unify! val1: " val1))
   (log/info (str "       val2: " val2))
-  (if (not (nil? val1-containing-refs))
-    (log/info (str "       val1-containing-refs: " val1-containing-refs)))
-  (if (not (nil? val2-containing-refs))
-    (log/info (str "       val2-containing-refs: " val2-containing-refs)))
+  (if (not (nil? containing-refs))
+    (log/info (str "       containing-refs: " containing-refs)))
   (cond
-    (and (not (nil? val1))
-         (some #(= % val1) val1-containing-refs))
-    (do
-      (log/info (str "containment failure (NEW): "
-                     "val1 contains itself: " val1))
-      (exception (str "containment failure (NEW): "
-                      "val1 would contain itself: " val1)))
     (and (not (nil? val2))
-         (= val2-containing-refs val2))
+         (= containing-refs val2))
     (do
       (log/info (str "containment failure (NEW): "
                      "val2 contains itself: " val2))
@@ -88,7 +76,7 @@
     
     (and (map? val1)
          (map? val2))
-    (let [result (unify-dags val1 val2 val1-containing-refs val2-containing-refs)]
+    (let [result (unify-dags val1 val2 containing-refs)]
       (log/info (str "unify! result of unifying the 2 dags: " result))
       result)
 
@@ -100,13 +88,13 @@
          (map? val2))
     (do
       (log/info (str "unify!: val1 is :top; val2 is a map."))
-      (unify-dags val2 {} val2-containing-refs val1-containing-refs))
+      (unify-dags val2 {} containing-refs))
 
     (and (= val2 :top)
          (map? val1))
     (do
       (log/info (str "unify!: val1 is a map; val2 is  :top"))
-      (unify-dags val1 {} val1-containing-refs val2-containing-refs))
+      (unify-dags val1 {} containing-refs))
     
     (= val1 :top)
     val2
@@ -126,17 +114,14 @@
       (log/info (str "UNIFY! CASE 10."))
       (log/info (str "val1 is a ref: " val1))
       (log/info (str "val2 is not a ref: " val2))
-      (if val1-containing-refs (log/info (str "unify! (6): val1-containing-refs: " val1-containing-refs)))
-      (if val2-containing-refs (log/info (str "unify! (6): val2-containing-refs: " val2-containing-refs)))
+      (if containing-refs (log/info (str "unify! (6): containing-refs: " containing-refs)))
       (log/info (str "all-the-refs of val2 (old): " (vec (all-refs val2))))
       (log/info (str "<propose (case 10 where val1 is a ref and val2 is not a ref)>"))
       (log/info (str "val1: " val1))
       (log/info (str "val2: " val2))
-      (log/info (str "val1-containing-refs: " (vec val1-containing-refs)))
-      (log/info (str "val2-containing-refs: " (vec val2-containing-refs)))
-      (let [new-val1-containing-refs (cons val1 val1-containing-refs)
-            proposed (unify! @val1 val2 new-val1-containing-refs val2-containing-refs)]
-        (log/info (str "new val1-containing-refs: " new-val1-containing-refs))
+      (log/info (str "containing-refs: " (vec containing-refs)))
+      (let [new-containing-refs (cons val1 containing-refs)
+            proposed (unify! @val1 val2 new-containing-refs)]
         (log/info (str "PROPOSED UNIFY: " proposed)))
       (log/info (str "</propose>"))
       (cond
@@ -149,7 +134,7 @@
         true
         (do (swap! val1
                    (fn [x]
-                     (unify! @val1 val2 val1-containing-refs val2-containing-refs)))
+                     (unify! @val1 val2 containing-refs)))
             val1)))
     
     ;; val2 is a ref, val1 is not a ref:
@@ -163,14 +148,14 @@
       true
       (do (swap! val2
                  (fn [x]
-                   (unify! val1 @val2 val1-containing-refs (cons val2 val2-containing-refs))))
+                   (unify! val1 @val2 (cons val2 containing-refs))))
           val2))
     
     ;; both val1 and val2 are refs:
     (and
      (ref? val1)
      (ref? val2))
-    (let [unified (unify! @val1 @val2 (cons val1 val1-containing-refs) (cons val2 val2-containing-refs))]
+    (let [unified (unify! @val1 @val2 (cons val2 containing-refs))]
       (log/info (str "will try to set val1 to unified: " unified "; and set val2 to val1."))
       (cond
         (= (final-reference-of val1)
