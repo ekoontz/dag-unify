@@ -3,7 +3,7 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [clojure.string :as string]
             [dag_unify.core :as u
-             :refer [all-refs assoc-in copy fail? get-in unify unify!]]
+             :refer [assoc-in copy fail? get-in unify unify!]]
             [dag_unify.serialization
              :refer [create-path-in deserialize final-reference-of serialize
                      skeletize ref?]])
@@ -108,42 +108,6 @@
     (is (ref? (:b result)))
     (is (= (:a result) (:b result)))
     (is (= @(:a result) 42))))
-
-(deftest all-refs1
-  (let [ref1 (atom 42)
-        mymap {:a ref1, :b ref1}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (= refs (list ref1)))))
-
-(deftest all-refs2
-  (let [ref1 (atom 42)
-        ref2 (atom 43)
-        mymap {:a ref1, :b ref2}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (or (= refs (list ref1 ref2))
-            (= refs (list ref2 ref1))))))
-
-(deftest all-refs3
-  (let [ref1 (atom 42)
-        ref2 (atom 43)
-        mymap {:a ref1 :b {:c ref2}}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (or (= refs (list ref1 ref2))
-            (= refs (list ref2 ref1))))))
-
-(deftest all-refs4
-  (let [ref1 (atom 42)
-        mymap {:a ref1 :b {:c ref1}}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (= refs (list ref1)))))
-
-(deftest all-refs5
-  (let [ref2 (atom 42)
-        ref1 (atom {:c ref2})
-        mymap {:a ref1 :b ref1 :d ref2}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (or (= refs (list ref1 ref2))
-            (= refs (list ref2 ref1))))))
 
 (deftest skeletize-1
   (let [mymap {:a 42}]
