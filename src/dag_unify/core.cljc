@@ -38,14 +38,16 @@
             (log/debug (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
             (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
               (let [cycle-detection-message
-                    (str "containment failure (NEW): "
+                    (str "containment failure: "
                          "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
                 (do
                   (log/debug cycle-detection-message)
                   (exception cycle-detection-message))))
-            
-            (if (= :fail value)
+            (cond
+              (or (= :fail value)
+                  (and (ref? value) (= :fail @value)))
               :fail
+              true
               {key value}))))
 
    (reduce (fn [a b]
@@ -93,6 +95,16 @@
     ;; expensive if val1 and val2 are not atomic values: the above
     ;; checks should ensure that by now, val1 and val2 are atomic.
     (= val1 val2) val1
+
+    (and
+     (ref? val1)
+     (= :fail @val1))
+    :fail
+
+    (and
+     (ref? val2)
+     (= :fail @val2))
+    :fail
 
     ;; val1 is a ref, val2 is not a ref:
     (and
