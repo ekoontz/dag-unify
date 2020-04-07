@@ -262,21 +262,23 @@
           {:a shared
            :b {:c shared}})]
     (let [result
-          (try (unify! foo bar)
-               (catch Exception e :an-exception-was-thrown))]
+          (binding [u/exception-if-cycle? true]
+            (try (unify! foo bar)
+                 (catch Exception e :an-exception-was-thrown)))]
       (is (= :an-exception-was-thrown result)))))
 
 (deftest prevent-cyclic-graph-2
   (let [result
-        (try
-          (unify
-           (let [shared (atom :top)]
-             {:synsem {:subcat {:2 {:sem {:obj shared}}}
-                       :sem {:obj shared}}})
-           (let [shared (atom :top)]
-             {:synsem {:subcat {:2 {:sem shared}}
-                       :sem {:obj shared}}}))
-          (catch Exception e :an-exception-was-thrown))]
+        (binding [u/exception-if-cycle? true]
+          (try
+            (unify
+             (let [shared (atom :top)]
+               {:synsem {:subcat {:2 {:sem {:obj shared}}}
+                         :sem {:obj shared}}})
+             (let [shared (atom :top)]
+               {:synsem {:subcat {:2 {:sem shared}}
+                         :sem {:obj shared}}}))
+            (catch Exception e :an-exception-was-thrown)))]
     (is (= :an-exception-was-thrown result))))
 
 (deftest prevent-cyclic-graph-3
@@ -292,8 +294,9 @@
           ['((:sem)
              (:subcat :2 :sem)) :top]])
         result
-        (try (unify! arg1 arg2)
-             (catch Exception e :an-exception-was-thrown))]
+        (binding [u/exception-if-cycle? true]
+          (try (unify! arg1 arg2)
+               (catch Exception e :an-exception-was-thrown)))]
     (is (= :an-exception-was-thrown result))))
 
 (deftest not-found-with-non-existent-path-with-nil

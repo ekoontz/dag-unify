@@ -20,6 +20,11 @@
   [val1 val2]
   (unify! (copy val1) (copy val2)))
 
+(def ^:dynamic exception-if-cycle?
+  "If true, and if unifying two DAGs would cause a cycle, thrown an exception. If false, 
+   return :fail rather than throwing an exception."
+  false)
+
 (defn unify-dags [dag1 dag2 containing-refs]
   ;; This is the canonical unification case: unifying two DAGs
   ;; (dags with references possibly within them).
@@ -37,12 +42,14 @@
                               containing-refs)]
             (log/debug (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
             (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
-              (let [cycle-detection-message
-                    (str "containment failure: "
-                         "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
-                (do
-                  (log/debug cycle-detection-message)
-                  (exception cycle-detection-message))))
+              (if exception-if-cycle?
+                (let [cycle-detection-message
+                      (str "containment failure: "
+                           "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
+                  (do
+                    (log/debug cycle-detection-message)
+                    (exception cycle-detection-message)))
+                :fail))
             (cond
               (or (= :fail value)
                   (and (ref? value) (= :fail @value)))
