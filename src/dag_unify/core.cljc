@@ -29,7 +29,8 @@
     (log/info (str "          containing-refs: " containing-refs)))
   (loop [dag1 dag1
          dag2 dag2
-         keys-of-dag1 (->> (keys dag1) (remove #(= % ::refs)))]
+         keys-of-dag1 (clojure.set/union (keys dag1)
+                                         (keys dag2))]
     ;; if keys-of-dag1 is empty, then dag2 is a dag containing
     ;; only keys that were *not* in dag1:
     (if (empty? keys-of-dag1)
