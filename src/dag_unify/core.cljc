@@ -28,32 +28,29 @@
 (defn unify-dags [dag1 dag2 containing-refs]
   ;; This is the canonical unification case: unifying two DAGs
   ;; (dags with references possibly within them).
-  (loop [retval {}
-         keys (clojure.set/union (keys dag1)
-                                 (keys dag2))]
-    (if (empty? keys)
-        retval
-      (let [key (first keys)
-            value (unify! (key dag1 :top)
-                          (key dag2 :top)
-                          containing-refs)
-            value
-            (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
-              (if exception-if-cycle?
-                (let [cycle-detection-message
-                      (str "containment failure: "
-                           "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
-                  (log/debug cycle-detection-message)
-                  (exception cycle-detection-message))
-                :fail)
-              value)]
-        (if (= :fail value)
-          :fail
-          (recur
-           (merge
-            retval
-            {key value})
-           (rest keys)))))))
+  (let [keys (vec (set (concat (keys dag1) (keys dag2))))
+        values
+        (map (fn [key]
+               (let [value (unify! (key dag1 :top)
+                                   (key dag2 :top)
+                                   containing-refs)]
+                 (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
+                   (if exception-if-cycle?
+                     (let [cycle-detection-message
+                           (str "containment failure: "
+                                "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
+                       (exception cycle-detection-message))
+                     :fail)
+                   value)))
+             keys)]
+    (if (some #(or (= % :fail)
+                   (and (ref? %)
+                        (= @(final-reference-of %) :fail)))
+                   values)
+      :fail
+      (zipmap
+       keys
+       values))))
 
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
