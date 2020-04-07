@@ -25,6 +25,33 @@
    return :fail rather than throwing an exception."
   false)
 
+(defn unify-dags [dag1 dag2 containing-refs]
+  ;; This is the canonical unification case: unifying two DAGs
+  ;; (dags with references possibly within them).
+  (let [keys (vec (set (concat (keys dag1) (keys dag2))))
+        values
+        (map (fn [key]
+               (let [value (unify! (key dag1 :top)
+                                   (key dag2 :top)
+                                   containing-refs)]
+                 (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
+                   (if exception-if-cycle?
+                     (let [cycle-detection-message
+                           (str "containment failure: "
+                                "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
+                       (exception cycle-detection-message))
+                     :fail)
+                   value)))
+             keys)]
+    (if (some #(or (= % :fail)
+                   (and (ref? %)
+                        (= @(final-reference-of %) :fail)))
+                   values)
+      :fail
+      (zipmap
+       keys
+       values))))
+
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
    so that sharing relationship in the arguments is preserved in the result"
@@ -32,32 +59,7 @@
   (cond
     (and (map? val1)
          (map? val2))
-    ;; This is the canonical unification case: unifying two DAGs
-    ;; (dags with references possibly within them).
-    (let [dag1 val1 dag2 val2
-          keys (vec (set (concat (keys dag1) (keys dag2))))
-          values
-          (map (fn [key]
-                 (let [value (unify! (key dag1 :top)
-                                     (key dag2 :top)
-                                     containing-refs)]
-                   (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
-                     (if exception-if-cycle?
-                       (let [cycle-detection-message
-                             (str "containment failure: "
-                                  "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
-                         (exception cycle-detection-message))
-                       :fail)
-                     value)))
-               keys)]
-      (if (some #(or (= % :fail)
-                     (and (ref? %)
-                          (= @(final-reference-of %) :fail)))
-                values)
-        :fail
-        (zipmap
-         keys
-         values)))
+    (unify-dags val1 val2 containing-refs)
 
     (or (= val1 :fail)
         (= val2 :fail))
