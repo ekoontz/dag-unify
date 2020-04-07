@@ -27,18 +27,12 @@
   (log/debug (str "           dag2: " dag2))
   (if (not (nil? containing-refs))
     (log/debug (str "          containing-refs: " containing-refs)))
-  (loop [dag1 dag1
-         dag2 dag2
-         keys-of-dag1 (clojure.set/union (keys dag1)
-                                         (keys dag2))]
-    ;; if keys-of-dag1 is empty, then dag2 is a dag containing
-    ;; only keys that were *not* in dag1:
-    (if (empty? keys-of-dag1)
-      (do
-        (log/debug (str "returning dag2: " dag2))
-        dag2)
-      (let [key (first keys-of-dag1)
-            val2 (key dag2 :top)
+  (loop [retval {}
+         keys (clojure.set/union (keys dag1)
+                                 (keys dag2))]
+    (if (empty? keys)
+        retval
+      (let [key (first keys)
             debug (log/debug (str "unify-dags: working on key: " key))
             value (unify! (key dag1 :top)
                           (key dag2 :top)
@@ -54,11 +48,11 @@
                        
         (if (= :fail value)
           :fail
-          (recur (dissoc dag1 key)
+          (recur ;; TODO: don't merge here: do a final (reduce merge) after the (recur) finishes.
                  (merge
-                  (dissoc dag2 key)
+                  retval
                   {key value})
-                 (rest keys-of-dag1)))))))
+                 (rest keys)))))))
 
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
