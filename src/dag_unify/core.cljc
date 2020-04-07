@@ -253,3 +253,20 @@
             (all-refs-with-binding (dissoc input (first (first input)))))
     true
     []))
+
+(defn pprint [input]
+  (cond
+    (or (true? input)
+        (false? input)
+        (string? input)
+        (keyword? input)
+        (number? input)
+        (empty? input))
+    input
+    (map? input)
+    (core-pprint/pprint (dissoc input :dag_unify.serialization/serialized))
+    (ref? input)
+    (pprint @input)
+    true
+    (core-pprint/pprint input)))
+

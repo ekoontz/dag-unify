@@ -67,22 +67,6 @@
         paths-in-fs2 (map #(first (first %)) (pathify fs2))]
     (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
 
-(defn pprint [input]
-  (cond
-    (or (true? input)
-        (false? input)
-        (string? input)
-        (keyword? input)
-        (number? input)
-        (empty? input))
-    input
-    (map? input)
-    (core-pprint/pprint (dissoc input :dag_unify.serialization/serialized))
-    (ref? input)
-    (pprint @input)
-    true
-    (core-pprint/pprint input)))
-
 (defn isomorphic? [a b]
   (cond (and (map? a)
              (map? b)
