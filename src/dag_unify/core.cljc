@@ -64,10 +64,6 @@
     (and (map? val1)
          (map? val2))
     (unify-dags val1 val2 containing-refs)
-
-    (or (= val1 :fail)
-        (= val2 :fail))
-    :fail
     
     (and (= val1 :top)
          (map? val2))
