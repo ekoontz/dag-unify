@@ -13,6 +13,7 @@
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
 (declare copy)
 (declare ref?)
+(declare resolve-ref)
 (declare unify!)
 
 (defn unify
@@ -48,10 +49,8 @@
                      :fail)
                    value)))
              keys)]
-    (if (some #(or (= % :fail)
-                   (and (ref? %)
-                        (= @(final-reference-of %) :fail)))
-                   values)
+    (if (some #(= (resolve-ref %) :fail)
+              values)
       :fail
       (zipmap
        keys
