@@ -16,7 +16,7 @@
 (declare unify!)
 
 (defn unify
-  "like unify!, but non-destructively copy each argument before unifying."
+  "like unify!, but copy each argument before unifying so that the original inputs' references are not modified."
   [val1 val2]
   (unify! (copy val1) (copy val2)))
 
@@ -27,29 +27,31 @@
   (log/debug (str "           dag2: " dag2))
   (if (not (nil? containing-refs))
     (log/debug (str "          containing-refs: " containing-refs)))
-  (reduce (fn [a b]
-            (cond (or (= a :fail) (= b :fail))
-                  :fail
-                  true (merge a b)))
-          (map (fn [key]
-                 (let [debug (log/debug (str "unify-dags: working on key: " key))
-                       value (unify! (key dag1 :top)
-                                     (key dag2 :top)
-                                     containing-refs)]
-                   (log/debug (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
-                   (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
-                     (let [cycle-detection-message
-                           (str "containment failure (NEW): "
-                                "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
-                       (do
-                         (log/debug cycle-detection-message)
-                         (exception cycle-detection-message))))
-                   
-                   (if (= :fail value)
-                     :fail
-                     {key value})))
-               (clojure.set/union (keys dag1)
-                                  (keys dag2)))))
+  (->>
+   (clojure.set/union (keys dag1)
+                      (keys dag2))
+   (map (fn [key]
+          (let [debug (log/debug (str "unify-dags: working on key: " key))
+                value (unify! (key dag1 :top)
+                              (key dag2 :top)
+                              containing-refs)]
+            (log/debug (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
+            (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
+              (let [cycle-detection-message
+                    (str "containment failure (NEW): "
+                         "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
+                (do
+                  (log/debug cycle-detection-message)
+                  (exception cycle-detection-message))))
+            
+            (if (= :fail value)
+              :fail
+              {key value}))))
+
+   (reduce (fn [a b]
+             (cond (or (= a :fail) (= b :fail))
+                   :fail
+                   true (merge a b))))))
 
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
