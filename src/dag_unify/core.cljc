@@ -28,54 +28,41 @@
 (defn unify-dags [dag1 dag2 containing-refs]
   ;; This is the canonical unification case: unifying two DAGs
   ;; (dags with references possibly within them).
-  (log/debug (str "unify-dags dag1: " dag1))
-  (log/debug (str "           dag2: " dag2))
-  (if (not (nil? containing-refs))
-    (log/debug (str "          containing-refs: " containing-refs)))
-  (->>
-   (clojure.set/union (keys dag1)
-                      (keys dag2))
-   (map (fn [key]
-          (let [debug (log/debug (str "unify-dags: working on key: " key))
-                value (unify! (key dag1 :top)
-                              (key dag2 :top)
-                              containing-refs)]
-            (log/debug (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
+  (loop [retval {}
+         keys (clojure.set/union (keys dag1)
+                                 (keys dag2))]
+    (if (empty? keys)
+        retval
+      (let [key (first keys)
+            value (unify! (key dag1 :top)
+                          (key dag2 :top)
+                          containing-refs)
+            value
             (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
               (if exception-if-cycle?
                 (let [cycle-detection-message
                       (str "containment failure: "
                            "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
-                  (do
-                    (log/debug cycle-detection-message)
-                    (exception cycle-detection-message)))
-                :fail))
-            (cond
-              (or (= :fail value)
-                  (and (ref? value) (= :fail @value)))
-              :fail
-              true
-              {key value}))))
-
-   (reduce (fn [a b]
-             (cond (or (= a :fail) (= b :fail))
-                   :fail
-                   true (merge a b))))))
+                  (log/debug cycle-detection-message)
+                  (exception cycle-detection-message))
+                :fail)
+              value)]
+        (if (= :fail value)
+          :fail
+          (recur
+           (merge
+            retval
+            {key value})
+           (rest keys)))))))
 
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
    so that sharing relationship in the arguments is preserved in the result"
   [val1 val2 & [containing-refs]]
-  (log/debug (str "unify! val1: " val1))
-  (log/debug (str "       val2: " val2))
-  (if (not (nil? containing-refs))
-    (log/debug (str "       containing-refs: " containing-refs)))
   (cond
     (and (map? val1)
          (map? val2))
-    (let [result (unify-dags val1 val2 containing-refs)]
-      (log/debug (str "unify! result of unifying the 2 dags: " result))
-      result)
+    (unify-dags val1 val2 containing-refs)
 
     (or (= val1 :fail)
         (= val2 :fail))
@@ -83,15 +70,11 @@
     
     (and (= val1 :top)
          (map? val2))
-    (do
-      (log/debug (str "unify!: val1 is :top; val2 is a map."))
-      (unify-dags val2 {} containing-refs))
+    (unify-dags val2 {} containing-refs)
 
     (and (= val2 :top)
          (map? val1))
-    (do
-      (log/debug (str "unify!: val1 is a map; val2 is  :top"))
-      (unify-dags val1 {} containing-refs))
+    (unify-dags val1 {} containing-refs)
     
     (= val1 :top)
     val2
