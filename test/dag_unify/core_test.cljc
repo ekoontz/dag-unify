@@ -67,7 +67,7 @@
     (is (= result :fail))))
 
 (deftest maps-unify
-  (let [result (unify! '{:a 42} '{:b 43})]
+  (let [result (unify! {:a 42} {:b 43})]
     (is (= (:a result) 42)
         (= (:b result) 43))))
 
