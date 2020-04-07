@@ -23,10 +23,10 @@
 (defn unify-dags [dag1 dag2 containing-refs]
   ;; This is the canonical unification case: unifying two DAGs
   ;; (dags with references possibly within them).
-  (log/info (str "unify-dags dag1: " dag1))
-  (log/info (str "           dag2: " dag2))
+  (log/debug (str "unify-dags dag1: " dag1))
+  (log/debug (str "           dag2: " dag2))
   (if (not (nil? containing-refs))
-    (log/info (str "          containing-refs: " containing-refs)))
+    (log/debug (str "          containing-refs: " containing-refs)))
   (loop [dag1 dag1
          dag2 dag2
          keys-of-dag1 (clojure.set/union (keys dag1)
@@ -35,21 +35,21 @@
     ;; only keys that were *not* in dag1:
     (if (empty? keys-of-dag1)
       (do
-        (log/info (str "returning dag2: " dag2))
+        (log/debug (str "returning dag2: " dag2))
         dag2)
       (let [key (first keys-of-dag1)
             val2 (key dag2 :top)
-            debug (log/info (str "unify-dags: working on key: " key))
+            debug (log/debug (str "unify-dags: working on key: " key))
             value (unify! (key dag1 :top)
                           (key dag2 :top)
                           containing-refs)]
-        (log/info (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
+        (log/debug (str "unified value for " key " : " value " with type: " (type value) (if (ref? value) (str " -> " @value))))
         (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
           (let [cycle-detection-message
                 (str "containment failure (NEW): "
                      "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
             (do
-              (log/info cycle-detection-message)
+              (log/debug cycle-detection-message)
               (exception cycle-detection-message))))
                        
         (if (= :fail value)
@@ -64,15 +64,15 @@
   "destructively merge arguments, where arguments are maps possibly containing references, 
    so that sharing relationship in the arguments is preserved in the result"
   [val1 val2 & [containing-refs]]
-  (log/info (str "unify! val1: " val1))
-  (log/info (str "       val2: " val2))
+  (log/debug (str "unify! val1: " val1))
+  (log/debug (str "       val2: " val2))
   (if (not (nil? containing-refs))
-    (log/info (str "       containing-refs: " containing-refs)))
+    (log/debug (str "       containing-refs: " containing-refs)))
   (cond
     (and (map? val1)
          (map? val2))
     (let [result (unify-dags val1 val2 containing-refs)]
-      (log/info (str "unify! result of unifying the 2 dags: " result))
+      (log/debug (str "unify! result of unifying the 2 dags: " result))
       result)
 
     (or (= val1 :fail)
@@ -82,13 +82,13 @@
     (and (= val1 :top)
          (map? val2))
     (do
-      (log/info (str "unify!: val1 is :top; val2 is a map."))
+      (log/debug (str "unify!: val1 is :top; val2 is a map."))
       (unify-dags val2 {} containing-refs))
 
     (and (= val2 :top)
          (map? val1))
     (do
-      (log/info (str "unify!: val1 is a map; val2 is  :top"))
+      (log/debug (str "unify!: val1 is a map; val2 is  :top"))
       (unify-dags val1 {} containing-refs))
     
     (= val1 :top)
