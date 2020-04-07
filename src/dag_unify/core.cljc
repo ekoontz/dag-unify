@@ -31,9 +31,14 @@
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         values
         (map (fn [key]
-               (let [value (unify! (key dag1 :top)
-                                   (key dag2 :top)
-                                   containing-refs)]
+               (let [value
+                     (cond
+                       (empty? dag1) (key dag2 :top)
+                       (empty? dag2) (key dag1 :top)
+                       true
+                       (unify! (key dag1 :top)
+                               (key dag2 :top)
+                               containing-refs))]
                  (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
                    (if exception-if-cycle?
                      (let [cycle-detection-message
@@ -67,11 +72,11 @@
     
     (and (= val1 :top)
          (map? val2))
-    (unify-dags val2 {} containing-refs)
+    (unify-dags val2 nil containing-refs)
 
     (and (= val2 :top)
          (map? val1))
-    (unify-dags val1 {} containing-refs)
+    (unify-dags val1 nil containing-refs)
     
     (= val1 :top)
     val2
