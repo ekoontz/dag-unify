@@ -107,35 +107,34 @@
     ;; checks should ensure that by now val1 and val2 are atomic.
     (= val1 val2) val1
     
-    ;; val1 is a ref, val2 is not a ref.
+    ;; val1 is a ref, val2 is not a ref:
     (and
      (ref? val1)
      (not (ref? val2)))
-    (do
-      (log/debug (str "case 1."))
-      (cond
-        (vec-contains? (vec (all-refs val2)) val1)
-        (exception (str "containment failure: "
-                        " val2: " val2 "'s references contain val1: " val1))
-        true
-        (do (swap! val1
-                   (fn [x] (unify! @val1 val2)))
-            val1)))
+    (cond
+      (vec-contains? (vec (all-refs val2)) val1)
+      (exception (str "containment failure: "
+                      " val2: " val2 "'s references contain val1: " val1))
+      true
+      (do (swap! val1
+                 (fn [x]
+                   (unify! @val1 val2 (cons val1 containing-refs))))
+          val1))
     
     ;; val2 is a ref, val1 is not a ref.
     (and
      (ref? val2)
      (not (ref? val1)))
-    (do
-      (log/debug (str "case 2: val1 is not a ref; val2 *is* a ref."))
-      (cond
-        (vec-contains? (vec (all-refs val1)) val2)
-        (exception (str "containment failure: "
-                        " val1: " val1 "'s references contain val2: " val2))
-        true
-        (do (swap! val2
-                   (fn [x] (unify! val1 @val2)))
-            val2)))
+    (cond
+      (vec-contains? (vec (all-refs val1)) val2)
+      (exception (str "containment failure: "
+                      " val1: " val1 "'s references contain val2: " val2))
+      true
+      (do (swap! val2
+                 (fn [x]
+                   (unify! val1 @val2 (cons val2 containing-refs))))
+          val2))
+    
     (and
      (ref? val1)
      (ref? val2))
