@@ -15,6 +15,7 @@
 (declare all-refs)
 (declare copy)
 (declare ref?)
+(declare resolve-ref)
 (declare unify!)
 (declare vec-contains?)
 
@@ -23,10 +24,45 @@
   [val1 val2]
   (unify! (copy val1) (copy val2)))
 
+(def ^:dynamic exception-if-cycle?
+  "If true, and if unifying two DAGs would cause a cycle, thrown an exception. If false,
+   return :fail rather than throwing an exception."
+  false)
+
+(defn unify-dags [dag1 dag2 containing-refs]
+  ;; This is the canonical unification case: unifying two DAGs
+  ;; (dags with references possibly within them).
+  (let [keys (vec (set (concat (keys dag1) (keys dag2))))
+        values
+        (map (fn [key]
+               (let [value
+                     (cond
+                       (empty? dag1) (key dag2 :top)
+                       (empty? dag2) (key dag1 :top)
+                       true
+                       (unify! (key dag1 :top)
+                               (key dag2 :top)
+                               containing-refs))]
+                 (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
+                   (if exception-if-cycle?
+                     (let [cycle-detection-message
+                           (str "containment failure: "
+                                "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
+                       (exception cycle-detection-message))
+                     :fail)
+                   value)))
+             keys)]
+    (if (some #(= (resolve-ref %) :fail)
+              values)
+      :fail
+      (zipmap
+       keys
+       values))))
+
 (defn unify!
   "destructively merge arguments, where arguments are maps possibly containing references, 
    so that sharing relationship in the arguments is preserved in the result"
-  [val1 val2]
+  [val1 val2 & [containing-refs]]
   (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
   (cond
     (and (map? val1)
