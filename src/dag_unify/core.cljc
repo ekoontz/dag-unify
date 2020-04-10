@@ -12,7 +12,6 @@
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
 
-(declare all-refs)
 (declare copy)
 (declare ref?)
 (declare resolve-ref)
@@ -101,29 +100,19 @@
     (and
      (ref? val1)
      (not (ref? val2)))
-    (cond
-      (and false (vec-contains? (vec (all-refs val2)) val1))
-      (exception (str "containment failure: "
-                      " val2: " val2 "'s references contain val1: " val1))
-      true
-      (do (swap! val1
-                 (fn [x]
-                   (unify! @val1 val2 (cons val1 containing-refs))))
-          val1))
+    (do (swap! val1
+               (fn [x]
+                 (unify! @val1 val2 (cons val1 containing-refs))))
+        val1)
     
     ;; val2 is a ref, val1 is not a ref.
     (and
      (ref? val2)
      (not (ref? val1)))
-    (cond
-      (and false (vec-contains? (vec (all-refs val1)) val2))
-      (exception (str "containment failure: "
-                      " val1: " val1 "'s references contain val2: " val2))
-      true
-      (do (swap! val2
-                 (fn [x]
-                   (unify! val1 @val2 (cons val2 containing-refs))))
-          val2))
+    (do (swap! val2
+               (fn [x]
+                 (unify! val1 @val2 (cons val2 containing-refs))))
+        val2)
 
     ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
     (and
@@ -136,19 +125,12 @@
     (and
      (ref? val1)
      (ref? val2))
-    (cond
-      (and false
-           (or (vec-contains? (vec (all-refs @val1)) val2)
-               (vec-contains? (vec (all-refs @val2)) val1)))
-      (exception (str "containment failure: "
-                      " val1: " val1 "'s references contain val2: " val2))
-      :else
-      (do
-        (swap! val1
-               (fn [x] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)))))
-        (swap! val2
-               (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-        val1))
+    (do
+      (swap! val1
+             (fn [x] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)))))
+      (swap! val2
+             (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+      val1)
     
     :else
     (do
@@ -235,37 +217,6 @@
 
 (defn fail? [arg]
   (= :fail arg))
-
-(def ^:dynamic found-refs nil)
-(declare all-refs-with-binding)
-
-(defn all-refs [input]
-  (binding [found-refs (atom (set nil))]
-    (all-refs-with-binding input)))
-
-(defn- all-refs-with-binding [input]
-  (cond
-    (and (ref? input)
-         (contains? @found-refs input))
-    []
-
-    (ref? input)
-    (let [input (final-reference-of input)]
-      (swap! found-refs
-             (fn [x]
-               (conj @found-refs input)))
-      (cons input (all-refs-with-binding @input)))
-
-    (and (map? input) (empty? input))
-    []
-
-    (map? input)
-    ;; get refs for the first key's value:
-    (concat (all-refs-with-binding (second (first input)))
-            ;; ..and refs for the remaining keys' values:
-            (all-refs-with-binding (dissoc input (first (first input)))))
-    true
-    []))
 
 (defn pprint [input]
   (cond
