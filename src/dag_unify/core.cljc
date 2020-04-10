@@ -152,24 +152,18 @@
     (and
      (ref? val1)
      (ref? val2))
-    (do
-      (log/debug (str "case 3: both val1 and val2 are refs."))
-      (cond
-        (= (final-reference-of val1)
-           (final-reference-of val2))
-        val1
-        
-        (or (vec-contains? (vec (all-refs @val1)) val2)
-            (vec-contains? (vec (all-refs @val2)) val1))
-        (exception (str "containment failure: "
-                        " val1: " val1 "'s references contain val2: " val2))
-        :else
-        (do
-          (swap! val1
-                 (fn [x] (unify! @val1 @val2)))
-          (swap! val2
-                 (fn [x] val1)) ;; note that now val2 is a ref to a ref.
-          val1)))
+    (cond
+      (or (vec-contains? (vec (all-refs @val1)) val2)
+          (vec-contains? (vec (all-refs @val2)) val1))
+      (exception (str "containment failure: "
+                      " val1: " val1 "'s references contain val2: " val2))
+      :else
+      (do
+        (swap! val1
+               (fn [x] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)))))
+        (swap! val2
+               (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+        val1))
     
     :else
     (do
