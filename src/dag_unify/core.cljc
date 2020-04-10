@@ -93,10 +93,6 @@
                                {key1 result})
                               (rest keys-of-arg1))))))]
       result)
-    (or (= val1 :fail)
-        (= val2 :fail))
-    :fail
-    
     (= val1 :top)
     val2
     
@@ -104,8 +100,18 @@
     val1
     
     ;; expensive if val1 and val2 are not atomic values: the above
-    ;; checks should ensure that by now val1 and val2 are atomic.
+    ;; checks should ensure that by now, val1 and val2 are atomic:
     (= val1 val2) val1
+
+    (and
+     (ref? val1)
+     (= :fail @val1))
+    :fail
+
+    (and
+     (ref? val2)
+     (= :fail @val2))
+    :fail
     
     ;; val1 is a ref, val2 is not a ref:
     (and
@@ -134,6 +140,14 @@
                  (fn [x]
                    (unify! val1 @val2 (cons val2 containing-refs))))
           val2))
+
+    ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
+    (and
+     (ref? val1)
+     (ref? val2)
+     (= (final-reference-of val1)
+        (final-reference-of val2)))
+    val1
     
     (and
      (ref? val1)
