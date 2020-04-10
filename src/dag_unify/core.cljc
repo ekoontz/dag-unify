@@ -67,32 +67,16 @@
   (cond
     (and (map? val1)
          (map? val2))
-    ;; This is the canonical unification case: unifying two DAGs
-    ;; (maps with possible references within them).
-    (let [arg1 val1
-          arg2 val2
-          result
-          (loop [arg1 arg1 arg2 arg2 keys-of-arg1 (keys arg1)]
-            ;; if keys-of-arg1 is empty, then arg2 contains
-            ;; only keys that were *not* in arg1:
-            (if (empty? keys-of-arg1)
-              arg2
-              
-              (let [key1 (first keys-of-arg1)
-                    result (unify! (key1 arg1 :top)
-                                   (key1 arg2 :top))]
-                (cond
-                  (= :fail result) :fail
-                  
-                  (and (ref? result)
-                       (= :fail @result)) :fail
-                  
-                  true (recur arg1
-                              (merge
-                               arg2
-                               {key1 result})
-                              (rest keys-of-arg1))))))]
-      result)
+    (unify-dags val1 val2 containing-refs)
+
+    (and (= val1 :top)
+         (map? val2))
+    (unify-dags val2 nil containing-refs)
+
+    (and (= val2 :top)
+         (map? val1))
+    (unify-dags val1 nil containing-refs)
+    
     (= val1 :top)
     val2
     
@@ -118,7 +102,7 @@
      (ref? val1)
      (not (ref? val2)))
     (cond
-      (vec-contains? (vec (all-refs val2)) val1)
+      (and false (vec-contains? (vec (all-refs val2)) val1))
       (exception (str "containment failure: "
                       " val2: " val2 "'s references contain val1: " val1))
       true
@@ -132,7 +116,7 @@
      (ref? val2)
      (not (ref? val1)))
     (cond
-      (vec-contains? (vec (all-refs val1)) val2)
+      (and false (vec-contains? (vec (all-refs val1)) val2))
       (exception (str "containment failure: "
                       " val1: " val1 "'s references contain val2: " val2))
       true
@@ -153,8 +137,9 @@
      (ref? val1)
      (ref? val2))
     (cond
-      (or (vec-contains? (vec (all-refs @val1)) val2)
-          (vec-contains? (vec (all-refs @val2)) val1))
+      (and false
+           (or (vec-contains? (vec (all-refs @val1)) val2)
+               (vec-contains? (vec (all-refs @val2)) val1)))
       (exception (str "containment failure: "
                       " val1: " val1 "'s references contain val2: " val2))
       :else

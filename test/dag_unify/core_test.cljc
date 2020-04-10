@@ -3,7 +3,7 @@
             #?(:cljs [cljs.test :refer-macros [deftest is]])
             [clojure.string :as string]
             [dag_unify.core :as u
-             :refer [all-refs assoc-in copy fail? get-in unify unify!]]
+             :refer [assoc-in copy fail? get-in unify unify!]]
             [dag_unify.serialization
              :refer [create-path-in deserialize final-reference-of serialize
                      skeletize ref?]])
@@ -47,7 +47,7 @@
     (is (= result :fail))))
 
 (deftest maps-unify
-  (let [result (unify! '{:a 42} '{:b 43})]
+  (let [result (unify! {:a 42} {:b 43})]
     (is (= (:a result) 42)
         (= (:b result) 43))))
 
@@ -88,42 +88,6 @@
     (is (ref? (:b result)))
     (is (= (:a result) (:b result)))
     (is (= @(:a result) 42))))
-
-(deftest all-refs1
-  (let [ref1 (atom 42)
-        mymap {:a ref1, :b ref1}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (= refs (list ref1)))))
-
-(deftest all-refs2
-  (let [ref1 (atom 42)
-        ref2 (atom 43)
-        mymap {:a ref1, :b ref2}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (or (= refs (list ref1 ref2))
-            (= refs (list ref2 ref1))))))
-
-(deftest all-refs3
-  (let [ref1 (atom 42)
-        ref2 (atom 43)
-        mymap {:a ref1 :b {:c ref2}}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (or (= refs (list ref1 ref2))
-            (= refs (list ref2 ref1))))))
-
-(deftest all-refs4
-  (let [ref1 (atom 42)
-        mymap {:a ref1 :b {:c ref1}}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (= refs (list ref1)))))
-
-(deftest all-refs5
-  (let [ref2 (atom 42)
-        ref1 (atom {:c ref2})
-        mymap {:a ref1 :b ref1 :d ref2}
-        refs (seq (set (flatten (all-refs mymap))))]
-    (is (or (= refs (list ref1 ref2))
-            (= refs (list ref2 ref1))))))
 
 (deftest skeletize-1
   (let [mymap {:a 42}]
@@ -278,21 +242,23 @@
           {:a shared
            :b {:c shared}})]
     (let [result
-          (try (unify! foo bar)
-               (catch Exception e :an-exception-was-thrown))]
+          (binding [u/exception-if-cycle? true]
+            (try (unify! foo bar)
+                 (catch Exception e :an-exception-was-thrown)))]
       (is (= :an-exception-was-thrown result)))))
 
 (deftest prevent-cyclic-graph-2
   (let [result
-        (try
-          (unify
-           (let [shared (atom :top)]
-             {:synsem {:subcat {:2 {:sem {:obj shared}}}
-                       :sem {:obj shared}}})
-           (let [shared (atom :top)]
-             {:synsem {:subcat {:2 {:sem shared}}
-                       :sem {:obj shared}}}))
-          (catch Exception e :an-exception-was-thrown))]
+        (binding [u/exception-if-cycle? true]
+          (try
+            (unify
+             (let [shared (atom :top)]
+               {:synsem {:subcat {:2 {:sem {:obj shared}}}
+                         :sem {:obj shared}}})
+             (let [shared (atom :top)]
+               {:synsem {:subcat {:2 {:sem shared}}
+                         :sem {:obj shared}}}))
+            (catch Exception e :an-exception-was-thrown)))]
     (is (= :an-exception-was-thrown result))))
 
 (deftest prevent-cyclic-graph-3
@@ -308,8 +274,9 @@
           ['((:sem)
              (:subcat :2 :sem)) :top]])
         result
-        (try (unify! arg1 arg2)
-             (catch Exception e :an-exception-was-thrown))]
+        (binding [u/exception-if-cycle? true]
+          (try (unify! arg1 arg2)
+               (catch Exception e :an-exception-was-thrown)))]
     (is (= :an-exception-was-thrown result))))
 
 (deftest not-found-with-non-existent-path-with-nil
