@@ -38,40 +38,6 @@
         result (seq (set (mapcat #'keys maps)))] ;; mapcat->set->seq removes duplicates.
     (is (= result '(:b)))))
 
-(deftest unify-with-not
-  (let [result (unify! {:foo 42} {:foo {:not 43}})]
-    (is (= result {:foo 42}))))
-
-(deftest unify-fail-with-not
-  "test atom unifying with ':not' (special feature) (first in list; fail)"
-  (let [result (unify! {:not 42} 42)]
-    (is (= result :fail))))
-
-(deftest unify-succeed-with-not
-  "test atom unifying with ':not' (special feature) (second in list; succeed)"
-  (let [result (unify! 42 {:not 43})]
-    (is (= result 42))))
-
-(deftest unify-fail-with-not-2
-  "test atom unifying with ':not' (special feature) (second in list; fail)"
-  (let [result (unify! 42 {:not 42})]
-    (is (= result :fail))))
-
-(deftest unify-nested-not
-  "test unifying with ':not' (special feature)"
-  (let [result (unify! {:foo 42} {:foo {:not 43}})]
-    (is (= (get-in result [:foo]) 42))))
-
-(deftest unify-with-not-and-top1
-  "unifying {:not X} with :top should return {:not X} if X != top."
-  (let [result (unify! {:not 42} :top)]
-    (is (= result {:not 42}))))
-
-(deftest unify-with-not-and-top2
-  "(reversed argument order as preceding): unifying :top with {:not X} should return {:not X} if X != top."
-  (let [result (unify! :top {:not 42})]
-    (is (= result {:not 42}))))
-
 (deftest unify-atomic-vals
   (let [result (unify! 5 5)]
     (is (= result 5))))

@@ -157,25 +157,6 @@
                  (fn [x] val1)) ;; note that now val2 is a ref to a ref.
           val1)))
     
-    ;; convoluted way of expressing: "if val1 has the form: {:not X}, then .."
-    (not (= :notfound (:not val1 :notfound)))
-    (if (= val2 :top)
-      val1
-      ;; else
-      (let [result (unify! (:not val1) val2)]
-        (if (= result :fail)
-          val2
-          :fail)))
-    
-    ;; convoluted way of expressing: "if val2 has the form: {:not X}, then .."
-    (not (= :notfound (:not val2 :notfound)))
-    (if (= val1 :top)
-      val2
-      (let [result (unify! val1 (:not val2))]
-        (if (= result :fail)
-          val1
-          :fail)))
-    
     :else
     (do
       (log/debug (str "unify! else case."))
