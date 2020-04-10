@@ -128,11 +128,6 @@
 ;;              (= (:b result) (:c result))
 ;;              (= @(:a result) 42))))
 
-(deftest copy-with-not
-  (let [fs1 {:a (atom {:not 42})}
-        fs1-copy (copy fs1)]
-    (is (not (fail? fs1-copy)))))
-
 (deftest nil-and-top
   ;; ...should return emptylist.
   (is (= nil
