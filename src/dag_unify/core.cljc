@@ -40,18 +40,20 @@
                        true
                        (unify! (key dag1 :top)
                                (key dag2 :top)
-                               containing-refs))]
-                 (if (and (ref? value) (some #(= (final-reference-of value) %) containing-refs))
+                               containing-refs))
+                     final-ref (if (ref? value) (final-reference-of value))]
+                 (if (and (ref? value) (some #(= final-ref %) containing-refs))
                    (if exception-if-cycle?
                      (let [cycle-detection-message
                            (str "containment failure: "
-                                "val: " (final-reference-of value) " is referenced by one of the containing-refs: " containing-refs)]
+                                "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
                        (exception cycle-detection-message))
                      :fail)
-                   value)))
+                   (if (and final-ref (= @final-ref :fail))
+                     :fail
+                     value))))
              keys)]
-    (if (some #(= (resolve-ref %) :fail)
-              values)
+    (if (some #(= % :fail) values)
       :fail
       (zipmap
        keys
