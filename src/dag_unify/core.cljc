@@ -42,16 +42,17 @@
                                (key dag2 :top)
                                containing-refs))
                      final-ref (if (ref? value) (final-reference-of value))]
-                 (if (and (ref? value) (some #(= final-ref %) containing-refs))
-                   (if exception-if-cycle?
-                     (let [cycle-detection-message
-                           (str "containment failure: "
-                                "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
-                       (exception cycle-detection-message))
-                     :fail)
-                   (if (and final-ref (= @final-ref :fail))
-                     :fail
-                     value))))
+                 (cond (and final-ref (some #(= final-ref %) containing-refs))
+                       (if exception-if-cycle?
+                         (let [cycle-detection-message
+                               (str "containment failure: "
+                                    "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
+                           (exception cycle-detection-message))
+                         :fail)
+                       (and final-ref (= @final-ref :fail))
+                       :fail
+                       true
+                       value)))
              keys)]
     (if (some #(= % :fail) values)
       :fail
