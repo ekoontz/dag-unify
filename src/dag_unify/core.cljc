@@ -139,11 +139,6 @@
       (log/debug (str "unify! else case."))
       :fail)))
 
-(defn vec-contains?
-  "return true if e is in v, otherwise return false."
-  [v e]
-  (not (empty? (filter #(= e %) v))))
-
 (defn ref? [val]
   #?(:clj
      (= (type val) clojure.lang.Atom))
