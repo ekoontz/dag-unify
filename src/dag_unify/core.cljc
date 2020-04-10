@@ -37,13 +37,9 @@
         values
         (map (fn [key]
                (let [value
-                     (cond
-                       (empty? dag1) (key dag2 :top)
-                       (empty? dag2) (key dag1 :top)
-                       true
-                       (unify! (key dag1 :top)
-                               (key dag2 :top)
-                               containing-refs))
+                     (unify! (key dag1 :top)
+                             (key dag2 :top)
+                             containing-refs)
                      final-ref (if (ref? value) (final-reference-of value))]
                  (cond (and final-ref (some #(= final-ref %) containing-refs))
                        (if exception-if-cycle?
