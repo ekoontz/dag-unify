@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.1] - 2020-04-10
+
+- Removed support for `:not`: Can't remember it why or if this was ever needed; so if not needed,
+  I'm removing it for simplicity's sake.
+- Separate `unify!`'s handling of unifying two DAGs (maps with references) into a separate function, `unify-dags`.
+- Remove unneeded `(defn all-refs)` and related functions that were used by `unify!`: instead, doing cycle
+  detection by passing references to `unify!` and `unify-dag`. Performance difference is not measurably better
+  or worse, but at least amount of called code is smaller.
+
 ## [1.9.0] - 2020-03-30
 
 - move diagnostic functions (fail-path, pprint, strip-refs, isomorphic?) to a new namespace: dag_unify.diagnostics

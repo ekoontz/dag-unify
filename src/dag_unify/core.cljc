@@ -63,7 +63,7 @@
   "merge input arguments val1 and val2. if val1 and val2 are maps, merge recursively (via unify-dags).
    if val1 and/or val2 are references (Atoms), the references(s) will be updated to point to a new, unified value
    by resolving the references.
-   if val1 and/or val2 are atomic values (e.g. strings, numbers, etc), the unification is 
+   if val1 and/or val2 are atomic values (e.g. strings, numbers, etc), the unification is
    their equal value if they are equal, or :fail if they are not equal."
   [val1 val2 & [containing-refs]]
   (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
