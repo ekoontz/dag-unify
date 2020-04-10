@@ -29,7 +29,7 @@
 
 (defn unify-dags
   "Unify two maps by taking the union of their keys and for each
-   _k_ in this union, call unify! on the values of _k_ for each map." 
+   _k_ in this union, call unify! on the values of _k_ for each map."
   [dag1 dag2 containing-refs]
   ;; This is the canonical unification case: unifying two DAGs
   ;; (dags with references possibly within them).
@@ -82,10 +82,10 @@
 
     (= val1 :top)
     val2
-    
+
     (= val2 :top)
     val1
-    
+
     ;; expensive if val1 and val2 are not atomic values: the above
     ;; checks should ensure that by now, val1 and val2 are atomic:
     (= val1 val2) val1
@@ -99,7 +99,7 @@
      (ref? val2)
      (= :fail @val2))
     :fail
-    
+
     ;; val1 is a ref, val2 is not a ref:
     (and
      (ref? val1)
@@ -108,7 +108,7 @@
                (fn [x]
                  (unify! @val1 val2 (cons val1 containing-refs))))
         val1)
-    
+
     ;; val2 is a ref, val1 is not a ref.
     (and
      (ref? val2)
@@ -232,4 +232,3 @@
     (pprint @input)
     true
     (core-pprint/pprint input)))
-
