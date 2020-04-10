@@ -27,7 +27,10 @@
    return :fail rather than throwing an exception."
   false)
 
-(defn unify-dags [dag1 dag2 containing-refs]
+(defn unify-dags
+  "Unify two maps by taking the union of their keys and for each
+   _k_ in this union, call unify! on the values of _k_ for each map." 
+  [dag1 dag2 containing-refs]
   ;; This is the canonical unification case: unifying two DAGs
   ;; (dags with references possibly within them).
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
