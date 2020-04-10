@@ -16,7 +16,6 @@
 (declare ref?)
 (declare resolve-ref)
 (declare unify!)
-(declare vec-contains?)
 
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
@@ -75,7 +74,7 @@
     (and (= val2 :top)
          (map? val1))
     (unify-dags val1 nil containing-refs)
-    
+
     (= val1 :top)
     val2
     
@@ -121,7 +120,7 @@
      (= (final-reference-of val1)
         (final-reference-of val2)))
     val1
-    
+
     (and
      (ref? val1)
      (ref? val2))
@@ -131,7 +130,7 @@
       (swap! val2
              (fn [x] val1)) ;; note that now val2 is a ref to a ref.
       val1)
-    
+
     :else
     (do
       (log/debug (str "unify! else case."))
