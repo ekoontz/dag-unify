@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.2] - 2020-04-15
+
+- Improve `dag_unify.pprint`: output looks like:
+
+```
+{:c [[1] 42], :a {:b [1]}}
+```
+
+rather than:
+
+```
+{:c #<Atom@5fdb9f9b: 42>, :a {:b #<Atom@5fdb9f9b: 42>}}
+```
+
 ## [1.9.1] - 2020-04-10
 
 - Removed support for `:not`: Can't remember it why or if this was ever needed; so if not needed,
