@@ -41,8 +41,7 @@ user=> (def foo (let [shared-value (atom :top)]
   #_=>                   :c shared-value}))
 #'user/foo
 user=> (dag/pprint foo)
-{:a {:b #<Atom@2bac2366: :top>}, :c #<Atom@2bac2366: :top>}
-nil
+{:a {:b [[1] :top]}, :c [1]}
 ```
 
 Note in the above that in the directed acyclic graph `foo`, the value for the
@@ -52,10 +51,9 @@ Now, let's unify this with a specific value at the path: `[:c]`, namely `42`.
 
 ```
 user=> (dag/pprint (dag/unify foo {:c 42}))
-{:c #<Atom@7d8745bd: 42>, :a {:b #<Atom@7d8745bd: 42>}}
-nil
+{:c [[1] 42], :a {:b [1]}}
 user=>
-```   
+```
 
 Using dag-unify's built-in `get-in`, we get the same value for the
 paths `[:a :b]` and `[:c]`:
@@ -63,6 +61,8 @@ paths `[:a :b]` and `[:c]`:
 ```
 user=> (def foo2 (dag/unify foo {:c 42}))
 #'user/foo2
+user=> (dag/pprint foo2)
+{:c [[1] 42], :a {:b [1]}}
 user=> (dag/get-in foo2 [:a :b])
 42
 user=> (dag/get-in foo2 [:c])
@@ -118,6 +118,13 @@ user> foo
 user> 
 ```
 
+The function `dag_unify.pprint` can be used to display such DAGs more legibly:
+
+```
+user> (dag/pprint (dag/unify foo {:c 42}))
+{:a {:b [[1] :top]}, :c [1]}
+```
+
 If one or more arguments to `unify` is a map with a key whose value is
 an atom, then the value of that key will still be that same atom, but its
 value will be modified to be the unification of the arguments. For example:
@@ -126,7 +133,7 @@ value will be modified to be the unification of the arguments. For example:
 (let [shared-value (atom {:b 42})
       foo {:a shared-value}
       bar {:a {:c 43}}]
-  (unify foo bar))
+	(dag/unify foo bar))
 => {:a #<Atom@344dc027: {:c 43, :b 42}>}
 ```
 
