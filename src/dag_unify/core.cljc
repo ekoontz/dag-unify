@@ -217,18 +217,41 @@
 (defn fail? [arg]
   (= :fail arg))
 
+(def ref-counter (atom 0))
+(def ^:dynamic ref2counter-value)
+(declare pprint-with-binding)
 (defn pprint [input]
+  (binding [ref2counter-value (atom {})]
+    (swap! ref-counter (fn [x] 0))
+    ;; doing a (deserialize (serialize)) on the input to remove
+    ;; singleton references (references which are only used once in the input),
+    ;; which clutters up the displayed output unnecessarily.
+    (pprint-with-binding (deserialize (serialize input)))))
+
+(defn pprint-with-binding [input]
   (cond
-    (or (true? input)
-        (false? input)
-        (string? input)
-        (keyword? input)
-        (number? input)
-        (empty? input))
-    input
-    (map? input)
-    (core-pprint/pprint (dissoc input :dag_unify.serialization/serialized))
     (ref? input)
-    (pprint @input)
-    true
-    (core-pprint/pprint input)))
+    (let [entry-if-any
+          (get @ref2counter-value (final-reference-of input))]
+      ;; input is a ref that we have seen _input_ before, so return the new
+      ;; already-created pprint of _input_:
+      (if entry-if-any
+        [entry-if-any]
+
+        ;; else:
+        ;; input is a ref that we have *not* seen before, so:
+        ;; 1. create a new ref:
+        (let [input (final-reference-of input)
+              increment (swap! ref-counter (fn [x] (+ 1 x)))]
+          (swap! ref2counter-value
+                 (fn [x] (assoc x input @ref-counter)))
+          [[@ref-counter] (pprint-with-binding @input)])))
+
+    (map? input)
+    (into {}
+          (map (fn [[k v]]
+                 [k (pprint-with-binding v)])
+              input))
+
+    ;; simply an atomic value; nothing needed but to return the original atomic value:
+    true input))
