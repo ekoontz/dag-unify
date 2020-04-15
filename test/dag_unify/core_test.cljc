@@ -7,7 +7,7 @@
             [dag_unify.serialization
              :refer [create-path-in deserialize final-reference-of serialize
                      skeletize ref?]])
-  (:refer-clojure :exclude [assoc-in get-in resolve]))
+  (:refer-clojure :exclude [assoc-in get-in]))
 
 (deftest simple-unify-test
   (let [result (unify! {:foo 99} {:bar 42})]
