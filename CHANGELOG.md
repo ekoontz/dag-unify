@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.3] - 2020-04-19
+ 
+- Rewrite `dag_unify.diagnostics/fail-path` to fix bug: was returning nil 
+unexpectedly rather than showing expected failed path.
+- `fail-path` also returns values as processed by `dag_unify.diagnostics/pprint`for clarity.
+- Improve function documentation for `unify-dags` and `unify!`.
+
 ## [1.9.2] - 2020-04-15
 
 - Improve `dag_unify.pprint`: output looks like:
