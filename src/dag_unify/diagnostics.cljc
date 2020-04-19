@@ -54,6 +54,7 @@
     (let [path (first paths)
           val1 (get-in fs1 path :top)
           val2 (get-in fs2 path :top)]
+      (log/info (str "looking at: " val1 " and " val2 " unify=> " (unify val1 val2) " and path: " (vec path)))
       (if (fail? (unify val1 val2))
         {:fail-path (str "/" (join "/" path))
          :val1 (strip-refs val1)
