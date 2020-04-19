@@ -58,7 +58,7 @@
               {:fail-path (:p pair)
                :val1 (u/pprint (u/get-in fs1 (:p pair) :top))
                :val2 (u/pprint (u/get-in fs2 (:p pair) :top))}))
-               
+
        (take 1)
        first))
 
