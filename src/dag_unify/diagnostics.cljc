@@ -47,26 +47,20 @@
                           val)}])))))
           fs))
 
-;; TODO: use a reduce or recur here rather
-;; than simply recursion
-(defn- find-fail-in [fs1 fs2 paths]
-  (if (not (empty? paths))
-    (let [path (first paths)
-          val1 (get-in fs1 path :top)
-          val2 (get-in fs2 path :top)]
-      (log/info (str "looking at: " val1 " and " val2 " unify=> " (unify val1 val2) " and path: " (vec path)))
-      (if (fail? (unify val1 val2))
-        {:fail-path (str "/" (join "/" path))
-         :val1 (strip-refs val1)
-         :val2 (strip-refs val2)}
-        (find-fail-in fs1 fs2 (rest paths))))))
-
-;; shorter alternative to the above.
 (defn fail-path [fs1 fs2]
-  "if unifying fs1 and fs2 leads to a fail somewhere, show the path to the fail. Otherwise return nil."
-  (let [paths-in-fs1 (map #(first (first %)) (pathify fs1))
-        paths-in-fs2 (map #(first (first %)) (pathify fs2))]
-    (find-fail-in fs1 fs2 (concat paths-in-fs1 paths-in-fs2))))
+  (->> (concat (->> (pathify fs1) (map first) (map first))
+               (->> (pathify fs2) (map first) (map first)))
+       (map (fn [p] {:p p
+                     :result (unify (u/get-in fs1 p :top)
+                                    (u/get-in fs2 p :top))}))
+       (filter #(= :fail (:result %)))
+       (map (fn [pair]
+              {:fail-path (:p pair)
+               :val1 (u/get-in fs1 (:p pair) :top)
+               :val2 (u/get-in fs2 (:p pair) :top)}))
+               
+       (take 1)
+       first))
 
 (defn isomorphic? [a b]
   (cond (and (map? a)
