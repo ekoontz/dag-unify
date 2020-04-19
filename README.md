@@ -253,4 +253,4 @@ A similar library written in Python for the the Natural Language Toolkit (NLTK).
 
 ## See also:
 
-- [release-notes.txt](release-notes.txt)
+- [CHANGELOG.md](CHANGELOG.md)
