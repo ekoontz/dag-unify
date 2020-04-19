@@ -28,11 +28,25 @@
   false)
 
 (defn unify-dags
-  "Unify two maps by taking the union of their keys and for each
-   _k_ in this union, call unify! on the values of _k_ for each map."
+  "Unify two maps into a single map (or :fail) by taking the union of their keys and for each
+   :k in this union, unify the two values of :k, and use that unified
+   value as the :k of the returned map. 
+   - If the unified value for :k is :fail, then
+   return :fail for the whole function call. 
+   - If a cycle is detected during unification, for example, if dag1 is:
+     {:a [[1] :top]
+      :c [[1]]}}    
+
+      and dag2 is:
+
+     {:a {:b [[2] :top]
+      :c [[2]]}},
+    
+     then this function will return :fail if the dynamic variable exception-if-cycle? 
+     (declared above) is false.
+     However, if exception-if-cycle? is set to true, this function will throw an
+     exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
   [dag1 dag2 containing-refs]
-  ;; This is the canonical unification case: unifying two DAGs
-  ;; (dags with references possibly within them).
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         values
         (map (fn [key]
@@ -60,11 +74,13 @@
        values))))
 
 (defn unify!
-  "merge input arguments val1 and val2. if val1 and val2 are maps, merge recursively (via unify-dags).
-   if val1 and/or val2 are references (Atoms), the references(s) will be updated to point to a new, unified value
-   by resolving the references.
-   if val1 and/or val2 are atomic values (e.g. strings, numbers, etc), the unification is
-   their equal value if they are equal, or :fail if they are not equal."
+  "Merge input arguments val1 and val2, according to their types:
+   - If val1 and val2 are maps, merge recursively (via unify-dags).
+   - If val1 and/or val2 are references (Atoms), the references(s) will 
+     be updated to point to the unification of the resolved reference(s).
+   - If val1 and/or val2 are atomic values (e.g. strings, numbers, etc), 
+     the unification is their equal value if they are equal, according 
+     to =, or :fail if they are not equal according to =."
   [val1 val2 & [containing-refs]]
   (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
   (cond
@@ -138,7 +154,7 @@
 
     :else
     (do
-      (log/debug (str "unify! else case."))
+      (log/debug (str "unify! else case: " val1 " and " val2))
       :fail)))
 
 (defn ref? [val]
