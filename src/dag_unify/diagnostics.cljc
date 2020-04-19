@@ -81,12 +81,10 @@
         false ;; two maps whose key cardinality (different number of keys) is different are not equal.
         (and (map? a)
              (map? b))
-        (let [a (dissoc a :dag_unify.serialization/serialized)
-              b (dissoc b :dag_unify.serialization/serialized)]
-          (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
-                            (get b (first (keys a))))
-               (isomorphic? (dissoc a (first (keys a)))
-                            (dissoc b (first (keys a))))))
+        (and (isomorphic? (get a (first (keys a))) ;; two maps are isomorphic if their keys' values are isomorphic.
+                          (get b (first (keys a))))
+             (isomorphic? (dissoc a (first (keys a)))
+                          (dissoc b (first (keys a)))))
         (and (ref? a)
              (ref? b))
         (isomorphic? @a @b)
