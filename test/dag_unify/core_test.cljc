@@ -358,15 +358,13 @@
   (let [arg1s [[[]
                 {:sem
                  {:subj
-                  {:ref {:number :plur}
-                   :mod []}}}]
+                  {:mod []}}}]
                [[[:sem :mod]
                  [:mod]] :top]]
         arg2s [[[]
                 {:mod {:first {:subj :top}
                        :rest []}
-                 :sem {:subj
-                       {:ref :top}
+                 :sem {:subj :top
                        :mod []}}]
                [[[:sem :subj :ref]
                  [:mod :first :subj]]
