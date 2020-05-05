@@ -327,48 +327,39 @@
     (is (empty? @result1))
     (is (empty? @result2))))
 
-
 ;; for below test, arg1 looks like:
 (comment
-  {:sem
-   {:mod [[1] :top]
-    :subj {:ref {:number :plur}
-           :mod []}
-    :obj {:top :top}}
-   :mod [1]})
+  {:mod [1]
+   :sem {:subj {:mod []}
+         :mod [[1] :top]}})
 ;; 
 ;; and arg2 looks like:
 (comment
-  {:mod
-   {:first {:subj [[1] {:number :plur}]},
-    :rest []}
-   :sem {:subj {:ref [1]}
-         :mod []
-         :obj {:top :top}}})
+  {:mod {:first {:subj [[1] :top]}},
+   :sem {:subj {:ref [1]},
+         :mod []}})
 
 ;; we are testing for fail-path to return:
 (comment
-  {:fail :fail
-   :type :ref
+  {:fail :fail,
+   :type :ref,
    :path (:sem :mod),
-   :arg1 [[[] {:first {:subj {:number :plur}}, :rest []}]],
+   :arg1 [[[] {:first {:subj :top}}]]
    :arg2 [[[] []]]})
 
 (deftest diagnostics
   (let [arg1s [[[]
                 {:sem
-                 {:subj
-                  {:mod []}}}]
+                 {:subj :top}}]
                [[[:sem :mod]
                  [:mod]] :top]]
         arg2s [[[]
-                {:mod {:first {:subj :top}
-                       :rest []}
-                 :sem {:subj :top
-                       :mod []}}]
+                {:mod {:first {:subj :top}}
+                 :sem
+                 {:subj {:ref :top}
+                  :mod []}}]
                [[[:sem :subj :ref]
-                 [:mod :first :subj]]
-                :top]]
+                 [:mod :first :subj]] :top]]
         
         arg1 (dag_unify.serialization/deserialize arg1s)
         arg2 (dag_unify.serialization/deserialize arg2s)]
@@ -382,9 +373,8 @@
     (is (= (vec (:path (fail-path2 arg1 arg2)))
            [:sem :mod]))
 
-
     (is (= (:arg1 (fail-path2 arg1 arg2))
-           [[[] {:first {:subj :top}, :rest []}]]))
+           [[[] {:first {:subj :top}}]] [[[] {:first {:subj :top}}]]))
 
     (is (= (:arg2 (fail-path2 arg1 arg2))
            [[[] []]]))))
