@@ -333,34 +333,44 @@
   {:sem
    {:mod [[1] :top]
     :subj {:ref {:number :plur}
-           :pred :we, :mod [], :context :unspec}
+           :mod []}
     :obj {:top :top}}
    :mod [1]})
 ;; 
 ;; and arg2 looks like:
 (comment
   {:mod
-   {:first {:subj [[1] {:number :plur}]
-            :pred :together}, :rest []}
+   {:first {:subj [[1] {:number :plur}]},
+    :rest []}
    :sem {:subj {:ref [1]}
-         :pred :overcome
          :mod []
          :obj {:top :top}}})
 
-(deftest diagnostic-test
+;; we are testing for fail-path to return:
+(comment
+  {:fail :fail
+   :type :ref
+   :path (:sem :mod),
+   :arg1 [[[] {:first {:subj {:number :plur}}, :rest []}]],
+   :arg2 [[[] []]]})
+
+(deftest diagnostics
   (let [arg1s [[[]
                 {:sem
-                 {:mod :top,
-                  :subj
-                  {:ref {:number :plur}, :pred :we, :mod [], :context :unspec},
-                  :obj {:top :top}},
-                 :mod :top}]
-               [[[:sem :mod] [:mod]] :top]]
+                 {:subj
+                  {:ref {:number :plur}
+                   :mod []}}}]
+               [[[:sem :mod]
+                 [:mod]] :top]]
         arg2s [[[]
-                {:mod {:first {:subj :top, :pred :together}, :rest []},
-                 :sem
-                 {:subj {:ref :top}, :pred :overcome, :mod [], :obj {:top :top}}}]
-               [[[:sem :subj :ref] [:mod :first :subj]] {:number :plur}]]
+                {:mod {:first {:subj :top}
+                       :rest []}
+                 :sem {:subj
+                       {:ref :top}
+                       :mod []}}]
+               [[[:sem :subj :ref]
+                 [:mod :first :subj]]
+                :top]]
         
         arg1 (dag_unify.serialization/deserialize arg1s)
         arg2 (dag_unify.serialization/deserialize arg2s)]
@@ -369,13 +379,14 @@
             arg2)
            :fail))
     
-    (log/info (str "FAIL-PATH2: " (fail-path2 arg1 arg2)))
+    (log/info (str "fail-path2: " (fail-path2 arg1 arg2)))
+
     (is (= (vec (:path (fail-path2 arg1 arg2)))
            [:sem :mod]))
 
 
     (is (= (:arg1 (fail-path2 arg1 arg2))
-           [[[] {:first {:pred :together, :subj {:number :plur}}, :rest []}]]))
+           [[[] {:first {:subj :top}, :rest []}]]))
 
     (is (= (:arg2 (fail-path2 arg1 arg2))
            [[[] []]]))))
