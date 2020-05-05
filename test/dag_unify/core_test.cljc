@@ -341,30 +341,29 @@
 
 ;; we are testing for fail-path to return:
 (comment
-  {:fail :fail,
-   :type :ref,
-   :path (:sem :mod),
-   :arg1 [[[] {:first {:subj :top}}]]
+  {:fail :fail
+   :type :ref
+   :path (:sem :mod)
+   :arg1 [[[] {:tag 1
+               :subj {:tag 1}}]]
    :arg2 [[[] []]]})
 
 (deftest diagnostics
   (let [arg1s [[[]
                 {:mod
-                 {:first
-                  {:subj {:tag 1}}}
+                 {:subj {:tag 1}}
                  :sem
                  {:mod {:tag 1}}}]
                [[[:mod]
                  [:sem :mod]] {:tag 1}]]
         arg2s [[[]
                 {:mod
-                 {:first
-                  {:subj {:tag 1}}}
+                 {:subj {:tag 1}}
                  :sem
                  {:mod []
                   :subj
                   {:ref {:tag 1}}}}]
-               [[[:mod :first :subj]
+               [[[:mod :subj]
                  [:sem :subj :ref]] {:tag 1}]]
         
         arg1 (dag_unify.serialization/deserialize arg1s)
@@ -378,7 +377,7 @@
            [:sem :mod]))
 
     (is (= (:arg1 (fail-path2 arg1 arg2))
-           [[[] {:tag 1, :first {:subj {:tag 1}}}]]))
+           [[[] {:tag 1, :subj {:tag 1}}]]))
 
     (is (= (:arg2 (fail-path2 arg1 arg2))
            [[[] []]]))))
