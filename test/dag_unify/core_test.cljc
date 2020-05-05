@@ -351,9 +351,9 @@
   (let [arg1s [[[]
                 {:mod
                  {:first
-                  {:subj :top}}
+                  {:subj {:tag 1}}}
                  :sem
-                 {:mod :top}}]
+                 {:mod {:tag 1}}}]
                [[[:mod][:sem :mod]] :top]]
         arg2s [[[]
                 {:mod
@@ -379,7 +379,7 @@
            [:sem :mod]))
 
     (is (= (:arg1 (fail-path2 arg1 arg2))
-           [[[] {:first {:subj :top}}]] [[[] {:first {:subj :top}}]]))
+           [[[] {:tag 1, :first {:subj {:tag 1}}}]]))
 
     (is (= (:arg2 (fail-path2 arg1 arg2))
            [[[] []]]))))
