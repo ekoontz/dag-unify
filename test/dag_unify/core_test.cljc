@@ -349,7 +349,7 @@
 
 (deftest diagnostics
   (let [arg1s [[[]
-                {:mod :top
+                {:mod {:first {:subj :top}}
                  :sem {:mod :top}}]
                [[[:mod][:sem :mod]] :top]]
         arg2s [[[]
