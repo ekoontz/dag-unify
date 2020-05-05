@@ -1,9 +1,12 @@
 (ns dag_unify.core-test
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
+            #?(:clj [clojure.tools.logging :as log])
+            #?(:cljs [cljslog.core :as log])
             [clojure.string :as string]
             [dag_unify.core :as u
-             :refer [assoc-in copy fail? get-in unify unify!]]
+             :refer [assoc-in copy fail-path2 fail? get-in unify unify!]]
+            [dag_unify.diagnostics :refer [fail-path isomorphic?]]
             [dag_unify.serialization
              :refer [create-path-in deserialize final-reference-of serialize
                      skeletize ref?]])
@@ -323,3 +326,60 @@
     (is (= true (ref? result2)))
     (is (empty? @result1))
     (is (empty? @result2))))
+
+
+;; for below test, arg1 looks like:
+(comment
+  {:sem
+   {:mod [[1] :top]
+    :subj {:ref {:number :plur}
+           :pred :we, :mod [], :context :unspec}
+    :obj {:top :top}}
+   :mod [1]})
+;; 
+;; and arg2 looks like:
+(comment
+  {:mod
+   {:first {:subj [[1] {:number :plur}]
+            :pred :together}, :rest []}
+   :sem {:subj {:ref [1]}
+         :pred :overcome
+         :mod []
+         :obj {:top :top}}})
+
+(deftest diagnostic-test
+  (let [arg1s [[[]
+                {:sem
+                 {:mod :top,
+                  :subj
+                  {:ref {:number :plur}, :pred :we, :mod [], :context :unspec},
+                  :obj {:top :top}},
+                 :mod :top}]
+               [[[:sem :mod] [:mod]] :top]]
+        arg2s [[[]
+                {:mod {:first {:subj :top, :pred :together}, :rest []},
+                 :sem
+                 {:subj {:ref :top}, :pred :overcome, :mod [], :obj {:top :top}}}]
+               [[[:sem :subj :ref] [:mod :first :subj]] {:number :plur}]]
+        
+        arg1 (dag_unify.serialization/deserialize arg1s)
+        arg2 (dag_unify.serialization/deserialize arg2s)]
+    (is (= (unify
+            arg1
+            arg2)
+           :fail))
+    
+    (log/info (str "FAIL-PATH2: " (fail-path2 arg1 arg2)))
+    (is (= (vec (:path (fail-path2 arg1 arg2)))
+           [:sem :mod]))
+
+
+    (is (= (:arg1 (fail-path2 arg1 arg2))
+           [[[] {:first {:pred :together, :subj {:number :plur}}, :rest []}]]))
+
+    (is (= (:arg2 (fail-path2 arg1 arg2))
+           [[[] []]]))))
+
+
+
+
