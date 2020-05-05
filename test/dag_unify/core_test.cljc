@@ -354,23 +354,22 @@
                   {:subj {:tag 1}}}
                  :sem
                  {:mod {:tag 1}}}]
-               [[[:mod][:sem :mod]] :top]]
+               [[[:mod]
+                 [:sem :mod]] {:tag 1}]]
         arg2s [[[]
                 {:mod
                  {:first
-                  {:subj :top}}
+                  {:subj {:tag 1}}}
                  :sem
-                 {:subj
-                  {:ref :top}
-                  :mod []}}]
+                 {:mod []
+                  :subj
+                  {:ref {:tag 1}}}}]
                [[[:mod :first :subj]
-                 [:sem :subj :ref]] :top]]
+                 [:sem :subj :ref]] {:tag 1}]]
         
         arg1 (dag_unify.serialization/deserialize arg1s)
         arg2 (dag_unify.serialization/deserialize arg2s)]
-    (is (= (unify
-            arg1
-            arg2)
+    (is (= (unify arg1 arg2)
            :fail))
     
     (log/info (str "fail-path2: " (fail-path2 arg1 arg2)))
