@@ -27,6 +27,18 @@
    return :fail rather than throwing an exception."
   false)
 
+(def ^:dynamic diagnostics?
+  "If true:
+  - copies input arguments to unify! to enable tracing where fails happen with unify.
+  - concat a path along to recursive calls between unify! and unify-dags to enable debugging."
+  ;; TODO: change to false before next release.
+  false)
+
+(defn fail? [arg]
+  (or (= :fail arg)
+      (and (map? arg)
+           (= :fail (:fail arg)))))
+
 (defn unify-dags
   "Unify two maps into a single map (or :fail) by taking the union of their keys and for each
    :k in this union, unify the two values of :k, and use that unified
@@ -46,29 +58,86 @@
      (declared above) is false.
      However, if exception-if-cycle? is set to true, this function will throw an
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
-  [dag1 dag2 containing-refs]
+  [dag1 dag2 containing-refs path]
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
+        debug (log/debug (str "unify-dags WITH PATH: " (vec path)))
+        debug (log/debug (str " dag1: " (serialize dag1)))
+        debug (log/debug (str " dag2: " (serialize dag2)))
         values
         (map (fn [key]
-               (let [value
+               (if (or (map? (key dag1))
+                       (map? (key dag2)))
+                 (log/debug (str "looking at key with map: " key)))
+               (let [save-dag1 (if diagnostics? (copy (key dag1 :top)))
+                     save-dag2 (if diagnostics? (copy (key dag2 :top)))
+
+                     value
                      (unify! (key dag1 :top)
                              (key dag2 :top)
-                             containing-refs)
+                             containing-refs (if diagnostics? (concat path [key])))
                      final-ref (if (ref? value) (final-reference-of value))]
+                 (log/debug (str "final-ref: " final-ref))
+                 (if (ref? value)
+                   (log/debug (str "final-ref@: " @final-ref)))
                  (cond (and final-ref (some #(= final-ref %) containing-refs))
                        (if exception-if-cycle?
                          (let [cycle-detection-message
                                (str "containment failure: "
                                     "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
                            (exception cycle-detection-message))
-                         :fail)
+                         (do
+                           (log/debug (str "found a cycle-detection fail at:" (vec (concat path [key]))))
+                           (if diagnostics?
+                             {:fail :fail
+                              :type :cycle
+                              :path (concat path [key])
+                              :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
+                              :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
+                             :fail)))
+                           
+                       (= :fail value)
+                       (do
+                         (log/debug (str "found a fail at: " (vec (concat path [key]))))
+                         (if diagnostics?
+                           {:fail :fail
+                            :type :fail
+                            :path (concat path [key])
+                            :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
+                            :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
+                           :fail))
+
+                       (and diagnostics? (fail? value))
+                       value
+                       
                        (and final-ref (= @final-ref :fail))
-                       :fail
+                       (do
+                         (log/debug (str "found a ref fail at: " (vec (concat path [key]))
+                                         "; val1: " (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
+                                         "; val2: " (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))))
+                         (if diagnostics?
+                           {:fail :fail
+                            :type :ref
+                            :path (concat path [key])
+                            :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
+                            :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
+                         :fail))
+
+                       (and diagnostics? final-ref (fail? @final-ref))
+                       @final-ref
+                       
                        true
                        value)))
              keys)]
-    (if (some #(= % :fail) values)
+    (cond
+      (some #(= % :fail) values)
       :fail
+
+      (and diagnostics? (some #(fail? %) values))
+      (->> values
+           (filter #(fail? %))
+           first)
+
+      true
       (zipmap
        keys
        values))))
@@ -81,20 +150,26 @@
    - If val1 and/or val2 are atomic values (e.g. strings, numbers, etc),
      the unification is their equal value if they are equal, according
      to =, or :fail if they are not equal according to =."
-  [val1 val2 & [containing-refs]]
-  (log/debug (str "val1: " (type val1) "; val2: " (if (keyword? val2) val2 (type val2))))
+  [val1 val2 & [containing-refs path]]
+  (log/debug (str "UNIFY!: path: " (vec path) "; val1: " (if (keyword? val1) val1 (type val1)) "; val2: " (if (keyword? val2) val2 (type val2))))
   (cond
     (and (map? val1)
          (map? val2))
-    (unify-dags val1 val2 containing-refs)
+    (do
+      (log/debug (str "UNIFY! path: " (vec path)))
+      (unify-dags val1 val2 containing-refs path))
 
     (and (= val1 :top)
          (map? val2))
-    (unify-dags val2 nil containing-refs)
+    (do
+      (log/debug (str "UNIFY! path: " (vec path)))
+      (unify-dags val2 nil containing-refs path))
 
     (and (= val2 :top)
          (map? val1))
-    (unify-dags val1 nil containing-refs)
+    (do
+      (log/debug (str "UNIFY! path: " (vec path)))
+      (unify-dags val1 nil containing-refs path))
 
     (= val1 :top)
     val2
@@ -122,7 +197,7 @@
      (not (ref? val2)))
     (do (swap! val1
                (fn [x]
-                 (unify! @val1 val2 (cons val1 containing-refs))))
+                 (unify! @val1 val2 (cons val1 containing-refs) path)))
         val1)
 
     ;; val2 is a ref, val1 is not a ref.
@@ -131,7 +206,7 @@
      (not (ref? val1)))
     (do (swap! val2
                (fn [x]
-                 (unify! val1 @val2 (cons val2 containing-refs))))
+                 (unify! val1 @val2 (cons val2 containing-refs) path)))
         val2)
 
     ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
@@ -147,7 +222,7 @@
      (ref? val2))
     (do
       (swap! val1
-             (fn [x] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)))))
+             (fn [x] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)) path)))
       (swap! val2
              (fn [x] val1)) ;; note that now val2 is a ref to a ref.
       val1)
@@ -229,9 +304,6 @@
 
     ;; simply an atomic value; nothing needed but to return the original atomic value:
     true input))
-
-(defn fail? [arg]
-  (= :fail arg))
 
 (def ref-counter (atom 0))
 (def ^:dynamic ref2counter-value)

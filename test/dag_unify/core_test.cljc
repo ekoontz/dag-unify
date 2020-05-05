@@ -1,9 +1,12 @@
 (ns dag_unify.core-test
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
+            #?(:clj [clojure.tools.logging :as log])
+            #?(:cljs [cljslog.core :as log])
             [clojure.string :as string]
             [dag_unify.core :as u
              :refer [assoc-in copy fail? get-in unify unify!]]
+            [dag_unify.diagnostics :refer [fail-path isomorphic?]]
             [dag_unify.serialization
              :refer [create-path-in deserialize final-reference-of serialize
                      skeletize ref?]])
@@ -323,3 +326,60 @@
     (is (= true (ref? result2)))
     (is (empty? @result1))
     (is (empty? @result2))))
+
+;; for below test, arg1 looks like:
+(comment
+  {:mod [1]
+   :sem {:subj {:mod []}
+         :mod [[1] :top]}})
+;; 
+;; and arg2 looks like:
+(comment
+  {:mod {:first {:subj [[1] :top]}},
+   :sem {:subj {:ref [1]},
+         :mod []}})
+
+;; we are testing for fail-path to return:
+(comment
+  {:fail :fail
+   :type :ref
+   :path (:sem :mod)
+   :arg1 [[[] {:tag 1
+               :subj {:tag 1}}]]
+   :arg2 [[[] []]]})
+
+(deftest diagnostics
+  (let [arg1s [[[]
+                {:mod
+                 {:subj {:tag 1}}
+                 :sem
+                 {:mod {:tag 1}}}]
+               [[[:mod]
+                 [:sem :mod]] {:tag 1}]]
+        arg2s [[[]
+                {:mod
+                 {:subj {:tag 1}}
+                 :sem
+                 {:mod []
+                  :subj
+                  {:ref {:tag 1}}}}]
+               [[[:mod :subj]
+                 [:sem :subj :ref]] {:tag 1}]]
+        
+        arg1 (dag_unify.serialization/deserialize arg1s)
+        arg2 (dag_unify.serialization/deserialize arg2s)]
+    (is (= (unify arg1 arg2)
+           :fail))
+
+    (is (= (vec (:path (fail-path arg1 arg2)))
+           [:sem :mod]))
+
+    (is (= (:arg1 (fail-path arg1 arg2))
+           [[[] {:tag 1, :subj {:tag 1}}]]))
+
+    (is (= (:arg2 (fail-path arg1 arg2))
+           [[[] []]]))))
+
+
+
+

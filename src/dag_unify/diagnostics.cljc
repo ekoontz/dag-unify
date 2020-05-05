@@ -25,43 +25,6 @@
     :else
     map-with-refs))
 
-(defn- pathify
-  "Transform a map into a map of paths/value pairs,
-  where paths are lists of keywords, and values are atomic values.
-  e.g.:
-  {:foo {:bar 42, :baz 99}} =>  { { (:foo :bar) 42}, {(:foo :baz) 99} }
-  The idea is to map the key :foo to the (recursive) result of pathify on :foo's value."
-  [fs & [prefix]]
-  (mapcat (fn [kv]
-            (let [key (first kv)
-                  val (second kv)]
-              (if true
-                (if (map? val)
-                  (pathify val (concat prefix (list key)))
-                  (if (and (ref? val)
-                           (let [val @val]
-                             (map? val)))
-                    (pathify @val (concat prefix (list key)))
-                    [{(concat prefix (list key))
-                      (if (ref? val) @val ;; simply resolve references rather than trying to search for graph isomorphism.
-                          val)}])))))
-          fs))
-
-(defn fail-path [fs1 fs2]
-  (->> (concat (->> (pathify fs1) (map first) (map first))
-               (->> (pathify fs2) (map first) (map first)))
-       (map (fn [p] {:p p
-                     :result (unify (u/get-in fs1 p :top)
-                                    (u/get-in fs2 p :top))}))
-       (filter #(= :fail (:result %)))
-       (map (fn [pair]
-              {:fail-path (:p pair)
-               :val1 (u/pprint (u/get-in fs1 (:p pair) :top))
-               :val2 (u/pprint (u/get-in fs2 (:p pair) :top))}))
-
-       (take 1)
-       first))
-
 (defn isomorphic? [a b]
   (cond (and (map? a)
              (map? b)
@@ -84,3 +47,7 @@
         (isomorphic? @a @b)
         true
         (= a b)))
+
+(defn fail-path [arg1 arg2]
+  (binding [u/diagnostics? true]
+    (unify arg1 arg2)))
