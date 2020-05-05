@@ -350,17 +350,14 @@
 (deftest diagnostics
   (let [arg1s [[[]
                 {:mod :top
-                 :sem
-                 {:mod :top}}]
-               [[[:sem :mod]
-                 [:mod]] :top]]
+                 :sem {:mod :top}}]
+               [[[:mod][:sem :mod]] :top]]
         arg2s [[[]
                 {:mod {:first {:subj :top}}
-                 :sem
-                 {:subj {:ref :top}
-                  :mod []}}]
-               [[[:sem :subj :ref]
-                 [:mod :first :subj]] :top]]
+                 :sem {:subj {:ref :top}
+                       :mod []}}]
+               [[[:mod :first :subj]
+                 [:sem :subj :ref]] :top]]
         
         arg1 (dag_unify.serialization/deserialize arg1s)
         arg2 (dag_unify.serialization/deserialize arg2s)]
