@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.5] - 2020-05-09
+
+- Simplify and fix bugs in diagnostics/fail-path.
+
 ## [1.9.4] - 2020-04-21
 
 - Cleanup old files: attempting to get cljdoc.org to generate online documentation.
