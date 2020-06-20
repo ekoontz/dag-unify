@@ -381,5 +381,8 @@
            [[[] []]]))))
 
 
+(deftest subsumes-test
+  (is (= true (u/subsumes? {:a 42} {:a 42 :b 43})))
+  (is (= false (u/subsumes? {:a 42 :b 43} {:a 42}))))
 
 

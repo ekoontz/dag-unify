@@ -343,3 +343,42 @@
 
     ;; simply an atomic value; nothing needed but to return the original atomic value:
     true input))
+
+(defn paths
+  "return all paths found in dag _d_."
+  [d & [prefix]]
+  (let [prefix (or prefix [])]
+    (cond (map? d)
+          (->> (keys d)
+               (map (fn [k]
+                      (if (map? (get-in d [k]))
+                        (paths (get-in d [k])
+                               (concat prefix [k]))
+                        [(concat prefix [k])])))
+               (reduce concat))
+          true
+          prefix)))
+
+(defn subsumes?
+  "Returns true if dag _a_ is more general than dag _b_, 
+   or more precisely, dag _a_ subsumes dag _b_ if:
+      for all _p_ in paths(a), (unify (get-in a _p_) (get-in b _p_ :fail)) is not fail.
+
+   For example, (subsumes? {:a 42} {:a 42, :b 43}) => true
+           but: (subsumes? {:a 42, :b 43} {:a 42}) => false."
+  [a b]
+  (->> (paths a)
+       (map (fn [p]
+              (unify (get-in a p)
+                     (get-in b p :fail))))
+       (filter #(= :fail %))
+       empty?))
+
+ 
+
+
+
+
+
+
+
