@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.6] - 2020-06-20
+
+- Add new function dag_unify.core/subsumes? - used to determine if one dag is more specific than another.
+
 ## [1.9.5] - 2020-05-09
 
 - Simplify and fix bugs in diagnostics/fail-path.
