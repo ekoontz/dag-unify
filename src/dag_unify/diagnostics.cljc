@@ -50,4 +50,12 @@
 
 (defn fail-path [arg1 arg2]
   (binding [u/diagnostics? true]
-    (unify arg1 arg2)))
+    (let [result (unify arg1 arg2)]
+      (cond (= :fail (:fail result))
+            result
+
+            true
+            (do
+              (log/warn (str "fail-path: unification succeeded with arguments."))
+              nil)))))
+
