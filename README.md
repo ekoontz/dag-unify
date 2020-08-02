@@ -6,8 +6,8 @@
 
 A Clojure library for combining directed acyclic graphs
 ([DAGs](https://en.wikipedia.org/wiki/Directed_acyclic_graph)) via
-unification. Unification is similar to merge
-(http://clojure.github.io/clojure/clojure.core-api.html#clojure.core/merge),
+unification. Unification is similar to Clojure core's 
+[merge](http://clojure.github.io/clojure/clojure.core-api.html#clojure.core/merge),
 except that if arguments have the same keys, the arguments' values for
 those keys will be recursively combined via unification to yield the
 value for the key in the combined map.
@@ -107,6 +107,14 @@ user> foo
 {:a {:b #atom[:top 0x57212d5f]}, :c #atom[:top 0x57212d5f]}
 ```
 
+We can use `dag_unify.print` to more legibly show that the two paths `[:a :b]` and `[:c]`
+share a value:
+
+```
+user> (dag/pprint foo)
+{:a {:b [[1] :top]}, :c [1]}
+```
+
 And then `unify` that DAG with another map to cause the atom's value
 to be modified:
 
@@ -118,11 +126,12 @@ user> foo
 user> 
 ```
 
-The function `dag_unify.pprint` can be used to display such DAGs more legibly:
+Using again `dag_unify.pprint`, we can be used to more legibly show that the two paths share the same value, and
+that this value is `42`:
 
 ```
 user> (dag/pprint (dag/unify foo {:c 42}))
-{:a {:b [[1] :top]}, :c [1]}
+{:a {:b [[1] 42]}, :c [1]}
 ```
 
 If one or more arguments to `unify` is a map with a key whose value is
