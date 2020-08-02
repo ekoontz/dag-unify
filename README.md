@@ -134,7 +134,7 @@ user> (dag/pprint (dag/unify foo {:c 42}))
 {:a {:b [[1] 42]}, :c [1]}
 ```
 
-If one or more arguments to `unify` is a map with a key whose value is
+If one of the arguments to `unify` is a map with a key whose value is
 an atom, then the value of that key will still be that same atom, but its
 value will be modified to be the unification of the arguments. For example:
 
