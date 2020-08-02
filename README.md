@@ -152,6 +152,19 @@ Above, `foo`'s value for `:a` is a reference to the value `{:b
 reference, and this reference is the value `:a` for the unification of
 `foo` and `bar`.
 
+In a graph where there is only a single path to an atom,
+the atom will not be shown by `dag_unify.pprint` for legibility; thus, looking
+at the same example immediately above, but with `dag_unify.pprint`:
+
+```
+(let [shared-value (atom {:b 42})
+      foo {:a shared-value}
+      bar {:a {:c 43}}]
+	(dag/pprint (dag/unify foo bar)))
+=> {:a {:c 43, :b 42}}
+```
+
+
 ## `:top`
 
 For the special keyword `:top`, the following is true for all `X`:
