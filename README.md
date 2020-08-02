@@ -136,7 +136,7 @@ user> (dag/pprint (dag/unify foo {:c 42}))
 
 If one of the arguments to `unify` is a map with a key whose value is
 an atom, then the value of that key will still be that same atom, but its
-value will be modified to be the unification of the arguments. For example:
+value will be an atom whose value is the unification of the arguments. For example:
 
 ```
 (let [shared-value (atom {:b 42})
