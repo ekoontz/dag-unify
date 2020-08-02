@@ -126,7 +126,7 @@ user> foo
 user> 
 ```
 
-Using again `dag_unify.pprint`, we can be used to more legibly show that the two paths share the same value, and
+Using again `dag_unify.pprint`, we can more legibly show that the two paths still share the same value, and
 that this value is `42`:
 
 ```
