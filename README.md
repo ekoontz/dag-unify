@@ -1,6 +1,7 @@
 [![Clojars Project](http://clojars.org/dag_unify/latest-version.svg)](http://clojars.org/dag_unify)
 
 [![Build Status](https://secure.travis-ci.org/ekoontz/dag-unify.png?branch=master)](http://travis-ci.org/ekoontz/dag-unify)
+[![Run on Repl.it](https://repl.it/badge/github/ekoontz/dag-unify)](https://repl.it/github/ekoontz/dag-unify)
 
 # dag-unify
 
