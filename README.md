@@ -60,6 +60,10 @@ user=> (dag/pprint foo)
 {:a {:b [[1] :top]}, :c [1]}
 ```
 
+In the above output, the `[1]` is used to represent the atom that is
+the shared value. If there were other shared values, they would be
+represented by `[2]`, `[3]`, ...
+
 ### The special keyword `:top`
 
 We used the keyword `:top` in the above example because it is a special
@@ -80,7 +84,7 @@ as in arithmetic, the result of multiplying any number with 1 is that same numbe
 
 ### Unification with non-`:top` values.
 
-Continuing with our `foo` map above. Now, let's unify it with another map: `{:c 42}`:
+Continuing with our `foo` map above, let's unify it with another map: `{:c 42}`:
 
 ```
 user=> (dag/pprint (dag/unify foo {:c 42}))
@@ -90,15 +94,30 @@ user=> (dag/pprint (dag/unify foo {:c 42}))
 Since `foo`'s value for `:c` is `:top`, the special identity element,
 when we unify that with 42, the result is that same value 42.
 
-However, suppose we unify that value again, with this map `{:a {:b 99}}`:
+However, suppose we unify that value again, with another map: `{:c 99}`:
 
 ```
-user=> (dag/pprint (-> foo (dag/unify {:c 42}) (dag/unify {:a {:b 99}})))
+user=> (dag/pprint (-> foo 
+                       (dag/unify {:c 42}) 
+					   (dag/unify {:c 99})))
 :fail
 ```
 
 Unification of these three input maps _failed_, because it could not unify
-the two non-identical values 42 and 99, within the three input maps.
+the two non-identical values 42 and 99.
+
+The same would happen if we unified with the map `{:a {:b 99}}`,
+
+```
+user=> (dag/pprint (-> foo 
+                       (dag/unify {:c 42}) 
+					   (dag/unify {:a {:b 99}})))
+:fail
+```
+
+Because the paths `[:a :b]` and `[:c]` share the same value in `foo`,
+all results of unifications using it must also have that same path
+shared within the result.
 
 ### The special keyword `:fail`
 
@@ -113,13 +132,13 @@ Thus in the example above, `(unify 42 99) => :fail`, since 42 and 99 are not map
 The result of unifying any _a_ and _b_ is also `:fail`, if: 
 - Either _a_ and _b_ are `:fail`.
 
-Thus the result of unifying any value with `:fail` is `:fail`, just as
-in arithmetic, the result of multiplying any number with 0 is 0.
+Thus the result of unifying any value with `:fail` is itself `:fail`, just as
+in arithmetic, the result of multiplying any number with 0 is itself 0.
 
 ## `clojure.core/get-in` vs. `dag_unify.core/get-in`
 
 
-For the above graph like `foo`:
+For the above graph `foo`:
 
 ```
 user=> (dag/pprint foo)
@@ -160,9 +179,14 @@ value will be an atom whose value is the unification of the arguments. For examp
 
 Above, `foo`'s value for `:a` is a reference to the value `{:b
 42}`. `foo`'s value for `:a` is unified with `bar`'s value for `:a`
-(`{:c 43}`), and the result `{:b 42, c 43}` is the new value of the
-reference, and this reference is the value `:a` for the unification of
-`foo` and `bar`.
+(`{:c 43}`), and the result 
+
+```
+{:b 42, c 43}
+```
+
+is the new value of the reference, and this reference is the value
+`:a` for the unification of `foo` and `bar`.
 
 In a graph where there is only a single path to an atom,
 the atom will not be shown by `dag_unify.pprint` for legibility; thus, looking
@@ -191,43 +215,6 @@ complicated structure:
 ```
 
 is no different from `:fail` as far as unification is concerned.
-
-
-`:fail` is used to represent a failed attempt of trying to unify
-values which are not equal (if atomic values) or have some part that
-is not equal. For example:
-
-```
-(let [shared-value (atom :top)
-      foo {:a shared-value
-           :b shared-value}
-      bar {:a 42
-           :b 43}]
-  (unify foo bar))
-=> :fail
-```
-
-Above, the `:a` value and `:b` values of `bar` should be identical
-because `:foo` has a shared value which `:a` and `:b` both point to.
-However, these two atomic values (42 and 43) are not equal
-to one another. The result is that the unification of `foo` and `bar`
-is `:fail`.
-
-## Unification of simple values
-
-For unification of simple values (numbers, strings, keywords), they
-are compared by equality. If the values to be unified are not equal,
-then `:fail` is returned:
-
-```
-(unify 1 1)
-=> 1
-```
-
-```
-(unify 1 2)
-=> :fail
-```
 
 ## `unify!` versus `unify`
 
