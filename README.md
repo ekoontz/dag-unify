@@ -10,8 +10,8 @@ A Clojure library for combining directed acyclic graphs
 is similar to Clojure core's
 [merge](http://clojure.github.io/clojure/clojure.core-api.html#clojure.core/merge),
 except that if arguments have the same keys, the arguments' values for
-those keys will be recursively combined via unification
-to yield the value for the key in the combined map.
+those keys will be recursively combined (as described below) to yield
+the value for the key in the combined map.
 
 ## Usage
 
