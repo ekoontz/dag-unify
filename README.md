@@ -81,7 +81,7 @@ element](https://en.wikipedia.org/wiki/Identity_element) of
 unification. It is the most unspecific, most general value possible.
 
 The result of unifying any value with `:top` is that same value, just
-as in arithmetic, the result of multiplying any number with 1 is that same number.
+as in arithmetic, the result of multiplying any number by 1 is that same number.
 
 ## Unification with non-`:top` values.
 
@@ -93,9 +93,11 @@ user=> (dag/pprint (dag/unify foo {:c 42}))
 ```
 
 Since `foo`'s value for `:c` is `:top`, the special identity element,
-when we unify that with 42, the result is that same value 42.
+when we unify that with 42, the result is that there is an atom with
+the the unified value, 42, which is, as with `foo`, shared as the
+common value of both the path: `[:a :b]` and: `[:c]`.
 
-However, suppose we unify that value again, with another map: `{:c 99}`:
+However, suppose we unify that result again, with another map: `{:c 99}`:
 
 ```
 user=> (dag/pprint (-> foo 
@@ -107,7 +109,7 @@ user=> (dag/pprint (-> foo
 Unification of these three input maps _failed_, because it could not unify
 the two non-identical values 42 and 99.
 
-The same would happen if we unified with the map `{:a {:b 99}}`,
+The same would happen if we tried to unify with the map `{:a {:b 99}}`:
 
 ```
 user=> (dag/pprint (-> foo 
@@ -118,23 +120,22 @@ user=> (dag/pprint (-> foo
 
 Because the paths `[:a :b]` and `[:c]` share the same value in `foo`,
 all results of unifications using it must also have that same path
-shared within the result.
+shared within the result, but since `(= 42 99) => false`, unification fails.
 
 ## The special keyword `:fail`
 
 The result of unifying any _a_ and _b_ is `:fail`, if: 
-- _a_ and _b_ are not `:top`, and
-- _a_ and _b_ are not maps (i.e. they are numbers, strings, keywords, etc), and
+- neither _a_ or _b_ are `:top`, and
+- _a_ and _b_ are not maps (i.e. they are numbers, strings, keywords, sequences, etc.), and
 - `(= a b) => false`
 
-Thus in the example above, `(unify 42 99) => :fail`, since 42 and 99 are not maps and
-`(= 42 99) => false`.
+Thus in the example above, `(unify 42 99) => :fail`, since 42 and 99 are not maps and `(= 42 99) => false`.
 
 The result of unifying any _a_ and _b_ is also `:fail`, if: 
 - Either _a_ and _b_ are `:fail`.
 
 Thus the result of unifying any value with `:fail` is itself `:fail`, just as
-in arithmetic, the result of multiplying any number with 0 is itself 0.
+in arithmetic, the result of multiplying any number by 0 is itself 0.
 
 ## `clojure.core/get-in` vs. `dag_unify.core/get-in`
 
