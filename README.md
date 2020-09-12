@@ -100,9 +100,9 @@ common value of both the path: `[:a :b]` and: `[:c]`.
 However, suppose we unify that result again, with another map: `{:c 99}`:
 
 ```
-user=> (dag/pprint (-> foo 
-                       (dag/unify {:c 42}) 
-					   (dag/unify {:c 99})))
+user=> (dag/pprint (-> foo
+                       (dag/unify {:c 42})
+                       (dag/unify {:c 99})))
 :fail
 ```
 
@@ -112,9 +112,9 @@ the two non-identical values 42 and 99.
 The same would happen if we tried to unify with the map `{:a {:b 99}}`:
 
 ```
-user=> (dag/pprint (-> foo 
-                       (dag/unify {:c 42}) 
-					   (dag/unify {:a {:b 99}})))
+user=> (dag/pprint (-> foo
+                       (dag/unify {:c 42})
+                       (dag/unify {:a {:b 99}})))
 :fail
 ```
 
@@ -124,14 +124,14 @@ shared within the result, but since `(= 42 99) => false`, unification fails.
 
 ## The special keyword `:fail`
 
-The result of unifying any _a_ and _b_ is `:fail`, if: 
+The result of unifying any _a_ and _b_ is `:fail`, if:
 - neither _a_ or _b_ are `:top`, and
 - _a_ and _b_ are not maps (i.e. they are numbers, strings, keywords, sequences, etc.), and
 - `(= a b) => false`
 
 Thus in the example above, `(unify 42 99) => :fail`, since 42 and 99 are not maps and `(= 42 99) => false`.
 
-The result of unifying any _a_ and _b_ is also `:fail`, if: 
+The result of unifying any _a_ and _b_ is also `:fail`, if:
 - Either _a_ and _b_ are `:fail`.
 
 Thus the result of unifying any value with `:fail` is itself `:fail`, just as
@@ -140,7 +140,7 @@ in arithmetic, the result of multiplying any number by 0 is itself 0.
 ## `clojure.core/get-in` vs. `dag_unify.core/get-in`
 
 
-For the above graph `foo`:
+Considering again the above graph `foo`:
 
 ```
 user=> (dag/pprint foo)
@@ -175,13 +175,13 @@ value will be an atom whose value is the unification of the arguments. For examp
 (let [shared-value (atom {:b 42})
       foo {:a shared-value}
       bar {:a {:c 43}}]
-	(dag/unify foo bar))
+   (dag/unify foo bar))
 => {:a #<Atom@344dc027: {:c 43, :b 42}>}
 ```
 
 Above, `foo`'s value for `:a` is a reference to the value `{:b
 42}`. `foo`'s value for `:a` is unified with `bar`'s value for `:a`
-(`{:c 43}`), and the result 
+(`{:c 43}`), and the result
 
 ```
 {:b 42, c 43}
@@ -198,7 +198,7 @@ at the same example immediately above, but with `dag_unify.pprint`:
 (let [shared-value (atom {:b 42})
       foo {:a shared-value}
       bar {:a {:c 43}}]
-	(dag/pprint (dag/unify foo bar)))
+   (dag/pprint (dag/unify foo bar)))
 => {:a {:c 43, :b 42}}
 ```
 
