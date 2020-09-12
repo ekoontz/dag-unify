@@ -1,13 +1,12 @@
 (ns dag_unify.diagnostics
   (:require
-   [clojure.pprint :as core-pprint]
-   [clojure.string :refer [join]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
-   [dag_unify.core :as u :refer [fail? ref? unify]]))
+   [dag_unify.core :as u :refer [ref? unify]]))
 
-(defn strip-refs [map-with-refs]
+(defn strip-refs
   "return a map like map-with-refs, but without refs - (e.g. {:foo (atom 42)} => {:foo 42}) - used for printing maps in plain (i.e. non html) format"
+  [map-with-refs]
   (cond
     (or (vector? map-with-refs)
         (seq? map-with-refs))
@@ -45,7 +44,7 @@
         (and (ref? a)
              (ref? b))
         (isomorphic? @a @b)
-        true
+        :else
         (= a b)))
 
 (defn fail-path [arg1 arg2]
@@ -54,7 +53,7 @@
       (cond (= :fail (:fail result))
             result
 
-            true
+            :else
             (do
               (log/warn (str "fail-path: unification succeeded with arguments."))
               nil)))))

@@ -1,9 +1,6 @@
 (ns dag_unify.core
   (:refer-clojure :exclude [assoc-in get-in])
   (:require
-   [clojure.pprint :as core-pprint]
-   [clojure.repl :refer [doc]]
-   [clojure.string :refer [join]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])
    [dag_unify.serialization :refer [create-path-in deserialize exception
@@ -59,26 +56,22 @@
      However, if exception-if-cycle? is set to true, this function will throw an
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
   [dag1 dag2 containing-refs path]
+  (log/debug (str "unify-dags WITH PATH: " (vec path)))
+  (log/debug (str " dag1: " (serialize dag1)))
+  (log/debug (str " dag2: " (serialize dag2)))
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
-        debug (log/debug (str "unify-dags WITH PATH: " (vec path)))
-        debug (log/debug (str " dag1: " (serialize dag1)))
-        debug (log/debug (str " dag2: " (serialize dag2)))
         values
         (map (fn [key]
-               (if (or (map? (key dag1))
-                       (map? (key dag2)))
-                 (log/debug (str "looking at key with map: " key)))
-               (let [save-dag1 (if diagnostics? (copy (key dag1 :top)))
-                     save-dag2 (if diagnostics? (copy (key dag2 :top)))
-
+               (log/debug (str "looking at key with map: " key))
+               (let [save-dag1 (if diagnostics? (copy (key dag1 :top)) nil)
+                     save-dag2 (if diagnostics? (copy (key dag2 :top)) nil)
                      value
                      (unify! (key dag1 :top)
                              (key dag2 :top)
-                             containing-refs (if diagnostics? (concat path [key])))
-                     final-ref (if (ref? value) (final-reference-of value))]
+                             containing-refs (and diagnostics? (concat path [key])))
+                     final-ref (and (ref? value) (final-reference-of value))]
                  (log/debug (str "final-ref: " final-ref))
-                 (if (ref? value)
-                   (log/debug (str "final-ref@: " @final-ref)))
+                 (and (ref? value) (log/debug (str "final-ref@: " @final-ref)))
                  (cond (and final-ref (some #(= final-ref %) containing-refs))
                        (if exception-if-cycle?
                          (let [cycle-detection-message
@@ -125,7 +118,7 @@
                        (and diagnostics? final-ref (fail? @final-ref))
                        @final-ref
                        
-                       true
+                       :else
                        value)))
              keys)]
     (cond
@@ -137,7 +130,7 @@
            (filter #(fail? %))
            first)
 
-      true
+      :else
       (zipmap
        keys
        values))))
@@ -196,8 +189,7 @@
      (ref? val1)
      (not (ref? val2)))
     (do (swap! val1
-               (fn [x]
-                 (unify! @val1 val2 (cons val1 containing-refs) path)))
+                 (fn [_] (unify! @val1 val2 (cons val1 containing-refs) path)))
         val1)
 
     ;; val2 is a ref, val1 is not a ref.
@@ -205,8 +197,7 @@
      (ref? val2)
      (not (ref? val1)))
     (do (swap! val2
-               (fn [x]
-                 (unify! val1 @val2 (cons val2 containing-refs) path)))
+               (fn [_] (unify! val1 @val2 (cons val2 containing-refs) path)))
         val2)
 
     ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
@@ -222,9 +213,9 @@
      (ref? val2))
     (do
       (swap! val1
-             (fn [x] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)) path)))
+             (fn [_] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)) path)))
       (swap! val2
-             (fn [x] val1)) ;; note that now val2 is a ref to a ref.
+             (fn [_] val1)) ;; note that now val2 is a ref to a ref.
       val1)
 
     :else
@@ -292,7 +283,7 @@
                    (fn [x] (assoc x input new-input)))
             ;; set the value of the new ref, based on the existing _input_:
             (swap! new-input
-                   (fn [x] (copy-with-binding @input)))
+                   (fn [_] (copy-with-binding @input)))
             ;; and return the new ref:
             new-input)))
 
@@ -303,14 +294,14 @@
               input))
 
     ;; simply an atomic value; nothing needed but to return the original atomic value:
-    true input))
+    :else input))
 
 (def ref-counter (atom 0))
 (def ^:dynamic ref2counter-value)
 (declare pprint-with-binding)
 (defn pprint [input]
   (binding [ref2counter-value (atom {})]
-    (swap! ref-counter (fn [x] 0))
+    (swap! ref-counter (fn [_] 0))
     ;; doing a (deserialize (serialize)) on the input to remove
     ;; singleton references (references which are only used once in the input),
     ;; which clutters up the displayed output unnecessarily.
@@ -327,10 +318,9 @@
         [entry-if-any]
 
         ;; else:
-        ;; input is a ref that we have *not* seen before, so:
-        ;; 1. create a new ref:
-        (let [input (final-reference-of input)
-              increment (swap! ref-counter (fn [x] (+ 1 x)))]
+        ;; input is a ref that we have *not* seen before, so create a new ref:
+        (let [input (final-reference-of input)]
+          (swap! ref-counter (fn [x] (+ 1 x)))
           (swap! ref2counter-value
                  (fn [x] (assoc x input @ref-counter)))
           [[@ref-counter] (pprint-with-binding @input)])))
@@ -342,7 +332,7 @@
               input))
 
     ;; simply an atomic value; nothing needed but to return the original atomic value:
-    true input))
+    :else input))
 
 (defn paths
   "return all paths found in dag _d_."
@@ -356,7 +346,7 @@
                                (concat prefix [k]))
                         [(concat prefix [k])])))
                (reduce concat))
-          true
+          :else
           prefix)))
 
 (defn subsumes?

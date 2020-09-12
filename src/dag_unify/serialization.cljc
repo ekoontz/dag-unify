@@ -1,7 +1,6 @@
 (ns dag_unify.serialization
   (:refer-clojure :exclude [merge]) ;; TODO: don't override (merge)
   (:require
-   [clojure.set :as set :refer [union]]
    #?(:clj [clojure.tools.logging :as log])
    #?(:cljs [cljslog.core :as log])))
 
@@ -32,7 +31,7 @@
                    (skeletize val)
                    val)))
              (vals input-val)))
-    true
+    :else
     input-val))
 
 (declare final-reference-of)
@@ -40,7 +39,7 @@
 (defn final-reference-of [input]
   (cond (ref? @input)
         (final-reference-of @input)
-        true input))
+        :else input))
 
 (defn find-paths-to-refs
   "find all paths in _map_ which point to any ref."
@@ -63,7 +62,7 @@
                     (concat path [key])
                     retval))
                  (keys input)))
-    true
+    :else
     retval))
 
 (defn merge-skeleton
@@ -77,7 +76,7 @@
      [[]
       (reduce merge
               (cons skel (->> (-> si rest)
-                              (filter (fn [[paths val]]
+                              (filter (fn [[paths _]]
                                         (= (count paths) 1)))
                               (map (fn [[paths val]]
                                      (assoc-in {} (first paths) val))))))])))
@@ -85,7 +84,7 @@
 (defn serialize [input]
   (cond
     (ref? input) (serialize @input)
-    true
+    :else
     (vec
      (->>
       (->
@@ -101,7 +100,7 @@
             (skeletize input)]
            rest-serialized)))
        merge-skeleton)
-      (filter (fn [[paths val]]
+      (filter (fn [[paths _]]
                 (or (empty? paths)
                     (> (count paths) 1))))
       (map vec)))))
@@ -166,17 +165,17 @@
      (ref? val1)
      (ref? val2))
     (do (swap! val1
-               (fn [x] (merge @val1 @val2)))
+               (fn [_] (merge @val1 @val2)))
         val1)
 
     (ref? val1)
     (do (swap! val1
-               (fn [x] (merge @val1 val2)))
+               (fn [_] (merge @val1 val2)))
         val1)
     
     (ref? val2)
     (do (swap! val2
-               (fn [x] (merge val1 @val2)))
+               (fn [_] (merge val1 @val2)))
         val2)
 
     (= val1 :top)
