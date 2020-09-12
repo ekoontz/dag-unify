@@ -212,7 +212,7 @@ complicated structure:
 {:a 42
  :b {:c {:d :fail
          :e {:f 43}
-	 :g 44}}
+             :g 44}}
  :h {:i "hello"}}
 ```
 
