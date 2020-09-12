@@ -6,11 +6,12 @@
 
 A Clojure library for combining directed acyclic graphs
 ([DAGs](https://en.wikipedia.org/wiki/Directed_acyclic_graph)) via
-unification. Unification is similar to Clojure core's 
+[unification](https://en.wikipedia.org/wiki/Graph_theory#Subsumption_and_unification). Unification
+is similar to Clojure core's
 [merge](http://clojure.github.io/clojure/clojure.core-api.html#clojure.core/merge),
 except that if arguments have the same keys, the arguments' values for
-those keys will be recursively combined via [unification](https://en.wikipedia.org/wiki/Graph_theory#Subsumption_and_unification) to yield the
-value for the key in the combined map.
+those keys will be recursively combined via unification
+to yield the value for the key in the combined map.
 
 ## Usage
 
