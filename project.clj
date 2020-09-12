@@ -1,4 +1,4 @@
-(defproject dag_unify "1.9.7-SNAPSHOT"
+(defproject dag_unify "1.9.7"
   :description "Unification of Directed Acyclic Graphs"
   :url "https://github.com/ekoontz/dag-unify"
   :license {:name "Eclipse Public License"
