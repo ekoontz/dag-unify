@@ -223,7 +223,18 @@ is no different from `:fail` as far as unification is concerned.
 references, whereas `unify` copies its arguments before performing
 unification, so that the input arguments are never modified.
 
-## License
+# Applications
+
+From [wikipedia](https://en.wikipedia.org/wiki/Graph_theory#Subsumption_and_unification):
+
+> Well-known applications include automatic theorem proving and modeling
+> the elaboration of linguistic structure.
+
+[Menard](https://github.com/ekoontz/menard), a Clojure library for
+parsing and generating natural language expressions, based on
+[HPSG](https://en.wikipedia.org/wiki/Head-driven_phrase_structure_grammar),
+is one example of such a linguistic application.
+
 # License
 
 Copyright © 2015 Eugene Koontz
