@@ -2,7 +2,7 @@
 
 [![Build Status](https://secure.travis-ci.org/ekoontz/dag-unify.png?branch=master)](http://travis-ci.org/ekoontz/dag-unify)
 
-# dag-unify
+# Introduction
 
 A Clojure library for combining directed acyclic graphs
 ([DAGs](https://en.wikipedia.org/wiki/Directed_acyclic_graph)) via
@@ -13,7 +13,7 @@ except that if arguments have the same keys, the arguments' values for
 those keys will be recursively combined (as described below) to yield
 the value for the key in the combined map.
 
-## Usage
+# Usage
 
 ```
 % git clone git@github.com:ekoontz/dag-unify.git
@@ -65,7 +65,7 @@ In the above output, the `[1]` is used to represent the atom that is
 the shared value. If there were other shared values, they would be
 represented by `[2]`, `[3]`, ...
 
-### The special keyword `:top`
+## The special keyword `:top`
 
 We used the keyword `:top` in the above example because it is a special
 keyword for the purposes of unification.
@@ -83,7 +83,7 @@ unification. It is the most unspecific, most general value possible.
 The result of unifying any value with `:top` is that same value, just
 as in arithmetic, the result of multiplying any number with 1 is that same number.
 
-### Unification with non-`:top` values.
+## Unification with non-`:top` values.
 
 Continuing with our `foo` map above, let's unify it with another map: `{:c 42}`:
 
@@ -120,7 +120,7 @@ Because the paths `[:a :b]` and `[:c]` share the same value in `foo`,
 all results of unifications using it must also have that same path
 shared within the result.
 
-### The special keyword `:fail`
+## The special keyword `:fail`
 
 The result of unifying any _a_ and _b_ is `:fail`, if: 
 - _a_ and _b_ are not `:top`, and
@@ -201,7 +201,7 @@ at the same example immediately above, but with `dag_unify.pprint`:
 => {:a {:c 43, :b 42}}
 ```
 
-### `:fail` within maps
+## `:fail` within maps
 
 In any map, if any key's value is equal to `:fail`, the entire map is
 equal to `:fail`. For example, the following map, despite its
@@ -224,19 +224,20 @@ references, whereas `unify` copies its arguments before performing
 unification, so that the input arguments are never modified.
 
 ## License
+# License
 
 Copyright © 2015 Eugene Koontz
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
 
-## References
+# References
 
 - "Feature Structures & Unification" http://www.nltk.org/howto/featstruct.html
 A similar library written in Python for the the Natural Language Toolkit (NLTK).
 
 - https://en.wikipedia.org/wiki/Feature_structure
 
-## See also:
+# See also:
 
 - [CHANGELOG.md](CHANGELOG.md)
