@@ -233,7 +233,7 @@ From [wikipedia](https://en.wikipedia.org/wiki/Graph_theory#Subsumption_and_unif
 [Menard](https://github.com/ekoontz/menard), a Clojure library for
 parsing and generating natural language expressions, based on
 [HPSG](https://en.wikipedia.org/wiki/Head-driven_phrase_structure_grammar),
-is one example of such a linguistic application.
+is one example of such a linguistic application, and uses [dag_unify](https://github.com/ekoontz/dag_unify) to do this.
 
 # License
 
