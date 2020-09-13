@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.9.8] - 2020-09-13
+
+- Improve [README.md](README.md).
+- Fix bugs in last version where `if` was replaced by `and`: use
+  instead `(when)`, not `(and)` where the difference is significant.
+- Remove use of `cljslog/debug` to improve performance in cljs.
+  
 ## [1.9.7] - 2020-09-12
 
 - Fix all warnings identified by [Kondo](https://github.com/borkdude/clj-kondo) with `lein clj-kondo --lint src`.
