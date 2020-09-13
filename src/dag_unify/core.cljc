@@ -77,7 +77,7 @@
                             :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
                             :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
                            :fail))
-                           
+
                        (= :fail value)
                        (if diagnostics?
                          {:fail :fail
