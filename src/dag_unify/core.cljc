@@ -1,8 +1,6 @@
 (ns dag_unify.core
   (:refer-clojure :exclude [assoc-in get-in])
   (:require
-   #?(:clj [clojure.tools.logging :as log])
-   #?(:cljs [cljslog.core :as log])
    [dag_unify.serialization :refer [create-path-in deserialize exception
                                     final-reference-of serialize]]))
 
@@ -56,13 +54,9 @@
      However, if exception-if-cycle? is set to true, this function will throw an
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
   [dag1 dag2 containing-refs path]
-  (log/debug (str "unify-dags WITH PATH: " (vec path)))
-  (log/debug (str " dag1: " (serialize dag1)))
-  (log/debug (str " dag2: " (serialize dag2)))
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         values
         (map (fn [key]
-               (log/debug (str "looking at key with map: " key))
                (let [save-dag1 (if diagnostics? (copy (key dag1 :top)) nil)
                      save-dag2 (if diagnostics? (copy (key dag2 :top)) nil)
                      value
@@ -70,50 +64,40 @@
                              (key dag2 :top)
                              containing-refs (when diagnostics? (concat path [key])))
                      final-ref (when (ref? value) (final-reference-of value))]
-                 (log/debug (str "final-ref: " final-ref))
-                 (and (ref? value) (log/debug (str "final-ref@: " @final-ref)))
                  (cond (and final-ref (some #(= final-ref %) containing-refs))
                        (if exception-if-cycle?
                          (let [cycle-detection-message
                                (str "containment failure: "
                                     "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
                            (exception cycle-detection-message))
-                         (do
-                           (log/debug (str "found a cycle-detection fail at:" (vec (concat path [key]))))
-                           (if diagnostics?
-                             {:fail :fail
-                              :type :cycle
-                              :path (concat path [key])
-                              :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
-                              :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
-                             :fail)))
-                           
-                       (= :fail value)
-                       (do
-                         (log/debug (str "found a fail at: " (vec (concat path [key]))))
                          (if diagnostics?
                            {:fail :fail
-                            :type :fail
+                            :type :cycle
                             :path (concat path [key])
                             :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
                             :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
                            :fail))
+                           
+                       (= :fail value)
+                       (if diagnostics?
+                         {:fail :fail
+                          :type :fail
+                          :path (concat path [key])
+                          :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
+                          :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
+                         :fail)
 
                        (and diagnostics? (fail? value))
                        value
                        
                        (and final-ref (= @final-ref :fail))
-                       (do
-                         (log/debug (str "found a ref fail at: " (vec (concat path [key]))
-                                         "; val1: " (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
-                                         "; val2: " (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))))
-                         (if diagnostics?
-                           {:fail :fail
-                            :type :ref
-                            :path (concat path [key])
-                            :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
-                            :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
-                         :fail))
+                       (if diagnostics?
+                         {:fail :fail
+                          :type :ref
+                          :path (concat path [key])
+                          :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
+                          :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
+                         :fail)
 
                        (and diagnostics? final-ref (fail? @final-ref))
                        @final-ref
@@ -144,25 +128,18 @@
      the unification is their equal value if they are equal, according
      to =, or :fail if they are not equal according to =."
   [val1 val2 & [containing-refs path]]
-  (log/debug (str "UNIFY!: path: " (vec path) "; val1: " (if (keyword? val1) val1 (type val1)) "; val2: " (if (keyword? val2) val2 (type val2))))
   (cond
     (and (map? val1)
          (map? val2))
-    (do
-      (log/debug (str "UNIFY! path: " (vec path)))
-      (unify-dags val1 val2 containing-refs path))
+    (unify-dags val1 val2 containing-refs path)
 
     (and (= val1 :top)
          (map? val2))
-    (do
-      (log/debug (str "UNIFY! path: " (vec path)))
-      (unify-dags val2 nil containing-refs path))
+    (unify-dags val2 nil containing-refs path)
 
     (and (= val2 :top)
          (map? val1))
-    (do
-      (log/debug (str "UNIFY! path: " (vec path)))
-      (unify-dags val1 nil containing-refs path))
+    (unify-dags val1 nil containing-refs path)
 
     (= val1 :top)
     val2
@@ -219,9 +196,7 @@
       val1)
 
     :else
-    (do
-      (log/debug (str "unify! else case: " val1 " and " val2))
-      :fail)))
+    :fail))
 
 (defn ref? [val]
   #?(:clj

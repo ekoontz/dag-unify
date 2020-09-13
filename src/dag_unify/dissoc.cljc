@@ -1,8 +1,6 @@
 (ns dag_unify.dissoc
   (:require
-   [dag_unify.serialization :as s]
-   #?(:clj [clojure.tools.logging :as log])
-   #?(:cljs [cljslog.core :as log])))
+   [dag_unify.serialization :as s]))
 
 ;; 'dissoc-in' function defined here along with
 ;; its supporting functions. 
@@ -38,41 +36,27 @@
 (defn dissoc-path [serialized pathsets path]
   (when (seq serialized)
     (let [[reentrance-set value] (first serialized)
-          filtered-reentrance-set (remove #(remove-path? %) reentrance-set)]
-      (when (not (= reentrance-set filtered-reentrance-set))
-        (log/debug (str "RE!=FRE: "
-                        (vec reentrance-set) " != "
-                        (vec filtered-reentrance-set))))
-      (let [new-reentrance-set (if (some #(prefix? path %) reentrance-set)
-                                 filtered-reentrance-set
-                                 reentrance-set)
-            remainders (get-remainders-for
-                        (set (cons path
-                                   (aliases-of path pathsets)))
-                        reentrance-set)]
-        (log/debug (str "remainders for path: " path ": " (vec remainders)))
-        (let [new-value
-              (reduce (fn [value path]
-                        (log/debug (str "DIM(value=" value "; path=" (vec path)))
-                        (let [dim (dissoc-in-map value path)]
-                          (log/debug (str " DIM: return value: " dim))
-                          dim))
-                      value
-                      remainders)]
-          (log/debug (str "dissoc-path: serialized: " serialized
-                          "; reentrance-set: " reentrance-set
-                          "; new-reentrance-set: " (vec new-reentrance-set)
-                          "; value at set: " value
-                          "; path to remove: " path
-                          "; new-value: " new-value))
-          (cons [new-reentrance-set new-value]
-                (dissoc-path (rest serialized) pathsets path)))))))
+          filtered-reentrance-set (remove #(remove-path? %) reentrance-set)
+          new-reentrance-set (if (some #(prefix? path %) reentrance-set)
+                               filtered-reentrance-set
+                               reentrance-set)
+          remainders (get-remainders-for
+                      (set (cons path
+                                 (aliases-of path pathsets)))
+                      reentrance-set)
+          new-value
+          (reduce (fn [value path]
+                    (let [dim (dissoc-in-map value path)]
+                      dim))
+                  value
+                  remainders)]
+      (cons [new-reentrance-set new-value]
+            (dissoc-path (rest serialized) pathsets path)))))
 
 (defn dissoc-in-map
   "dissoc a nested path from the-map; e.g.:
   (dissoc-in {:a {:b 42, :c 43}} [:a :b]) => {:a {:c 43}}." 
   [the-map path]
-  (log/debug (str "dissoc-in-map: the-map: " the-map "; path: " (vec path)))
   (cond (or (empty? path)
             (= :top the-map)
             (= ::none (get the-map (first path) ::none)))
