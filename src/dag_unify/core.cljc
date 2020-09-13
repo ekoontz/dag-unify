@@ -68,8 +68,8 @@
                      value
                      (unify! (key dag1 :top)
                              (key dag2 :top)
-                             containing-refs (and diagnostics? (concat path [key])))
-                     final-ref (and (ref? value) (final-reference-of value))]
+                             containing-refs (when diagnostics? (concat path [key])))
+                     final-ref (when (ref? value) (final-reference-of value))]
                  (log/debug (str "final-ref: " final-ref))
                  (and (ref? value) (log/debug (str "final-ref@: " @final-ref)))
                  (cond (and final-ref (some #(= final-ref %) containing-refs))
