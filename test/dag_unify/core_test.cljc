@@ -1,8 +1,6 @@
 (ns dag_unify.core-test
   (:require #?(:clj [clojure.test :refer [deftest is]])
             #?(:cljs [cljs.test :refer-macros [deftest is]])
-            #?(:clj [clojure.tools.logging :as log])
-            #?(:cljs [cljslog.core :as log])
             [clojure.string :as string]
             [dag_unify.core :as u
              :refer [assoc-in copy fail? get-in unify unify!]]

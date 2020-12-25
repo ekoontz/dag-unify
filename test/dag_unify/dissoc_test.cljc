@@ -4,8 +4,7 @@
             [dag_unify.core :as u]
             [dag_unify.dissoc :as d]
             [dag_unify.serialization :as s]
-            #?(:clj [clojure.tools.logging :as log])
-            #?(:cljs [cljslog.core :as log])))
+            [dag_unify.logging :as log]))
 
 (defn isomorphic? [a b]
   (cond (and (map? a)

@@ -1,7 +1,6 @@
 (ns dag_unify.diagnostics
   (:require
-   #?(:clj [clojure.tools.logging :as log])
-   #?(:cljs [cljslog.core :as log])
+   [dag_unify.logging :as log]
    [dag_unify.core :as u :refer [ref? unify]]))
 
 (defn strip-refs

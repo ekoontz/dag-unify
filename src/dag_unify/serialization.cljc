@@ -1,8 +1,7 @@
 (ns dag_unify.serialization
   (:refer-clojure :exclude [merge]) ;; TODO: don't override (merge)
   (:require
-   #?(:clj [clojure.tools.logging :as log])
-   #?(:cljs [cljslog.core :as log])))
+   [dag_unify.logging :as log]))
 
 (declare merge)
 
@@ -13,10 +12,8 @@
      (= (type val) cljs.core.Atom)))
 
 (defn exception [error-string]
-  #?(:clj
-     (throw (Exception. error-string)))
-  #?(:cljs
-     (throw (js/Error. error-string))))
+  ;; noop
+  )
 
 (defn skeletize [input-val]
   (cond
