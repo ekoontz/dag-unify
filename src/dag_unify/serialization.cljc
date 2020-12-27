@@ -12,8 +12,10 @@
      (= (type val) cljs.core.Atom)))
 
 (defn exception [error-string]
-  ;; noop
-  )
+  #?(:clj
+     (throw (Exception. error-string)))
+  #?(:cljs
+     (throw (js/Error. error-string))))
 
 (defn skeletize [input-val]
   (cond
