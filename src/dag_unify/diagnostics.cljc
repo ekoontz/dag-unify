@@ -48,13 +48,13 @@
         (= a b)))
 
 (defn fail-path [arg1 arg2]
-  (binding [u/diagnostics? true]
-    (let [result (unify arg1 arg2)]
-      (cond (= :fail (:fail result))
-            result
+  (let [result (unify arg1 arg2)]
+    (cond (= :fail (:fail result))
+          result
 
-            :else
-            (do
-              (log/warn (str "fail-path: unification succeeded with arguments."))
-              nil)))))
+          :else
+          (do
+            (log/warn (str "fail-path: unification succeeded with arguments."))
+            nil))))
+
 

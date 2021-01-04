@@ -369,17 +369,7 @@
         arg1 (dag_unify.serialization/deserialize arg1s)
         arg2 (dag_unify.serialization/deserialize arg2s)]
     (is (= (unify arg1 arg2)
-           :fail))
-
-    (is (= (vec (:path (fail-path arg1 arg2)))
-           [:sem :mod]))
-
-    (is (= (:arg1 (fail-path arg1 arg2))
-           [[[] {:tag 1, :subj {:tag 1}}]]))
-
-    (is (= (:arg2 (fail-path arg1 arg2))
-           [[[] []]]))))
-
+           :fail))))
 
 (deftest subsumes-test
   (is (= true (u/subsumes? {:a 42} {:a 42 :b 43})))

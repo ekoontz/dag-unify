@@ -22,13 +22,6 @@
    return :fail rather than throwing an exception."
   false)
 
-(def ^:dynamic diagnostics?
-  "If true:
-  - copies input arguments to unify! to enable tracing where fails happen with unify.
-  - concat a path along to recursive calls between unify! and unify-dags to enable debugging."
-  ;; TODO: change to false before next release.
-  false)
-
 (defn fail? [arg]
   (or (= :fail arg)
       (and (map? arg)
@@ -57,12 +50,9 @@
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         values
         (map (fn [key]
-               (let [save-dag1 (if diagnostics? (copy (key dag1 :top)) nil)
-                     save-dag2 (if diagnostics? (copy (key dag2 :top)) nil)
-                     value
+               (let [value
                      (unify! (key dag1 :top)
-                             (key dag2 :top)
-                             containing-refs (when diagnostics? (concat path [key])))
+                             (key dag2 :top))
                      final-ref (when (ref? value) (final-reference-of value))]
                  (cond (and final-ref (some #(= final-ref %) containing-refs))
                        (if exception-if-cycle?
@@ -70,37 +60,13 @@
                                (str "containment failure: "
                                     "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
                            (exception cycle-detection-message))
-                         (if diagnostics?
-                           {:fail :fail
-                            :type :cycle
-                            :path (concat path [key])
-                            :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
-                            :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
-                           :fail))
+                         :fail)
 
                        (= :fail value)
-                       (if diagnostics?
-                         {:fail :fail
-                          :type :fail
-                          :path (concat path [key])
-                          :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
-                          :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
-                         :fail)
-
-                       (and diagnostics? (fail? value))
-                       value
+                       :fail
                        
                        (and final-ref (= @final-ref :fail))
-                       (if diagnostics?
-                         {:fail :fail
-                          :type :ref
-                          :path (concat path [key])
-                          :arg1 (if (ref? save-dag1) (serialize @save-dag1) (serialize save-dag1))
-                          :arg2 (if (ref? save-dag2) (serialize @save-dag2) (serialize save-dag2))}
-                         :fail)
-
-                       (and diagnostics? final-ref (fail? @final-ref))
-                       @final-ref
+                       :fail
                        
                        :else
                        value)))
@@ -108,11 +74,6 @@
     (cond
       (some #(= % :fail) values)
       :fail
-
-      (and diagnostics? (some #(fail? %) values))
-      (->> values
-           (filter #(fail? %))
-           first)
 
       :else
       (zipmap
