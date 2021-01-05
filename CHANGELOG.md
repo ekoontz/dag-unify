@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.10.0] - 2021-01-05
+
+- Remove diagnostics flag to improve performance.
+
 ## [1.9.8] - 2020-09-13
 
 - Improve [README.md](README.md).
