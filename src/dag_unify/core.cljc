@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [assoc-in get-in])
   (:require
    [dag_unify.serialization :refer [create-path-in deserialize exception
-                                    final-reference-of serialize]]))
+                                    final-reference-of serialize]]
+   [clojure.tools.logging :as log]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
@@ -20,7 +21,7 @@
 (def ^:dynamic exception-if-cycle?
   "If true, and if unifying two DAGs would cause a cycle, thrown an exception. If false,
    return :fail rather than throwing an exception."
-  false)
+  true)
 
 (defn fail? [arg]
   (or (= :fail arg)
