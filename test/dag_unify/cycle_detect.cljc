@@ -15,12 +15,7 @@
 (def foo (deserialize [[[] {:subcat {:1 {:sem :top}}
                             :sem {:subj :top}}]
                        [[[:sem :subj]
-                         [:subcat :1 :sem]] {:ref :top, :subj {:ref :top}}]
-                       [[[:subcat :1 :sem :subj :ref]
-                         [:sem :subj :subj :ref]
-                         [:subcat :1 :sem :ref]
-                         [:sem :subj :ref]]
-                        {:is-subj true}]]))
+                         [:subcat :1 :sem]] {:ref :top, :subj {:ref :top}}]]))
 
 (def bar (deserialize [[[] {:subcat {:1 {:sem :top}}
                             :sem :top}]
