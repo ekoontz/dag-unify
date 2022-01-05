@@ -15,7 +15,7 @@
 (def foo (deserialize [[[] {:a {:b :top}
                             :b {:c :top}}]
                        [[[:b :c]
-                         [:a :b]] {:c {:ref :top}}]]))
+                         [:a :b]] {:c {:d :top}}]]))
 
 (def bar (deserialize [[[] {:a {:b :top}
                             :b :top}]
