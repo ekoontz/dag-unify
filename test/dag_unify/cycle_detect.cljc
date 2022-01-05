@@ -20,7 +20,7 @@
                          [:sem :subj :subj :ref]
                          [:subcat :1 :sem :ref]
                          [:sem :subj :ref]]
-                        #:menard.reflexives{:is-subj true}]]))
+                        {:is-subj true}]]))
 
 (def bar (deserialize [[[] {:subcat {:1 {:sem :top}}
                             :sem :top}]
