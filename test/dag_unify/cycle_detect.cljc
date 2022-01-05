@@ -12,13 +12,13 @@
                      skeletize ref?]])
   (:refer-clojure :exclude [assoc-in get-in]))
 
-(def foo (deserialize [[[] {:subcat {:1 {:sem :top}}
+(def foo (deserialize [[[] {:subcat {:sem :top}
                             :sem {:subj :top}}]
                        [[[:sem :subj]
-                         [:subcat :1 :sem]] {:ref :top, :subj {:ref :top}}]]))
+                         [:subcat :sem]] {:ref :top, :subj {:ref :top}}]]))
 
-(def bar (deserialize [[[] {:subcat {:1 {:sem :top}}
+(def bar (deserialize [[[] {:subcat {:sem :top}
                             :sem :top}]
-                       [[[:subcat :1 :sem]
+                       [[[:subcat :sem]
                          [:sem]] :top]]))
 
