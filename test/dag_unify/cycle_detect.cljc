@@ -12,18 +12,14 @@
                      skeletize ref?]])
   (:refer-clojure :exclude [assoc-in get-in]))
 
-(def foo (deserialize [[[] {:cat :verb,
-                            :subcat {:1 {:cat :noun :sem :top}, :2 []},
-                            :sem {:subj :top},
-                            :reflexive? true}]
+(def foo (deserialize [[[] {:subcat {:1 {:sem :top}}
+                            :sem {:subj :top}}]
                        [[[:sem :subj] [:subcat :1 :sem]] {:ref :top, :subj {:ref :top}}]
                        [[[:subcat :1 :sem :subj :ref] [:sem :subj :subj :ref]
                          [:subcat :1 :sem :ref] [:sem :subj :ref]]
                         #:menard.reflexives{:is-subj true}]]))
 
-(def bar (deserialize [[[] {:cat :neg
-                            :inflected? true, :curriculum :menard.nederlands/none,
-                            :subcat {:1 {:cat :noun, :sem :top}},
+(def bar (deserialize [[[] {:subcat {:1 {:sem :top}}
                             :sem :top}]
                        [[[:subcat :1 :sem] [:sem]] :top]]))
 
