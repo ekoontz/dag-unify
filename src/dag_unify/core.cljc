@@ -21,7 +21,7 @@
 (def ^:dynamic exception-if-cycle?
   "If true, and if unifying two DAGs would cause a cycle, thrown an exception. If false,
    return :fail rather than throwing an exception."
-  true)
+  false)
 
 (defn fail? [arg]
   (or (= :fail arg)
@@ -48,6 +48,8 @@
      However, if exception-if-cycle? is set to true, this function will throw an
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
   [dag1 dag2 containing-refs path]
+  (log/info (str "unify-dags (begin): dag1: " (serialize dag1)))
+  (log/info (str "unify-dags (begin): dag2: " (serialize dag2)))
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         kvs
         (loop [kvs []
@@ -87,18 +89,26 @@
      the unification is their equal value if they are equal, according
      to =, or :fail if they are not equal according to =."
   [val1 val2 & [containing-refs path]]
+  (log/info (str "unify! (begin): val1: " (serialize val1)))
+  (log/info (str "unify! (begin): val2: " (serialize val2)))
   (cond
     (and (map? val1)
          (map? val2))
-    (unify-dags val1 val2 containing-refs path)
+    (do
+      (log/info (str "unify! cond1"))
+      (unify-dags val1 val2 containing-refs path))
 
     (and (= val1 :top)
          (map? val2))
-    (unify-dags val2 nil containing-refs path)
+    (do
+      (log/info (str "unify! cond2"))
+      (unify-dags val2 nil containing-refs path))
 
     (and (= val2 :top)
          (map? val1))
-    (unify-dags val1 nil containing-refs path)
+    (do
+      (log/info (str "unify! cond3"))
+      (unify-dags val1 nil containing-refs path))
 
     (= val1 :top)
     val2
@@ -106,8 +116,8 @@
     (= val2 :top)
     val1
 
-    ;; expensive if val1 and val2 are not atomic values: the above
-    ;; checks should ensure that by now, val1 and val2 are atomic:
+    ;; expensive if val1 and val2 are maps, but the above
+    ;; checks ensure that by now, val1 and val2 are not maps:
     (= val1 val2) val1
 
     (and
