@@ -49,35 +49,34 @@
   [dag1 dag2 containing-refs path]
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         values
-        (map (fn [key]
-               (let [value
-                     (unify! (key dag1 :top)
-                             (key dag2 :top))
-                     final-ref (when (ref? value) (final-reference-of value))]
-                 (cond (and final-ref (some #(= final-ref %) containing-refs))
-                       (if exception-if-cycle?
-                         (let [cycle-detection-message
-                               (str "containment failure: "
-                                    "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
-                           (exception cycle-detection-message))
-                         :fail)
-
-                       (= :fail value)
-                       :fail
-                       
-                       (and final-ref (= @final-ref :fail))
-                       :fail
-                       
-                       :else
-                       value)))
-             keys)]
+        (loop [values []
+               keys keys]
+          (if (seq keys)
+            (let [k (first keys)
+                  v (unify! (k dag1 :top)
+                            (k dag2 :top))
+                  final-ref (when (ref? v) (final-reference-of v))]
+              (cond
+                (= :fail v)
+                :fail
+                (and (ref? v) (= :fail @v))
+                :fail
+                (and final-ref (some #(= final-ref %) containing-refs))
+                (if exception-if-cycle?
+                  (let [cycle-detection-message
+                        (str "containment failure: "
+                             "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
+                    (exception cycle-detection-message))
+                  :fail)
+                :else
+                (recur (cons v values) (rest keys))))
+            values))]
     (cond
-      (some #(= % :fail) values)
+      (= :fail values)
       :fail
-
       :else
       (zipmap
-       keys
+       (reverse keys)
        values))))
 
 (defn unify!
