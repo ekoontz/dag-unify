@@ -48,8 +48,8 @@
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
   [dag1 dag2 containing-refs path]
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
-        values
-        (loop [values []
+        result
+        (loop [result []
                keys keys]
           (if (seq keys)
             (let [k (first keys)
@@ -69,15 +69,13 @@
                     (exception cycle-detection-message))
                   :fail)
                 :else
-                (recur (cons v values) (rest keys))))
-            values))]
+                (recur (cons [k v] result) (rest keys))))
+            result))]
     (cond
-      (= :fail values)
+      (= :fail result)
       :fail
       :else
-      (zipmap
-       (reverse keys)
-       values))))
+      (into {} result))))
 
 (defn unify!
   "Merge input arguments val1 and val2, according to their types:
