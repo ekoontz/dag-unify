@@ -144,7 +144,7 @@
      (ref? val2)
      (= (final-reference-of val1)
         (final-reference-of val2)))
-    val1
+    (final-reference-of val1)
     
     (and
      (ref? val1)
