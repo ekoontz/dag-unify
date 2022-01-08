@@ -88,9 +88,7 @@
   (cond
     (and (map? val1)
          (map? val2))
-    (do
-      (log/info (str "case 0: val1: " val1 "; val2: " val2))
-      (unify-dags val1 val2))
+    (unify-dags val1 val2)
 
     (and (= val1 :top)
          (map? val2))
@@ -134,7 +132,6 @@
      (ref? val1)
      (not (ref? val2)))
     (do
-      (log/info (str "case 1"))
       (swap! val1
              (fn [_] (unify! @val1 val2)))
       val1)
@@ -153,7 +150,6 @@
      (ref? val2)
      (not (ref? val1)))
     (do
-      (log/info (str "case 2: val1: " val1 "; val2: " val2 "; @val2: " @val2))
       (swap! val2
              (fn [_] (unify! val1 @val2)))
       val2)
@@ -173,7 +169,6 @@
      (ref? val2)
      (some #(= % val1) (get-all-refs @val2)))
     (do
-      (log/info (str "case 6: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
       (if exception-if-cycle?
           (exception "cycle detected.")
         :fail))
@@ -183,7 +178,6 @@
      (ref? val2)
      (some #(= % val2) (get-all-refs @val1)))
     (do
-      (log/info (str "case 7: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
       (if exception-if-cycle?
         (exception "cycle detected.")
         :fail))
@@ -192,7 +186,6 @@
      (ref? val1)
      (ref? val2))
     (do
-      (log/info (str "case 8: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
       (swap! val1
              (fn [_] (unify! @val1 @val2)))
       (swap! val2
