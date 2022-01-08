@@ -27,6 +27,8 @@
       (and (map? arg)
            (= :fail (:fail arg)))))
 
+(declare get-all-refs)
+
 (defn unify-dags
   "Unify two maps into a single map (or :fail) by taking the union of their keys and for each
    :k in this union, unify the two values of :k, and use that unified
@@ -300,7 +302,18 @@
        (filter #(= :fail %))
        empty?))
 
- 
+(defn get-all-refs
+  "return all paths found in dag _d_."
+  [d]
+  (cond
+    (ref? d)
+    (cons d (get-all-refs @d))
+    (map? d)
+    (mapcat (fn [k]
+              (let [v (k d)]
+                (get-all-refs v)))
+            (keys d))
+    :else []))
 
 
 
