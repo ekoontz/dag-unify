@@ -27,6 +27,8 @@
       (and (map? arg)
            (= :fail (:fail arg)))))
 
+(declare get-all-refs)
+
 (defn unify-dags
   "Unify two maps into a single map (or :fail) by taking the union of their keys and for each
    :k in this union, unify the two values of :k, and use that unified
@@ -46,40 +48,29 @@
      (declared above) is false.
      However, if exception-if-cycle? is set to true, this function will throw an
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
-  [dag1 dag2 containing-refs path]
+  [dag1 dag2]
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
-        values
-        (map (fn [key]
-               (let [value
-                     (unify! (key dag1 :top)
-                             (key dag2 :top))
-                     final-ref (when (ref? value) (final-reference-of value))]
-                 (cond (and final-ref (some #(= final-ref %) containing-refs))
-                       (if exception-if-cycle?
-                         (let [cycle-detection-message
-                               (str "containment failure: "
-                                    "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
-                           (exception cycle-detection-message))
-                         :fail)
-
-                       (= :fail value)
-                       :fail
-                       
-                       (and final-ref (= @final-ref :fail))
-                       :fail
-                       
-                       :else
-                       value)))
-             keys)]
+        kvs (loop [kvs []
+                   keys keys]
+              (if (seq keys)
+                (let [k (first keys)
+                      v (unify! (k dag1 :top)
+                                (k dag2 :top))]
+                  (cond
+                    (= :fail v)
+                    :fail
+                    (and (ref? v) (= :fail @v))
+                    :fail
+                    :else
+                    (recur (cons [k v] kvs)
+                           (rest keys))))
+                kvs))]
     (cond
-      (some #(= % :fail) values)
+      (= :fail kvs)
       :fail
-
       :else
-      (zipmap
-       keys
-       values))))
-
+      (into {} kvs))))
+  
 (defn unify!
   "Merge input arguments val1 and val2, according to their types:
    - If val1 and val2 are maps, merge recursively (via unify-dags).
@@ -88,29 +79,17 @@
    - If val1 and/or val2 are atomic values (e.g. strings, numbers, etc),
      the unification is their equal value if they are equal, according
      to =, or :fail if they are not equal according to =."
-  [val1 val2 & [containing-refs path]]
+  [val1 val2]
   (cond
     (and (map? val1)
          (map? val2))
-    (unify-dags val1 val2 containing-refs path)
-
-    (and (= val1 :top)
-         (map? val2))
-    (unify-dags val2 nil containing-refs path)
-
-    (and (= val2 :top)
-         (map? val1))
-    (unify-dags val1 nil containing-refs path)
+    (unify-dags val1 val2)
 
     (= val1 :top)
     val2
 
     (= val2 :top)
     val1
-
-    ;; expensive if val1 and val2 are not atomic values: the above
-    ;; checks should ensure that by now, val1 and val2 are atomic:
-    (= val1 val2) val1
 
     (and
      (ref? val1)
@@ -122,21 +101,41 @@
      (= :fail @val2))
     :fail
 
+    ;; val1 is a ref, val2 is not a ref, val1 is within val2:
+    (and
+     (ref? val1)
+     (not (ref? val2))
+     (some #(= % val1) (get-all-refs val2)))
+    (if exception-if-cycle?
+      (exception "cycle detected.")
+      :fail)
+
     ;; val1 is a ref, val2 is not a ref:
     (and
      (ref? val1)
      (not (ref? val2)))
-    (do (swap! val1
-                 (fn [_] (unify! @val1 val2 (cons val1 containing-refs) path)))
-        val1)
+    (do
+      (swap! val1
+             (fn [_] (unify! @val1 val2)))
+      val1)
+    
+    ;; val2 is a ref, val1 is not a ref, val2 is within val1:
+    (and
+     (ref? val2)
+     (not (ref? val1))
+     (some #(= % val2) (get-all-refs val1)))
+    (if exception-if-cycle?
+      (exception "cycle detected.")
+      :fail)
 
     ;; val2 is a ref, val1 is not a ref.
     (and
      (ref? val2)
      (not (ref? val1)))
-    (do (swap! val2
-               (fn [_] (unify! val1 @val2 (cons val2 containing-refs) path)))
-        val2)
+    (do
+      (swap! val2
+             (fn [_] (unify! val1 @val2)))
+      val2)
 
     ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
     (and
@@ -144,18 +143,33 @@
      (ref? val2)
      (= (final-reference-of val1)
         (final-reference-of val2)))
-    val1
+    (final-reference-of val1)
+
+    ;; both val1 and val2 are refs, and one contains the other:
+    (and
+     (ref? val1)
+     (ref? val2)
+     (or (some #(= % val1) (get-all-refs @val2))
+         (some #(= % val2) (get-all-refs @val1))))
+    (do
+      (if exception-if-cycle?
+        (exception "cycle detected.")
+        :fail))
 
     (and
      (ref? val1)
      (ref? val2))
     (do
       (swap! val1
-             (fn [_] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)) path)))
+             (fn [_] (unify! @val1 @val2)))
       (swap! val2
              (fn [_] val1)) ;; note that now val2 is a ref to a ref.
       val1)
 
+    ;; expensive if val1 and val2 are not atomic values: the above
+    ;; checks should ensure that by now, val1 and val2 are atomic:
+    (= val1 val2) val1
+    
     :else
     :fail))
 
@@ -300,7 +314,15 @@
        (filter #(= :fail %))
        empty?))
 
- 
+(defn get-all-refs
+  "return all paths found in dag _d_."
+  [d]
+  (cond
+    (ref? d)
+    (cons d (get-all-refs @d))
+    (map? d)
+    (mapcat get-all-refs (vals d))
+    :else []))
 
 
 
