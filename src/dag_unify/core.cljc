@@ -168,10 +168,7 @@
     (do
       (log/info (str "case 6: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
       (if exception-if-cycle?
-        (let [cycle-detection-message
-              (str "containment failure: "
-                   "val: " val1 " is referenced by one of the containing-refs: " containing-refs)]
-          (exception cycle-detection-message))
+          (exception "cycle detected.")
         :fail))
 
     (and
@@ -181,10 +178,7 @@
     (do
       (log/info (str "case 7: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
       (if exception-if-cycle?
-        (let [cycle-detection-message
-              (str "containment failure: "
-                   "val: " val1 " is referenced by one of the containing-refs: " containing-refs)]
-          (exception cycle-detection-message))
+        (exception "cycle detected.")
         :fail))
 
     (and
