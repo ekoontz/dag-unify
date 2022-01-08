@@ -58,18 +58,7 @@
                      (unify! (key dag1 :top)
                              (key dag2 :top))
                      final-ref (when (ref? value) (final-reference-of value))]
-                 (cond (and final-ref (some #(= final-ref %) containing-refs))
-                       (do
-                         (log/error "THROWING AN EXCEPTION!!! dag1: " dag1 "; dag2: " dag2)
-                         (exception "GOT HERE!!!")
-                         (if exception-if-cycle?
-                           (let [cycle-detection-message
-                                 (str "containment failure: "
-                                      "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
-                             (exception cycle-detection-message))
-                           :fail))
-
-                       (= :fail value)
+                 (cond (= :fail value)
                        :fail
                        
                        (and final-ref (= @final-ref :fail))
@@ -131,6 +120,15 @@
      (= :fail @val2))
     :fail
 
+    ;; val1 is a ref, val2 is not a ref, val1 is within val2:
+    (and
+     (ref? val1)
+     (not (ref? val2))
+     (some #(= % val1) (get-all-refs val2)))
+    (if exception-if-cycle?
+      (exception "cycle detected.")
+      :fail)
+
     ;; val1 is a ref, val2 is not a ref:
     (and
      (ref? val1)
@@ -141,6 +139,15 @@
              (fn [_] (unify! @val1 val2 (cons val1 containing-refs) path)))
       val1)
     
+    ;; val2 is a ref, val1 is not a ref, val2 is within val1:
+    (and
+     (ref? val2)
+     (not (ref? val1))
+     (some #(= % val2) (get-all-refs val1)))
+    (if exception-if-cycle?
+      (exception "cycle detected.")
+      :fail)
+
     ;; val2 is a ref, val1 is not a ref.
     (and
      (ref? val2)
