@@ -1,7 +1,0 @@
-language: clojure
-lein: lein
-script: lein test
-sudo: false
-jdk:
-  - openjdk11
-
