@@ -16,6 +16,7 @@
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
   [val1 val2]
+  (log/info (str "unify: val1: " val1 "; val2: " val2))
   (unify! (copy val1) (copy val2)))
 
 (def ^:dynamic exception-if-cycle?
@@ -58,12 +59,15 @@
                              (key dag2 :top))
                      final-ref (when (ref? value) (final-reference-of value))]
                  (cond (and final-ref (some #(= final-ref %) containing-refs))
-                       (if exception-if-cycle?
-                         (let [cycle-detection-message
-                               (str "containment failure: "
-                                    "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
-                           (exception cycle-detection-message))
-                         :fail)
+                       (do
+                         (log/error "THROWING AN EXCEPTION!!! dag1: " dag1 "; dag2: " dag2)
+                         (exception "GOT HERE!!!")
+                         (if exception-if-cycle?
+                           (let [cycle-detection-message
+                                 (str "containment failure: "
+                                      "val: " final-ref " is referenced by one of the containing-refs: " containing-refs)]
+                             (exception cycle-detection-message))
+                           :fail))
 
                        (= :fail value)
                        :fail
