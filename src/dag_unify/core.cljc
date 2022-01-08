@@ -55,12 +55,8 @@
         (map (fn [key]
                (let [value
                      (unify! (key dag1 :top)
-                             (key dag2 :top))
-                     final-ref (when (ref? value) (final-reference-of value))]
-                 (cond (= :fail value)
-                       :fail
-                       
-                       (and final-ref (= @final-ref :fail))
+                             (key dag2 :top))]
+                 (cond (and (ref? value) (= @(final-reference-of value) :fail))
                        :fail
                        
                        :else
