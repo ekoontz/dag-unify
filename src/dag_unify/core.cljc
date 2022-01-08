@@ -51,26 +51,27 @@
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
   [dag1 dag2]
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
-        values
-        (map (fn [key]
-               (let [value
-                     (unify! (key dag1 :top)
-                             (key dag2 :top))]
-                 (cond (and (ref? value) (= @(final-reference-of value) :fail))
-                       :fail
-                       
-                       :else
-                       value)))
-             keys)]
+        kvs (loop [kvs []
+                   keys keys]
+              (if (seq keys)
+                (let [k (first keys)
+                      v (unify! (k dag1 :top)
+                                (k dag2 :top))]
+                  (cond
+                    (= :fail v)
+                    :fail
+                    (and (ref? v) (= :fail @v))
+                    :fail
+                    :else
+                    (recur (cons [k v] kvs)
+                           (rest keys))))
+                kvs))]
     (cond
-      (some #(= % :fail) values)
+      (= :fail kvs)
       :fail
-
       :else
-      (zipmap
-       keys
-       values))))
-
+      (into {} kvs))))
+  
 (defn unify!
   "Merge input arguments val1 and val2, according to their types:
    - If val1 and val2 are maps, merge recursively (via unify-dags).
