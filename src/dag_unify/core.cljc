@@ -95,9 +95,7 @@
   (cond
     (and (map? val1)
          (map? val2))
-    (do
-      (log/info (str "case 0: val1: " val1 "; val2: " val2))
-      (unify-dags val1 val2 containing-refs path))
+    (unify-dags val1 val2 containing-refs path)
 
     (and (= val1 :top)
          (map? val2))
@@ -132,7 +130,6 @@
      (ref? val1)
      (not (ref? val2)))
     (do
-      (log/info (str "case 1"))
       (swap! val1
              (fn [_] (unify! @val1 val2 (cons val1 containing-refs) path)))
       val1)
@@ -142,7 +139,6 @@
      (ref? val2)
      (not (ref? val1)))
     (do
-      (log/info (str "case 2: val1: " val1 "; val2: " val2 "; @val2: " @val2))
       (swap! val2
              (fn [_] (unify! val1 @val2 (cons val2 containing-refs) path)))
       val2)
@@ -153,41 +149,34 @@
      (ref? val2)
      (= (final-reference-of val1)
         (final-reference-of val2)))
-    (do
-      (log/info (str "case 3"))
-      val1)
+    val1
     
     (and
      (ref? val1)
      (ref? val2)
      (some #(= % val1) (get-all-refs @val2)))
-    (do
-      (log/info (str "case 6: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
-      (if exception-if-cycle?
-        (let [cycle-detection-message
-              (str "containment failure: "
-                   "val: " val1 " is referenced by one of the containing-refs: " containing-refs)]
-          (exception cycle-detection-message))
-        :fail))
+    (if exception-if-cycle?
+      (let [cycle-detection-message
+            (str "containment failure: "
+                 "val: " val1 " is referenced by one of the containing-refs: " containing-refs)]
+        (exception cycle-detection-message))
+      :fail)
 
     (and
      (ref? val1)
      (ref? val2)
      (some #(= % val2) (get-all-refs @val1)))
-    (do
-      (log/info (str "case 7: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
-      (if exception-if-cycle?
-        (let [cycle-detection-message
-              (str "containment failure: "
-                   "val: " val1 " is referenced by one of the containing-refs: " containing-refs)]
-          (exception cycle-detection-message))
-        :fail))
+    (if exception-if-cycle?
+      (let [cycle-detection-message
+            (str "containment failure: "
+                 "val: " val1 " is referenced by one of the containing-refs: " containing-refs)]
+        (exception cycle-detection-message))
+      :fail)
 
     (and
      (ref? val1)
      (ref? val2))
     (do
-      (log/info (str "case 8: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
       (swap! val1
              (fn [_] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)) path)))
       (swap! val2
