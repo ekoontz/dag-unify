@@ -31,6 +31,16 @@
 
 ;; (unify foo2 bar2)
 
+(def arg1 (deserialize
+           [[nil {}]
+            [[[:sem :obj]
+              [:subcat :2 :sem]]
+             :top]]))
+
+(def arg2 (deserialize
+           [[nil {}]
+            [[[:sem]
+              [:subcat :2 :sem]] :top]]))
 
 (deftest cycle-test
   (is (= 5 5)))
