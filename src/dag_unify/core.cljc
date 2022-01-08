@@ -145,20 +145,13 @@
      (= (final-reference-of val1)
         (final-reference-of val2)))
     (final-reference-of val1)
-    
-    (and
-     (ref? val1)
-     (ref? val2)
-     (some #(= % val1) (get-all-refs @val2)))
-    (do
-      (if exception-if-cycle?
-          (exception "cycle detected.")
-        :fail))
 
+    ;; both val1 and val2 are refs, and one contains the other:
     (and
      (ref? val1)
      (ref? val2)
-     (some #(= % val2) (get-all-refs @val1)))
+     (or (some #(= % val1) (get-all-refs @val2))
+         (some #(= % val2) (get-all-refs @val1))))
     (do
       (if exception-if-cycle?
         (exception "cycle detected.")
@@ -329,10 +322,7 @@
     (ref? d)
     (cons d (get-all-refs @d))
     (map? d)
-    (mapcat (fn [k]
-              (let [v (k d)]
-                (get-all-refs v)))
-            (keys d))
+    (mapcat get-all-refs (vals d))
     :else []))
 
 
