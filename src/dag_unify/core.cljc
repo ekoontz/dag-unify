@@ -95,10 +95,6 @@
     (= val2 :top)
     val1
 
-    ;; expensive if val1 and val2 are not atomic values: the above
-    ;; checks should ensure that by now, val1 and val2 are atomic:
-    (= val1 val2) val1
-
     (and
      (ref? val1)
      (= :fail @val1))
@@ -181,6 +177,10 @@
              (fn [_] val1)) ;; note that now val2 is a ref to a ref.
       val1)
 
+    ;; expensive if val1 and val2 are not atomic values: the above
+    ;; checks should ensure that by now, val1 and val2 are atomic:
+    (= val1 val2) val1
+    
     :else
     :fail))
 
