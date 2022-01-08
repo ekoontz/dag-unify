@@ -89,14 +89,6 @@
          (map? val2))
     (unify-dags val1 val2)
 
-    (and (= val1 :top)
-         (map? val2))
-    (unify-dags val2 nil)
-
-    (and (= val2 :top)
-         (map? val1))
-    (unify-dags val1 nil)
-
     (= val1 :top)
     val2
 
