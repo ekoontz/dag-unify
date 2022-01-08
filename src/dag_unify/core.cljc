@@ -2,8 +2,7 @@
   (:refer-clojure :exclude [assoc-in get-in])
   (:require
    [dag_unify.serialization :refer [create-path-in deserialize exception
-                                    final-reference-of serialize]]
-   #?(:clj [clojure.tools.logging :as log])))
+                                    final-reference-of serialize]]))
 
 ;; TODO: consider making :fail and :top to be package-local keywords.
 ;; TODO: use commute to allow faster concurrent access: Rathore, p. 133.
