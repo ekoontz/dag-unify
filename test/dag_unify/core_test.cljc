@@ -277,6 +277,17 @@
                (catch Exception e :an-exception-was-thrown)))]
     (is (= :an-exception-was-thrown result))))
 
+(deftest prevent-cyclic-graph-4
+  (let [arg1 (deserialize [[[] {:a {:b :top}
+                                :b {:c :top}}]
+                           [[[:b :c]
+                             [:a :b]] {:c {:d :top}}]])
+        arg2 (deserialize [[[] {:a {:b :top}
+                                :b :top}]
+                           [[[:a :b]
+                             [:b]] :top]])]
+    (is (= :fail (unify arg1 arg2)))))
+
 (deftest not-found-with-non-existent-path-with-nil
   (is (= ::notfound
          (get-in
