@@ -50,7 +50,7 @@
      (declared above) is false.
      However, if exception-if-cycle? is set to true, this function will throw an
      exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
-  [dag1 dag2 containing-refs path]
+  [dag1 dag2]
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         values
         (map (fn [key]
@@ -84,21 +84,21 @@
    - If val1 and/or val2 are atomic values (e.g. strings, numbers, etc),
      the unification is their equal value if they are equal, according
      to =, or :fail if they are not equal according to =."
-  [val1 val2 & [containing-refs path]]
+  [val1 val2]
   (cond
     (and (map? val1)
          (map? val2))
     (do
       (log/info (str "case 0: val1: " val1 "; val2: " val2))
-      (unify-dags val1 val2 containing-refs path))
+      (unify-dags val1 val2))
 
     (and (= val1 :top)
          (map? val2))
-    (unify-dags val2 nil containing-refs path)
+    (unify-dags val2 nil)
 
     (and (= val2 :top)
          (map? val1))
-    (unify-dags val1 nil containing-refs path)
+    (unify-dags val1 nil)
 
     (= val1 :top)
     val2
@@ -136,7 +136,7 @@
     (do
       (log/info (str "case 1"))
       (swap! val1
-             (fn [_] (unify! @val1 val2 (cons val1 containing-refs) path)))
+             (fn [_] (unify! @val1 val2)))
       val1)
     
     ;; val2 is a ref, val1 is not a ref, val2 is within val1:
@@ -155,7 +155,7 @@
     (do
       (log/info (str "case 2: val1: " val1 "; val2: " val2 "; @val2: " @val2))
       (swap! val2
-             (fn [_] (unify! val1 @val2 (cons val2 containing-refs) path)))
+             (fn [_] (unify! val1 @val2)))
       val2)
 
     ;; both val1 and val2 are refs, and point (either directly or indirectly) to the same value:
@@ -194,7 +194,7 @@
     (do
       (log/info (str "case 8: val1: " val1 "; val2: " val2 "; @val1: " @val1 "; @val2: " @val2))
       (swap! val1
-             (fn [_] (unify! @val1 @val2 (cons val1 (cons val2 containing-refs)) path)))
+             (fn [_] (unify! @val1 @val2)))
       (swap! val2
              (fn [_] val1)) ;; note that now val2 is a ref to a ref.
       val1)
