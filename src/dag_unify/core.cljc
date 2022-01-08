@@ -16,7 +16,6 @@
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
   [val1 val2]
-  (log/info (str "unify: val1: " val1 "; val2: " val2))
   (unify! (copy val1) (copy val2)))
 
 (def ^:dynamic exception-if-cycle?
@@ -160,9 +159,7 @@
      (ref? val2)
      (= (final-reference-of val1)
         (final-reference-of val2)))
-    (do
-      (log/info (str "case 3"))
-      val1)
+    val1
     
     (and
      (ref? val1)
