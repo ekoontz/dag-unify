@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.10.1] - 2022-01-09
+
+- Detect a new case of a cycle being created during unification (#3)
+- Rewrite unify! and unify-dags to detect a new case of a cycle being created during unification
+- Add corresponding test case 'prevent-cyclic-graph-4'
+- Update dependencies to latest available versions
+- Remove unneeded log4j dependency
+- Transition CI from Travis to Github
+
 ## [1.10.0] - 2021-01-05
 
 - Remove diagnostics flag to improve performance.
