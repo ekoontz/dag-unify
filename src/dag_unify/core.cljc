@@ -129,7 +129,7 @@
       (exception "cycle detected.")
       :fail)
 
-    ;; val2 is a ref, val1 is not a ref.
+    ;; val2 is a ref, val1 is not a ref:
     (and
      (ref? val2)
      (not (ref? val1)))
