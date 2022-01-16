@@ -30,12 +30,15 @@
 (declare get-all-refs)
 
 (defn unify-dags
-  "Unify two maps into a single map (or :fail) by taking the union of their keys and for each
+  "Destructively unify two maps into a single map (or :fail) by taking the union of their keys and for each
    :k in this union, unify the two values of :k, and use that unified
    value as the :k of the returned map.
    - If the unified value for :k is :fail, then
    return :fail for the whole function call."
   [dag1 dag2]
+  ;; TODO: any performance difference between:
+  ;; (seq (concat ..) and
+  ;; (vec (concat ..) ?
   (let [keys (vec (set (concat (keys dag1) (keys dag2))))
         kvs (loop [kvs []
                    keys keys]
@@ -79,7 +82,15 @@
      then this function will return :fail if the dynamic variable exception-if-cycle?
      (declared above) is false.
      However, if exception-if-cycle? is set to true, this function will throw an
-     exception. See core_test.clj/prevent-cyclic-graph-* functions for example usage."
+     exception. See core_test.clj/prevent-cyclic-graph-* functions for examples.
+
+  Exception-checking is done by checking:
+   if val1 is ref and val2 is not a ref: 
+      checking that val1 is *not* a member of (get-all-refs val2).
+   if val1 is not a ref and val2 is a ref: 
+      checking that val2 is *not* a member of (get-all-refs val1).
+   
+"
   [val1 val2]
   (cond
     (and (map? val1)
