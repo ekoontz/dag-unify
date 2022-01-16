@@ -47,14 +47,35 @@
         :else
         (= a b)))
 
-(defn fail-path [arg1 arg2]
-  (let [result (unify arg1 arg2)]
-    (cond (= :fail (:fail result))
-          result
-
-          :else
-          (do
-            (log/warn (str "fail-path: unification succeeded with arguments."))
-            nil))))
-
-
+(defn fail-path [dag1 dag2]
+  (cond (or (not (map? dag1))
+            (not (map? dag2)))
+        []
+        :else 
+        (let [keys (vec (set (concat (keys dag1) (keys dag2))))]
+          (loop [kvs []
+                 keys keys]
+            (if (seq keys)
+              (let [k (first keys)
+                    v (dag_unify.core/unify (k dag1 :top)
+                                            (k dag2 :top))]
+                (cond
+                  (= :fail v)
+                  (do
+                    (log/debug (str "fail-key: (1) " k " between: "
+                                    (u/pprint (u/get-in dag1 [k] :top))
+                                    " and "
+                                    (u/pprint (u/get-in dag2 [k] :top))))
+                    (cons k (fail-path (u/get-in dag1 [k] :top)
+                                       (u/get-in dag2 [k] :top))))
+                  (and (dag_unify.core/ref? v) (= :fail @v))
+                  (do
+                    (log/debug (str "fail-key: (2) " k " between: "                   
+                                    (u/pprint (u/get-in dag1 [k] :top))
+                                    " and "
+                                    (u/pprint (u/get-in dag2 [k] :top))))
+                    (cons k (fail-path (u/get-in dag1 [k] :top)
+                                       (u/get-in dag2 [k] :top))))
+                  :else
+                  (recur [] (rest keys))))
+              kvs)))))

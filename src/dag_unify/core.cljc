@@ -89,6 +89,8 @@
       checking that val1 is *not* a member of (get-all-refs val2).
    if val1 is not a ref and val2 is a ref: 
       checking that val2 is *not* a member of (get-all-refs val1).
+   if both val1 and val2 are refs:
+      checking both of the above checks.
    
 "
   [val1 val2]
@@ -335,10 +337,3 @@
     (map? d)
     (mapcat get-all-refs (vals d))
     :else []))
-
-
-
-
-
-
-
