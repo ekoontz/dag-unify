@@ -350,15 +350,6 @@
    :sem {:subj {:ref [1]},
          :mod []}})
 
-;; we are testing for fail-path to return:
-(comment
-  {:fail :fail
-   :type :ref
-   :path (:sem :mod)
-   :arg1 [[[] {:tag 1
-               :subj {:tag 1}}]]
-   :arg2 [[[] []]]})
-
 (deftest diagnostics
   (let [arg1s [[[]
                 {:mod
@@ -380,7 +371,11 @@
         arg1 (dag_unify.serialization/deserialize arg1s)
         arg2 (dag_unify.serialization/deserialize arg2s)]
     (is (= (unify arg1 arg2)
-           :fail))))
+           :fail))
+
+    (is (= (vec (fail-path arg1 arg2))
+           [:sem :mod]))))
+
 
 (deftest subsumes-test
   (is (= true (u/subsumes? {:a 42} {:a 42 :b 43})))
