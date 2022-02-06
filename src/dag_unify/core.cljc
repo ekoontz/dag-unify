@@ -84,7 +84,7 @@
      However, if exception-if-cycle? is set to true, this function will throw an
      exception. See core_test.clj/prevent-cyclic-graph-* functions for examples.
 
-  Exception-checking is done by checking:
+  Cycle detection is done by checking:
    if val1 is ref and val2 is not a ref: 
       checking that val1 is *not* a member of (get-all-refs val2).
    if val1 is not a ref and val2 is a ref: 
