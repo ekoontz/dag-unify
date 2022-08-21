@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [merge]) ;; TODO: don't override (merge)
   (:require
    #?(:clj [clojure.tools.logging :as log])
-   #?(:cljs [cljslog.core :as log])))
+   #?(:cljs [dag_unify.log :as log])))
 
 (declare merge)
 
