@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.10.3] - 2022-08-21
+
+- Upgrade dependencies
+- Remove use of [cljslog](https://github.com/ekoontz/cljslog); use newly-added dag_unify.log instead.
+- Improve documentation: fix typo.
+
 ## [1.10.2] - 2022-01-20
 
 - Rewrite `fail-path` and associated test.

@@ -8,11 +8,11 @@
 
 (defn debug [& s]
   (let [msg (fmt s)]
-    (js/console.debug msg)))        
+    (js/console.debug msg)))
 
 (defn error [& s]
   (let [msg (fmt s)]
-    (js/console.error msg)))    
+    (js/console.error msg)))
 
 (defn info [& s]
   (let [msg (fmt s)]
