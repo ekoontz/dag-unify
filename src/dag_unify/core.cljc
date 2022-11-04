@@ -44,8 +44,8 @@
                    keys keys]
               (if (seq keys)
                 (let [k (first keys)
-                      v (unify! (k dag1 :top)
-                                (k dag2 :top))]
+                      v (unify! (get dag1 k :top)
+                                (get dag2 k :top))]
                   (cond
                     (= :fail v)
                     :fail

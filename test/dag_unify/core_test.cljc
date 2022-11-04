@@ -381,4 +381,8 @@
   (is (= true (u/subsumes? {:a 42} {:a 42 :b 43})))
   (is (= false (u/subsumes? {:a 42 :b 43} {:a 42}))))
 
+(deftest strings-as-keys
+  (is (= {:a 42 "a" 42} (u/unify {:a 42} {"a" 42})))
+  (is (= {"a" 42} (u/unify {"a" 42} {"a" 42})))
+  (is (= :fail (u/unify {"a" 42} {"a" 43}))))
 
