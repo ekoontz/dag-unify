@@ -44,6 +44,15 @@ user=> (def foo (let [shared-value (atom :top)]
 #'user/foo
 ```
 
+A visualization of this graph:
+
+```mermaid
+graph TD
+    foo --> |:a| B( )
+    B -->|:b| D[:top]
+    B -->|:c| D
+```
+
 If you print `foo` it looks like:
 
 ```
@@ -64,6 +73,9 @@ user=> (dag/pprint foo)
 In the above output, the `[1]` is used to represent the atom that is
 the shared value. If there were other shared values, they would be
 represented by `[2]`, `[3]`, ...
+
+
+
 
 ## The special keyword `:top`
 
