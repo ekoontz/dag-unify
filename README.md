@@ -118,6 +118,13 @@ user=> (def bar (let [shared-value (atom :top)]
 #'user/foo
 ```
 
+```mermaid
+graph TD
+    foo --> |:a| B( )
+    B -->|:b| D[:top]
+    B -->|:c| D
+```
+
 Now, let's unify `bar` with another map: `{:c 42}` and print the result legibly:
 
 ```
@@ -125,9 +132,18 @@ user=> (dag/pprint (dag/unify bar {:c 42}))
 {:c [[1] 42], :a {:b [1]}}
 ```
 
+In graphical form:
+
+```mermaid
+graph TD
+    foo --> |:a| B( )
+    B -->|:b| D[42]
+    B -->|:c| D
+```
+
 Since `bar`'s value for `:c` is `:top`, the special identity element,
 when we unify that with 42, the result is that there is an atom with
-the the unified value, 42, which is, as with `foo`, shared as the
+the the unified value, 42, which is, as it was with `bar`, shared as the
 common value of both the path: `[:a :b]` and: `[:c]`.
 
 ## The special keyword `:fail`
