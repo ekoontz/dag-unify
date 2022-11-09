@@ -201,7 +201,8 @@ In graphical form:
 
 ```mermaid
 graph TD
-    X[baz] --> |:a| B( )
+    baz --> X
+	X --> |:a| B( )
     B   --> |:b| D[42]
     X --> |:c| D
 ```
