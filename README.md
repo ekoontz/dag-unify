@@ -136,7 +136,7 @@ In graphical form:
 
 ```mermaid
 graph TD
-    foo --> |:a| B( )
+    bar --> |:a| B( )
     B -->|:b| D[42]
     B -->|:c| D
 ```
@@ -195,6 +195,15 @@ Considering the graph `baz`:
 ```
 user=> (dag/pprint baz)
 {:a {:b [[1] :top]}, :c [1]}
+```
+
+In graphical form:
+
+```mermaid
+graph TD
+    baz --> |:a| B( )
+    B   --> |:b| D[:top]
+    baz --> |:c| D
 ```
 
 Compare the output of `clojure.core/get-in` on `baz` using the path `[:a :b]`:
