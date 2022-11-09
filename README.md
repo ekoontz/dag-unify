@@ -1,6 +1,8 @@
 [![Clojars Project](http://clojars.org/dag_unify/latest-version.svg)](http://clojars.org/dag_unify)
 
-[![Build Status](https://secure.travis-ci.org/ekoontz/dag-unify.png?branch=master)](http://travis-ci.org/ekoontz/dag-unify)
+![Build Status](https://github.com/ekoontz/dag-unify/.github/workflows/clojure.yml/badge.svg)
+
+
 
 # Introduction
 
