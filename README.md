@@ -203,7 +203,7 @@ In graphical form:
 graph TD
     X[baz] --> |:a| B( )
     B   --> |:b| D[42]
-    baz --> |:c| D
+    X --> |:c| D
 ```
 
 Compare the output of `clojure.core/get-in` on `baz` using the path `[:a :b]`:
