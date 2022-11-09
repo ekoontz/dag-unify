@@ -1,6 +1,6 @@
 [![Clojars Project](http://clojars.org/dag_unify/latest-version.svg)](http://clojars.org/dag_unify)
 
-![Build Status](https://github.com/ekoontz/dag-unify/.github/workflows/clojure.yml/badge.svg)
+![Build Status](https://github.com/ekoontz/dag-unify/actions/workflows/clojure.yml/badge.svg)
 
 
 
