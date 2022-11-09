@@ -72,9 +72,10 @@ user=> foo
 {:a {:b #object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val 42}]}, :c #object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val 42}]}
 ```
 
-In the above output, here again it can be seen, although a bit
-less legibly, that the two atoms' IDs are identical and are thus the
-same in-memory object pointed-to by two paths: `[:a :b]` and `[:c]`.
+In the above output, here again it can be seen, although perhaps a bit
+less legibly, that the two atoms are identical because of their
+identical hexadecimal identification numbers, and thus the same
+in-memory object is being pointed-to by two different paths: `[:a :b]` and `[:c]`.
 
 # Special keywords
 
