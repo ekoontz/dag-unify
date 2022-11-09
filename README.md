@@ -48,7 +48,7 @@ A visualization of this graph:
 
 ```mermaid
 graph TD
-    foo --> |:a| B( )
+    X( ) --> |:a| B( )
     B -->|:b| D[42]
     B -->|:c| D
 ```
@@ -120,7 +120,7 @@ user=> (def bar (let [shared-value (atom :top)]
 
 ```mermaid
 graph TD
-    foo --> |:a| B( )
+    X( ) --> |:a| B( )
     B -->|:b| D[:top]
     B -->|:c| D
 ```
@@ -136,7 +136,7 @@ In graphical form:
 
 ```mermaid
 graph TD
-    bar --> |:a| B( )
+    X( ) --> |:a| B( )
     B -->|:b| D[42]
     B -->|:c| D
 ```
