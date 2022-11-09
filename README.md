@@ -194,7 +194,7 @@ Considering the graph `baz`:
 
 ```
 user=> (dag/pprint baz)
-{:a {:b [[1] :top]}, :c [1]}
+{:a {:b [[1] 42]}, :c [1]}
 ```
 
 In graphical form:
@@ -202,7 +202,7 @@ In graphical form:
 ```mermaid
 graph TD
     baz --> |:a| B( )
-    B   --> |:b| D[:top]
+    B   --> |:b| D[42]
     baz --> |:c| D
 ```
 
