@@ -38,7 +38,7 @@ First, let's create a Clojure map that is also a directed acyclic
 graph by using a Clojure atom within the map:
 
 ```
-user=> (def foo (let [shared-value (atom :top)]
+user=> (def foo (let [shared-value (atom 42)]
   #_=>            {:a {:b shared-value}
   #_=>                 :c shared-value}))
 #'user/foo
@@ -49,82 +49,119 @@ A visualization of this graph:
 ```mermaid
 graph TD
     foo --> |:a| B( )
-    B -->|:b| D[:top]
+    B -->|:b| D[42]
     B -->|:c| D
 ```
 
-If you print `foo` it looks like:
-
-```
-user=> foo
-{:a {:b #object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val :top}]}, :c #object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val :top}]}
-```
-
-In the above output, it can be seen that in `foo`, the value for the path `[:a :b]` is
-set to the same value (the atom `shared-value`) as the path `[:c]`.
-
-You can use `dag/pprint` to show this more readably:
+You can use `dag/pprint` to print this map in a human-legible form:
 
 ```
 user=> (dag/pprint foo)
-{:a {:b [[1] :top]}, :c [1]}
+{:a {:b [[1] 42]}, :c [1]}
 ```
 
 In the above output, the `[1]` is used to represent the atom that is
-the shared value. If there were other shared values, they would be
-represented by `[2]`, `[3]`, ...
+the shared value of the two distinct paths `[:a :b]` and `[:c]`. If
+there were other shared values, they would be represented by `[2]`,
+`[3]`, ...
 
+If you print this map `foo` in the default Clojure printer, it looks like:
 
+```
+user=> foo
+{:a {:b #object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val 42}]}, :c #object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val 42}]}
+```
 
+In the above output, here again it can be seen, although a bit
+less legibly, that the two atoms' IDs are identical and are thus the
+same in-memory object pointed-to by two paths: `[:a :b]` and `[:c]`.
+
+# Special keywords
+
+There are two keywords, `:top` and `:fail`, that are treated
+differently from other values.
 
 ## The special keyword `:top`
 
-We used the keyword `:top` in the above example because it is a special
-keyword for the purposes of unification.
-
-For this keyword `:top`, the following is true for all `X`:
+For this keyword `:top`, the following is true for all `X` (except for one exception):
 
 ```
 (unify X :top) => X
 ```
 
-In other words, `:top` is the [identity
-element](https://en.wikipedia.org/wiki/Identity_element) of
-unification. It is the most unspecific, most general value possible.
+The sole exception is when `X` is `:fail`, in which case:
 
-The result of unifying any value with `:top` is that same value, just
-as in arithmetic, the result of multiplying any number by 1 is that same number.
+```
+(unify :fail :top) => :fail
+```
+
+Thus `:top` is the [identity
+element](https://en.wikipedia.org/wiki/Identity_element) of
+unification. It is the most unspecific, most general value
+possible. It's useful when we want to represent the intention of "I
+don't know what this thing is, but I want to have a placeholder that
+might be filled in with something more specific later."
+
+Another example of an identity element, from arithmetic is the number
+1 the operation of multiplication: the result of multiplying any
+number by 1 is that same number. Thus for unification, `:top` plays
+the same role as 1 does in multiplication.
 
 ## Unification with non-`:top` values.
 
-Continuing with our `foo` map above, let's unify it with another map: `{:c 42}`:
+Suppose we have a map `bar`:
 
 ```
-user=> (dag/pprint (dag/unify foo {:c 42}))
+user=> (def bar (let [shared-value (atom :top)]
+  #_=>            {:a {:b shared-value}
+  #_=>                 :c shared-value}))
+#'user/foo
+```
+
+Now, let's unify `bar` with another map: `{:c 42}` and print the result legibly:
+
+```
+user=> (dag/pprint (dag/unify bar {:c 42}))
 {:c [[1] 42], :a {:b [1]}}
 ```
 
-Since `foo`'s value for `:c` is `:top`, the special identity element,
+Since `bar`'s value for `:c` is `:top`, the special identity element,
 when we unify that with 42, the result is that there is an atom with
 the the unified value, 42, which is, as with `foo`, shared as the
 common value of both the path: `[:a :b]` and: `[:c]`.
 
-However, suppose we unify that result again, with another map: `{:c 99}`:
+## The special keyword `:fail`
+
+The result of unifying any _a_ and _b_ is `:fail`, if:
+- neither _a_ or _b_ are `:top`, and
+- _a_ and _b_ are not maps (i.e. they are numbers, strings, keywords, sequences, etc.), and
+- `(= a b) => false`
+
+For example, `(unify 42 99) => :fail`, since 42 and 99 are not maps and 42 and 99 are not equal (`(= 42 99) => false`).
+
+The result of unifying any _a_ and _b_ is also `:fail`, if:
+- Either _a_ and _b_ are `:fail`.
+
+Thus the result of unifying any value with `:fail` is itself `:fail`, just as
+in arithmetic, the result of multiplying any number by 0 is itself 0.
+
+Looking at our example map `bar` again, suppose we unify it again with
+the same `{:c 42}`, but then unify it with yet another map: `{:c 99}`:
 
 ```
-user=> (dag/pprint (-> foo
+user=> (dag/pprint (-> bar
                        (dag/unify {:c 42})
                        (dag/unify {:c 99})))
 :fail
 ```
 
 Unification of these three input maps _failed_, because it could not unify
-the two non-identical values 42 and 99.
+the two non-equal values 42 and 99.
 
-The same would happen if we tried to unify with the map `{:a {:b 99}}`:
+The same would happen if we tried the other path, `[:a :b]`:
 
 ```
-user=> (dag/pprint (-> foo
+user=> (dag/pprint (-> bar
                        (dag/unify {:c 42})
                        (dag/unify {:a {:b 99}})))
 :fail
@@ -134,48 +171,35 @@ Because the paths `[:a :b]` and `[:c]` share the same value in `foo`,
 all results of unifications using it must also have that same path
 shared within the result, but since `(= 42 99) => false`, unification fails.
 
-## The special keyword `:fail`
-
-The result of unifying any _a_ and _b_ is `:fail`, if:
-- neither _a_ or _b_ are `:top`, and
-- _a_ and _b_ are not maps (i.e. they are numbers, strings, keywords, sequences, etc.), and
-- `(= a b) => false`
-
-Thus in the example above, `(unify 42 99) => :fail`, since 42 and 99 are not maps and `(= 42 99) => false`.
-
-The result of unifying any _a_ and _b_ is also `:fail`, if:
-- Either _a_ and _b_ are `:fail`.
-
-Thus the result of unifying any value with `:fail` is itself `:fail`, just as
-in arithmetic, the result of multiplying any number by 0 is itself 0.
-
 ## `clojure.core/get-in` vs. `dag_unify.core/get-in`
 
 
-Considering again the above graph `foo`:
+Considering the graph `baz`:
 
 ```
-user=> (dag/pprint foo)
+user=> (dag/pprint baz)
 {:a {:b [[1] :top]}, :c [1]}
 ```
 
-Compare the output of `clojure.core/get-in` on `foo` using the path `[:a :b]`:
+Compare the output of `clojure.core/get-in` on `baz` using the path `[:a :b]`:
 
 ```
-user=> (get-in foo [:a :b])
-#object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val :top}]
+user=> (get-in baz [:a :b])
+#object[clojure.lang.Atom 0x6ee6ded {:status :ready, :val 42}]
 ```
 
-Versus the output of `dag_unify.core/get-in` with `foo` on the same path:
+Versus the output of `dag_unify.core/get-in` with `baz` on the same path:
 
 ```
 user=> (dag/get-in foo2 [:a :b])
-:top
+42
 ```
 
 Thus `dag_unify.core/get-in` resolves any atoms it finds as it
-traverses within its input map and returns the value within the atom
-rather than the atom itself.
+traverses within its input map and returns the value *within* the atom
+rather than the atom itself. If that inner value is *itself* a ref,
+then the resolving function will continue inward, resolving that ref
+until it reaches a final non-ref value.
 
 ## Unification with atoms whose values are maps
 
@@ -217,7 +241,7 @@ at the same example immediately above, but with `dag_unify.pprint`:
 ## `:fail` within maps
 
 In any map, if any key's value is equal to `:fail`, the entire map is
-equal to `:fail`. For example, the following map, despite its
+equal to `:fail` from the point of view of unification. For example, the following map, despite its
 complicated structure:
 
 ```
