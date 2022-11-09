@@ -201,9 +201,9 @@ In graphical form:
 
 ```mermaid
 graph TD
-	X --> |:a| B( )
+	X( ) --> |:a| B( )
     B   --> |:b| D[42]
-    X --> |:c| D
+    X( ) --> |:c| D
 ```
 
 Compare the output of `clojure.core/get-in` on `baz` using the path `[:a :b]`:
