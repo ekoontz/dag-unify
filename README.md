@@ -1,6 +1,6 @@
-[![Clojars Project](http://clojars.org/dag_unify/latest-version.svg)](http://clojars.org/dag_unify)
-
-![Build Status](https://github.com/ekoontz/dag-unify/actions/workflows/clojure.yml/badge.svg)
+[![Clojars Project](https://img.shields.io/clojars/v/dag_unify.svg)](https://clojars.org/dag_unify)
+[![License](https://img.shields.io/badge/License-EPL%201.0-red.svg)](https://opensource.org/licenses/EPL-1.0)
+[![Clojure CI](https://github.com/ekoontz/dag-unify/actions/workflows/clojure.yml/badge.svg)](https://github.com/ekoontz/dag-unify/actions/workflows/clojure.yml)
 
 
 
