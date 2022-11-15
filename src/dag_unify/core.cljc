@@ -9,7 +9,6 @@
 
 (declare copy)
 (declare ref?)
-(declare resolve-ref)
 (declare unify!)
 
 (defn unify
@@ -194,7 +193,7 @@
      (= (type val) cljs.core/Atom)))
 
 (defn resolve-ref
-  "if arg is not a ref, return arg. if is a ref, return (resolve @arg)"
+  "if arg is not a ref, return arg. if is a ref, return (resolve-ref @arg)"
   [arg]
   (if (ref? arg)
     (resolve-ref @arg)
@@ -202,7 +201,7 @@
 
 ;; TODO: need tests: many tests use (get-in), but need more dedicated tests for it alone.
 (defn get-in
-  "same as clojure.core (get-in), but references are resolved and followed."
+  "same as clojure.core (get-in), but references are resolved and followed, if path is not empty."
   [in-map path & [not-found]]
   (let [result
         (if (first path)
