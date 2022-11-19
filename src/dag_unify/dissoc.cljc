@@ -33,7 +33,10 @@
 (declare get-remainders-for)
 (declare prefix?)
 
-(defn dissoc-path [serialized pathsets path]
+(defn dissoc-path
+  "given a serialized dag and the remaining pathsets within it, remove _path_ from the graph and all
+   paths that point to the value that _path_ points to."
+  [serialized pathsets path]
   (when (seq serialized)
     (let [[reentrance-set value] (first serialized)
           filtered-reentrance-set (remove #(remove-path? %) reentrance-set)
