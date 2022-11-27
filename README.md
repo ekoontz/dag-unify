@@ -140,7 +140,7 @@ In graphical form:
 ```mermaid
 graph TD
     X( ) --> |:a| B( )
-    B -->|:b| D[42]
+    B -->|:b| D(42)
     B -->|:c| D
 ```
 
@@ -205,7 +205,7 @@ In graphical form:
 ```mermaid
 graph TD
 	X( ) --> |:a| B( )
-    B   --> |:b| D[42]
+    B   --> |:b| D(42)
     X( ) --> |:c| D
 ```
 
