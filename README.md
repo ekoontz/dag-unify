@@ -51,7 +51,7 @@ A visualization of this graph:
 ```mermaid
 graph TD
     X( ) --> |:a| Y( )
-    Y    --> |:b| Z[42]
+    Y    --> |:b| Z(42)
     Y    --> |:c| Z
 ```
 
