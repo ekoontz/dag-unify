@@ -50,9 +50,9 @@ A visualization of this graph:
 
 ```mermaid
 graph TD
-    X( ) --> |:a| B( )
-    B -->|:b| D[42]
-    B -->|:c| D
+    X( ) --> |:a| Y( )
+    Y    --> |:b| Z[42]
+    Y    --> |:c| Z
 ```
 
 You can use `dag/pprint` to print this map in a human-legible form:
