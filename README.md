@@ -124,7 +124,7 @@ user=> (def bar (let [shared-value (atom :top)]
 ```mermaid
 graph TD
     X( ) --> |:a| B( )
-    B -->|:b| D[:top]
+    B -->|:b| D(:top)
     B -->|:c| D
 ```
 
