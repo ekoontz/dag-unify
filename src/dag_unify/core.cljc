@@ -35,10 +35,7 @@
    - If the unified value for :k is :fail, then
    return :fail for the whole function call."
   [dag1 dag2]
-  ;; TODO: any performance difference between:
-  ;; (seq (concat ..) and
-  ;; (vec (concat ..) ?
-  (let [keys (vec (set (concat (keys dag1) (keys dag2))))
+  (let [keys (set (concat (keys dag1) (keys dag2)))
         kvs (loop [kvs []
                    keys keys]
               (if (seq keys)
