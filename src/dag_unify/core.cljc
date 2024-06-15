@@ -13,8 +13,10 @@
 
 (defn unify
   "like unify!, but non-destructively copy each argument before unifying."
-  [val1 val2]
-  (unify! (copy val1) (copy val2)))
+  ([val1 val2 & vals]
+   (reduce unify! (map copy (concat [val1 val2] vals))))
+  ([val1 val2]
+   (unify! (copy val1) (copy val2))))
 
 (def ^:dynamic exception-if-cycle?
   "If true, and if unifying two DAGs would cause a cycle, thrown an exception. If false,

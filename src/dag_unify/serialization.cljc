@@ -54,6 +54,11 @@
               (cons path
                     (get retval input nil)))))
 
+    (and
+     (map? input)
+     (empty? input))
+    retval
+
     (map? input)
     (reduce (fn [a b] (merge-with concat a b))
             (map (fn [key]
