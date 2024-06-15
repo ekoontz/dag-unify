@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.1] - 2024-06-15
+
+- fix bug in (defn find-paths-in-refs): account for empty maps
+- allow more than 2 parameters to (defn unify)
+
 ## [1.11.0] - 2022-11-09
 
 - Support maps where keys can be strings as well as keywords (e.g. `{"foo" {"bar" 42}}` as well as: `{:foo {:bar 42}}`).
