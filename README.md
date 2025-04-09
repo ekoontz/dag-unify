@@ -118,7 +118,7 @@ Suppose we have a map `bar`:
 user=> (def bar (let [shared-value (atom :top)]
   #_=>            {:a {:b shared-value}
   #_=>                 :c shared-value}))
-#'user/foo
+#'user/bar
 ```
 
 ```mermaid
