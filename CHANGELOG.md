@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.2] - 2025-10-26
+
+- Upgrade to most recent Clojure release (1.12.3)
+- Upgrade to most recent tools.logging release (1.3.0)
+- Fix github CI
+
 ## [1.11.1] - 2024-06-15
 
 - fix bug in (defn find-paths-in-refs): account for empty maps
@@ -43,7 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix bugs in last version where `if` was replaced by `and`: use
   instead `(when)`, not `(and)` where the difference is significant.
 - Remove use of `cljslog/debug` to improve performance in cljs.
-  
+
 ## [1.9.7] - 2020-09-12
 
 - Fix all warnings identified by [Kondo](https://github.com/borkdude/clj-kondo) with `lein clj-kondo --lint src`.
