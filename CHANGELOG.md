@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.2] - 2025-10-26
+
+- Upgrade to most recent Clojure release (1.12.3)
+- Upgrade to most recent tools.logging release (1.3.0)
+
 ## [1.11.1] - 2024-06-15
 
 - fix bug in (defn find-paths-in-refs): account for empty maps
