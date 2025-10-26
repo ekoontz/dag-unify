@@ -1,20 +1,15 @@
-name: Clojure CI
+name: Test
 
-on:
-  push:
-    branches:
-      - '*'
-    pull_request:
-      - master
+on: [push]
 
-jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: lein deps
-    - name: Run tests
-      run: lein test
+steps:
+  - uses: actions/checkout@v2
+  - name: Install Leiningen
+    run: |
+      curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein -o lein
+      chmod +x lein
+      sudo mv lein /usr/local/bin/
+  - name: Install dependencies
+    run: lein deps
+  - name: Run tests
+    run: lein test
