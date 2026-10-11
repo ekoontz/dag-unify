@@ -28,6 +28,27 @@
       (and (map? arg)
            (= :fail (:fail arg)))))
 
+(defn- contains-ref? [value target]
+  (loop [pending (list value)
+         seen #{}]
+    (if (seq pending)
+      (let [current (first pending)
+            pending (rest pending)]
+        (cond
+          (ref? current)
+          (cond
+            (= current target) true
+            (contains? seen current) (recur pending seen)
+            :else (recur (cons @current pending)
+                         (conj seen current)))
+
+          (map? current)
+          (recur (concat (vals current) pending) seen)
+
+          :else
+          (recur pending seen)))
+      false)))
+
 (declare get-all-refs)
 
 (defn unify-dags
@@ -117,7 +138,7 @@
     (and
      (ref? val1)
      (not (ref? val2))
-     (some #(= % val1) (get-all-refs val2)))
+     (contains-ref? val2 val1))
     (if exception-if-cycle?
       (exception "cycle detected.")
       :fail)
@@ -135,7 +156,7 @@
     (and
      (ref? val2)
      (not (ref? val1))
-     (some #(= % val2) (get-all-refs val1)))
+     (contains-ref? val1 val2))
     (if exception-if-cycle?
       (exception "cycle detected.")
       :fail)
@@ -161,8 +182,8 @@
     (and
      (ref? val1)
      (ref? val2)
-     (or (some #(= % val1) (get-all-refs @val2))
-         (some #(= % val2) (get-all-refs @val1))))
+     (or (contains-ref? @val2 val1)
+         (contains-ref? @val1 val2)))
     (do
       (if exception-if-cycle?
         (exception "cycle detected.")
