@@ -288,6 +288,26 @@ is no different from `:fail` as far as unification is concerned.
 references, whereas `unify` copies its arguments before performing
 unification, so that the input arguments are never modified.
 
+# Benchmarking
+
+A benchmark suite that unifies large, complicated DAGs (deeply nested
+maps, densely shared references, exponential path counts, ...) lives in
+[bench/dag_unify/benchmark.clj](bench/dag_unify/benchmark.clj). Run it with:
+
+```
+% lein bench                 # standard sizes
+% lein bench --quick         # small sizes, fast smoke run
+% lein bench --scale 4       # multiply the default DAG sizes
+% lein bench --runs 10       # more repetitions per scenario
+% lein bench --csv out.csv   # also write results to a CSV file
+% lein bench help            # show all options
+```
+
+It prints per-scenario min/median/mean/max timings in milliseconds, along
+with a `FAIL?` marker for any scenario whose DAGs unexpectedly fail to unify.
+Each scenario derives its size from the single `--scale` factor, so the whole
+suite can be made heavier or lighter without editing the file.
+
 # Applications
 
 From [wikipedia](https://en.wikipedia.org/wiki/Graph_theory#Subsumption_and_unification):
