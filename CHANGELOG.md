@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.11.3] - 2026-10-15
+
+- Add a benchmark suite for unification performance
+- Optimize cycle detection during unification
+
 ## [1.11.2] - 2025-10-26
 
 - Upgrade to most recent Clojure release (1.12.3)
